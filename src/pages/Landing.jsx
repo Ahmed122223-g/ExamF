@@ -94,6 +94,7 @@ const Landing = () => {
           title: data.title,
           duration_minutes: data.duration_minutes,
           start_time: data.start_time,
+          end_time: data.end_time,
           total_questions: data.total_questions,
           total_marks: data.total_marks
         };
@@ -254,9 +255,9 @@ const Landing = () => {
               const timeLeft = timeLefts[exam.id] ?? 0;
               const isStarted = timeLeft <= 0;
               
-              // Calculate if official exam time has passed (start_time + duration)
+              // Calculate if official exam time has passed (start_time + duration or end_time)
               const startMs = new Date(exam.start_time).getTime();
-              const endMs = startMs + (exam.duration_minutes * 60 * 1000);
+              const endMs = exam.end_time ? new Date(exam.end_time).getTime() : startMs + (exam.duration_minutes * 60 * 1000);
               const hasEnded = endMs < Date.now();
               
               return (
@@ -296,9 +297,11 @@ const Landing = () => {
                     <h3 style={{ color: 'var(--accent-color)', fontSize: '1.2rem', fontWeight: 'bold', margin: '0 0 5px 0', paddingLeft: '25px' }}>
                       {exam.title}
                     </h3>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted-dark)' }}>
-                      كود الاختبار: <strong>{exam.exam_code}</strong>
-                    </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', fontSize: '0.8rem', color: 'var(--text-muted-dark)', marginBottom: '5px' }}>
+                      <span>كود الاختبار: <strong>{exam.exam_code}</strong></span>
+                      <span>البدء: {new Date(exam.start_time).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      {exam.end_time && <span>الانتهاء: {new Date(exam.end_time).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>}
+                    </div>
                   </div>
 
                   <div style={{ 
@@ -320,7 +323,11 @@ const Landing = () => {
                     {/* Status badge */}
                     <div>
                       {statusInfo.isSubmitted ? (
-                        statusInfo.result?.is_cheated ? (
+                        statusInfo.result?.is_submitted === false ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 'bold', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+                            <FaExclamationTriangle /> لم يتم تسليم الإجابات
+                          </span>
+                        ) : statusInfo.result?.is_cheated ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 'bold', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
                             <FaExclamationTriangle /> تم رصد مخالفة غش
                           </span>

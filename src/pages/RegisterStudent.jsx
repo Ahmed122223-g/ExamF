@@ -231,19 +231,20 @@ const RegisterStudent = () => {
           </div>
         )}
 
-        {/* CASE 1: Exam Already Submitted by this student */}
         {isSubmitted && result ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', textAlign: 'center' }}>
             
             {/* Header Result status */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-              {result.is_cheated ? (
+              {result.is_submitted === false ? (
+                <div style={{ fontSize: '4rem', color: '#ef4444' }}>⚠️</div>
+              ) : result.is_cheated ? (
                 <div style={{ fontSize: '4rem', color: '#ef4444' }}>⚠️</div>
               ) : (
                 <FaCheckCircle style={{ fontSize: '4rem', color: '#10b981' }} />
               )}
               <h3 style={{ fontSize: '1.4rem', color: 'white', fontWeight: 'bold' }}>
-                {result.is_cheated ? 'تم إنهاء الاختبار ورصد محاولة مخالفة' : 'تم تسليم إجاباتك بنجاح!'}
+                {result.is_submitted === false ? 'انتهى الوقت ولم تقم بتسليم الإجابات (تم احتساب درجة 0)' : (result.is_cheated ? 'تم إنهاء الاختبار ورصد محاولة مخالفة' : 'تم تسليم إجاباتك بنجاح!')}
               </h3>
               <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', margin: 0 }}>
                 اسم الطالب: <strong>{storedName || result.student_name}</strong>

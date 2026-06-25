@@ -17,6 +17,7 @@ const AdminExams = () => {
   const [examCode, setExamCode] = useState('');
   const [duration, setDuration] = useState(30);
   const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [questions, setQuestions] = useState([
     { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1 }
   ]);
@@ -80,8 +81,13 @@ const AdminExams = () => {
 
   const handleCreateExam = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !startTime) {
+    if (!title.trim() || !startTime || !endTime) {
       Swal.fire('تنبيه!', 'يرجى إكمال الحقول الأساسية للاختبار.', 'warning');
+      return;
+    }
+
+    if (new Date(endTime) <= new Date(startTime)) {
+      Swal.fire('تنبيه!', 'يجب أن يكون تاريخ ووقت انتهاء الاختبار بعد تاريخ ووقت البدء.', 'warning');
       return;
     }
 
@@ -101,6 +107,7 @@ const AdminExams = () => {
         exam_code: examCode.trim(),
         duration_minutes: parseInt(duration),
         start_time: new Date(startTime).toISOString(),
+        end_time: new Date(endTime).toISOString(),
         questions: questions.map(q => ({
           ...q,
           marks: parseInt(q.marks)
@@ -238,6 +245,17 @@ const AdminExams = () => {
                       className="form-input"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">تاريخ ووقت انتهاء الاختبار *</label>
+                    <input
+                      type="datetime-local"
+                      className="form-input"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
                       required
                     />
                   </div>
@@ -443,6 +461,14 @@ const AdminExams = () => {
                     minute: '2-digit'
                   });
 
+                  const localEndStr = exam.end_time ? new Date(exam.end_time).toLocaleString('ar-EG', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : 'غير محدد';
+
                   return (
                     <div key={exam.id} className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', padding: '20px 30px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -453,7 +479,8 @@ const AdminExams = () => {
                           <span>الأسئلة: {exam.total_questions}</span>
                           <span>الدرجات: {exam.total_marks}</span>
                           <span>المدة: {exam.duration_minutes} دقيقة</span>
-                          <span>تاريخ البدء: {localStartStr}</span>
+                          <span>البدء: {localStartStr}</span>
+                          <span>الانتهاء: {localEndStr}</span>
                         </div>
                       </div>
 

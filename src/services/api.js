@@ -119,6 +119,8 @@ export const apiService = {
   },
 
   getExportUrl: (examId) => {
-    return `/api/admin/exams/${examId}/export`;
+    const token = localStorage.getItem('admin_token') || '';
+    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app';
+    return `${baseUrl}/api/admin/exams/${examId}/export?token=${token}`;
   }
 };

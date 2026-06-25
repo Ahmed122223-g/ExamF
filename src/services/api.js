@@ -1,0 +1,112 @@
+import axios from 'axios';
+
+// Base API configurations are handled by Vite proxy in development
+// In production, it will hit relative paths e.g., /api
+const API = axios.create({
+  baseURL: '',
+});
+
+export const apiService = {
+  // Student Services
+  verifyExam: async (code) => {
+    const res = await API.get(`/api/exams/verify/${code}`);
+    return res.data;
+  },
+
+  registerStudent: async (examId, studentName) => {
+    const res = await API.post(`/api/exams/${examId}/register`, { student_name: studentName });
+    return res.data;
+  },
+
+  getExamData: async (examId, token) => {
+    const res = await API.get(`/api/exams/${examId}/take`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  submitExam: async (examId, answers, isCheated, token) => {
+    const res = await API.post(`/api/exams/${examId}/submit`, {
+      answers,
+      is_cheated: isCheated
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getExamResult: async (examId, token) => {
+    const res = await API.get(`/api/exams/${examId}/result`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // Admin Services
+  adminLogin: async (username, password) => {
+    const res = await API.post('/api/admin/login', { username, password });
+    return res.data;
+  },
+
+  getDashboardStats: async (token) => {
+    const res = await API.get('/api/admin/dashboard-stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getExams: async (token) => {
+    const res = await API.get('/api/admin/exams', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createExam: async (examData, token) => {
+    const res = await API.post('/api/admin/exams', examData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getExamDetails: async (examId, token) => {
+    const res = await API.get(`/api/admin/exams/${examId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteExam: async (examId, token) => {
+    const res = await API.delete(`/api/admin/exams/${examId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getResults: async (examId, token) => {
+    const params = examId ? { exam_id: examId } : {};
+    const res = await API.get('/api/admin/results', {
+      params,
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getResultDetails: async (resultId, token) => {
+    const res = await API.get(`/api/admin/results/${resultId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteAttempt: async (resultId, token) => {
+    const res = await API.delete(`/api/admin/results/${resultId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getExportUrl: (examId) => {
+    return `/api/admin/exams/${examId}/export`;
+  }
+};

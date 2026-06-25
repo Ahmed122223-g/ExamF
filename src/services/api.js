@@ -24,13 +24,27 @@ export const apiService = {
   },
 
   submitExam: async (examId, answers, isCheated, token) => {
-    const res = await API.post(`/api/exams/${examId}/submit`, {
-      answers,
-      is_cheated: isCheated
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
+    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app';
+    const url = `${baseUrl}/api/exams/${examId}/submit`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        answers,
+        is_cheated: isCheated
+      }),
+      keepalive: true
     });
-    return res.data;
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw { response: { data: errData } };
+    }
+
+    return await response.json();
   },
 
   getExamResult: async (examId, token) => {

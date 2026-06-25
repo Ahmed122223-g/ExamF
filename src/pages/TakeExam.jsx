@@ -23,6 +23,7 @@ const TakeExam = () => {
   const answersRef = useRef(answers);
   const submittedRef = useRef(submitted);
   const submittingRef = useRef(submitting);
+  const ignoreBlur = useRef(false);
 
   const studentToken = sessionStorage.getItem(`student_token_${examId}`);
   const studentName = sessionStorage.getItem(`student_name_${examId}`);
@@ -119,9 +120,11 @@ const TakeExam = () => {
     };
 
     const handleBlur = () => {
+      if (ignoreBlur.current) return;
       if (exam && !submittedRef.current && !submittingRef.current) {
         // Delay slightly to prevent triggering on dropdown select or text input blur in some browsers
         setTimeout(() => {
+          if (ignoreBlur.current) return;
           if (document.activeElement && document.activeElement.tagName !== 'IFRAME') {
             if (!document.hasFocus() && !submittedRef.current && !submittingRef.current) {
               handleCheatingSubmit('تم اكتشاف خروجك من نافذة الاختبار أو إلغاء التركيز.');
@@ -146,11 +149,16 @@ const TakeExam = () => {
         (e.ctrlKey && e.shiftKey && ['i', 'c', 'j'].includes(e.key.toLowerCase()))
       ) {
         e.preventDefault();
+        ignoreBlur.current = true;
         Swal.fire({
           title: 'إجراء محظور!',
           text: 'غير مسموح بنسخ النص، لصقه، طباعته أو استخدام أدوات المطورين أثناء الاختبار.',
           icon: 'warning',
           confirmButtonText: 'حسناً'
+        }).then(() => {
+          setTimeout(() => {
+            ignoreBlur.current = false;
+          }, 500);
         });
       }
     };
@@ -185,6 +193,7 @@ const TakeExam = () => {
   const handleAutoSubmit = (timeExpired = false) => {
     if (!submittedRef.current && !submittingRef.current) {
       if (timeExpired) {
+        ignoreBlur.current = true;
         Swal.fire({
           title: 'انتهى الوقت!',
           text: 'انتهى وقت الاختبار المحدد. سيتم تسليم إجاباتك الحالية تلقائياً.',
@@ -192,26 +201,54 @@ const TakeExam = () => {
           timer: 3000,
           showConfirmButton: false
         }).then(() => {
+          setTimeout(() => {
+            ignoreBlur.current = false;
+          }, 500);
           submitAnswers(false); // standard submit on timer end
         });
       }
     }
   };
 
-  const handleCheatingSubmit = (reasonText) => {
+  const handleCheatingSubmit = async (reasonText) => {
+    if (ignoreBlur.current) return;
     if (!submittedRef.current && !submittingRef.current) {
       setSubmitting(true);
       submittingRef.current = true;
       
-      Swal.fire({
-        title: 'تم إلغاء الاختبار!',
-        text: `${reasonText} تم تسليم إجاباتك الحالية تلقائياً وتسجيل محاولة غش.`,
-        icon: 'error',
-        confirmButtonText: 'حسناً',
-        confirmButtonColor: '#ef4444'
-      }).then(() => {
-        submitAnswers(true); // cheat submit
-      });
+      const answersPayload = exam.questions.map(q => ({
+        question_id: q.id,
+        selected_answer: answersRef.current[q.id] || null
+      }));
+
+      try {
+        // Submit immediately in the background before showing alerts
+        const res = await apiService.submitExam(examId, answersPayload, true, studentToken);
+        sessionStorage.setItem(`exam_result_${examId}`, JSON.stringify(res));
+        
+        submittedRef.current = true;
+        setSubmitted(true);
+
+        ignoreBlur.current = true;
+        Swal.fire({
+          title: 'تم إنهاء الاختبار ورصد مخالفة غش!',
+          text: `${reasonText} تم تسليم إجاباتك الحالية تلقائياً وحظر دخولك مجدداً.`,
+          icon: 'error',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#ef4444'
+        }).then(() => {
+          setTimeout(() => {
+            ignoreBlur.current = false;
+          }, 500);
+          navigate('/');
+        });
+
+      } catch (err) {
+        // Fallback redirection to landing even if submit fails
+        submittedRef.current = true;
+        setSubmitted(true);
+        navigate('/');
+      }
     }
   };
 
@@ -220,7 +257,6 @@ const TakeExam = () => {
     setSubmitted(true);
     submittedRef.current = true;
 
-    // Format answers payload
     const answersPayload = exam.questions.map(q => ({
       question_id: q.id,
       selected_answer: answersRef.current[q.id] || null
@@ -228,16 +264,32 @@ const TakeExam = () => {
 
     try {
       const res = await apiService.submitExam(examId, answersPayload, isCheated, studentToken);
-      
-      // Save result details in sessionStorage for the result screen
       sessionStorage.setItem(`exam_result_${examId}`, JSON.stringify(res));
       
-      navigate(`/exam-result/${examId}`);
+      ignoreBlur.current = true;
+      Swal.fire({
+        title: 'تم تسليم الاختبار بنجاح!',
+        text: 'لقد انتهيت من أداء الاختبار وتم رصد إجاباتك.',
+        icon: 'success',
+        confirmButtonText: 'حسناً',
+        confirmButtonColor: '#10b981'
+      }).then(() => {
+        setTimeout(() => {
+          ignoreBlur.current = false;
+        }, 500);
+        navigate('/');
+      });
     } catch (err) {
-      Swal.fire('خطأ!', err.response?.data?.detail || 'حدث خطأ أثناء تسليم الاختبار.', 'error');
-      setSubmitting(false);
-      setSubmitted(false);
-      submittedRef.current = false;
+      const errorMsg = err.response?.data?.detail || '';
+      if (errorMsg.includes('تم تسليم') || errorMsg.includes('بالفعل') || errorMsg.includes('submitted')) {
+        // Already submitted, navigate to Landing page directly
+        navigate('/');
+      } else {
+        Swal.fire('خطأ!', errorMsg || 'حدث خطأ أثناء تسليم الاختبار.', 'error');
+        setSubmitting(false);
+        setSubmitted(false);
+        submittedRef.current = false;
+      }
     }
   };
 
@@ -253,6 +305,7 @@ const TakeExam = () => {
       warningText = `لديك ${unansweredCount} أسئلة غير مجاب عليها. هل أنت متأكد من تسليم الاختبار؟`;
     }
 
+    ignoreBlur.current = true;
     Swal.fire({
       title: 'تسليم الاختبار',
       text: warningText,
@@ -263,6 +316,10 @@ const TakeExam = () => {
       confirmButtonColor: '#10b981',
       cancelButtonColor: '#334155'
     }).then((result) => {
+      setTimeout(() => {
+        ignoreBlur.current = false;
+      }, 500);
+      
       if (result.isConfirmed) {
         submitAnswers(false);
       }

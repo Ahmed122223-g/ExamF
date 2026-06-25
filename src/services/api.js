@@ -11,8 +11,32 @@ export const apiService = {
     return res.data;
   },
 
-  registerStudent: async (examId, studentName) => {
-    const res = await API.post(`/api/exams/${examId}/register`, { student_name: studentName });
+  registerStudent: async (examId, token) => {
+    const res = await API.post(`/api/exams/${examId}/register`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  studentSignup: async (name, email, password, confirmPassword) => {
+    const res = await API.post('/api/students/signup', { name, email, password, confirm_password: confirmPassword });
+    return res.data;
+  },
+
+  studentVerifyEmail: async (email, code) => {
+    const res = await API.post('/api/students/verify-email', { email, code });
+    return res.data;
+  },
+
+  studentLogin: async (email, password) => {
+    const res = await API.post('/api/students/login', { email, password });
+    return res.data;
+  },
+
+  studentGetDashboard: async (token) => {
+    const res = await API.get('/api/students/dashboard', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return res.data;
   },
 

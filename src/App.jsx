@@ -10,10 +10,20 @@ import AdminExams from './pages/AdminExams';
 import AdminResults from './pages/AdminResults';
 import AdminStats from './pages/AdminStats';
 
+import StudentLogin from './pages/StudentLogin';
+import StudentRegister from './pages/StudentRegister';
+import StudentDashboard from './pages/StudentDashboard';
+
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
   return token ? children : <Navigate to="/admin/login" replace />;
+};
+
+// Simple Route Guard to protect student routes
+const StudentRoute = ({ children }) => {
+  const token = localStorage.getItem('student_token');
+  return token ? children : <Navigate to="/login" replace />;
 };
 
 function App() {
@@ -21,10 +31,41 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Student Routes */}
-        <Route path="/" element={<Landing />} />
-        <Route path="/register-student/:examId" element={<RegisterStudent />} />
-        <Route path="/take-exam/:examId" element={<TakeExam />} />
-        <Route path="/exam-result/:examId" element={<ExamResult />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<StudentLogin />} />
+        <Route path="/register" element={<StudentRegister />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <StudentRoute>
+              <StudentDashboard />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/register-student/:examId" 
+          element={
+            <StudentRoute>
+              <RegisterStudent />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/take-exam/:examId" 
+          element={
+            <StudentRoute>
+              <TakeExam />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/exam-result/:examId" 
+          element={
+            <StudentRoute>
+              <ExamResult />
+            </StudentRoute>
+          } 
+        />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

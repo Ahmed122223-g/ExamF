@@ -25,8 +25,8 @@ const TakeExam = () => {
   const submittingRef = useRef(submitting);
   const ignoreBlur = useRef(false);
 
-  const studentToken = sessionStorage.getItem(`student_token_${examId}`);
-  const studentName = sessionStorage.getItem(`student_name_${examId}`);
+  const studentToken = sessionStorage.getItem(`student_token_${examId}`) || localStorage.getItem('student_token');
+  const studentName = sessionStorage.getItem(`student_name_${examId}`) || localStorage.getItem('student_name');
 
   // Check split screen width
   const isScreenSplit = () => {

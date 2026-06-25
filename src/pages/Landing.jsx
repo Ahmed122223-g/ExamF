@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaFileSignature, FaShieldAlt, FaClock, FaLock, FaCheckCircle, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
+import { FaLock, FaCheckCircle, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const Landing = () => {
@@ -217,28 +217,6 @@ const Landing = () => {
             {loading ? 'جاري البحث والتحقق...' : 'البحث عن الاختبار'}
           </button>
         </form>
-
-        <div style={{ 
-          marginTop: '40px', 
-          paddingTop: '25px', 
-          borderTop: '1px solid var(--border-dark)', 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr 1fr', 
-          gap: '15px' 
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <FaShieldAlt style={{ color: '#10b981', fontSize: '1.2rem' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted-dark)' }}>بيئة محمية وآمنة</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <FaClock style={{ color: '#f59e0b', fontSize: '1.2rem' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted-dark)' }}>مؤقت زمني دقيق</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <FaFileSignature style={{ color: '#3b82f6', fontSize: '1.2rem' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted-dark)' }}>تصحيح فوري للنتيجة</span>
-          </div>
-        </div>
       </div>
 
       {/* Searched Exams List Section */}

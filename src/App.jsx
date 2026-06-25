@@ -8,6 +8,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminExams from './pages/AdminExams';
 import AdminResults from './pages/AdminResults';
+import AdminStats from './pages/AdminStats';
 
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
@@ -49,6 +50,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminResults />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/exams/:id/stats" 
+          element={
+            <AdminRoute>
+              <AdminStats />
             </AdminRoute>
           } 
         />

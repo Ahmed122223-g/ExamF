@@ -231,6 +231,9 @@ const AdminDashboard = () => {
                             <Link to={`/admin/results?exam_id=${exam.id}`} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
                               النتائج
                             </Link>
+                            <Link to={`/admin/exams/${exam.id}/stats`} className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#8b5cf6', color: 'white' }}>
+                              الإحصائيات
+                            </Link>
                             <a 
                               href={apiService.getExportUrl(exam.id)}
                               className="btn"

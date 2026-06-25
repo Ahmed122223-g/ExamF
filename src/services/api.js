@@ -122,5 +122,12 @@ export const apiService = {
     const token = localStorage.getItem('admin_token') || '';
     const baseUrl = import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app';
     return `${baseUrl}/api/admin/exams/${examId}/export?token=${token}`;
+  },
+
+  getExamStats: async (examId, token) => {
+    const res = await API.get(`/api/admin/exams/${examId}/stats`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
   }
 };

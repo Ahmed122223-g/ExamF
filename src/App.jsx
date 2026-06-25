@@ -26,6 +26,7 @@ function App() {
         <Route path="/exam-result/:examId" element={<ExamResult />} />
 
         {/* Admin Routes */}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route 
           path="/admin/dashboard" 

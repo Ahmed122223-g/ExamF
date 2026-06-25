@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// Base API configurations are handled by Vite proxy in development
-// In production, it will hit relative paths e.g., /api
 const API = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app',
 });
 
 export const apiService = {

@@ -41,14 +41,7 @@ const Landing = () => {
       padding: '20px',
       background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)'
     }}>
-      
-      {/* Admin Quick Entry Button */}
-      <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
-        <Link to="/admin/login" className="btn btn-secondary" style={{ display: 'flex', gap: '8px', fontSize: '0.9rem', padding: '8px 16px' }}>
-          <FaUserShield />
-          لوحة تحكم المسؤول
-        </Link>
-      </div>
+
 
       <div className="glass-card" style={{ maxWidth: '550px', width: '100%', textAlign: 'center', position: 'relative' }}>
         

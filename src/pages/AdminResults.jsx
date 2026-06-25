@@ -105,7 +105,7 @@ const AdminResults = () => {
       {/* Top Navbar */}
       <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
-          منصة الاختبارات <span>لوحة التحكم</span>
+          منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
         <div className="nav-links">
           <Link to="/admin/dashboard" className="nav-btn">الرئيسية</Link>

@@ -19,7 +19,7 @@ const AdminExams = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [questions, setQuestions] = useState([
-    { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1 }
+    { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1, explanation: '' }
   ]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,7 +60,7 @@ const AdminExams = () => {
   const addQuestionField = () => {
     setQuestions(prev => [
       ...prev,
-      { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1 }
+      { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1, explanation: '' }
     ]);
   };
 
@@ -110,7 +110,8 @@ const AdminExams = () => {
         end_time: new Date(endTime).toISOString(),
         questions: questions.map(q => ({
           ...q,
-          marks: parseInt(q.marks)
+          marks: parseInt(q.marks),
+          explanation: q.explanation?.trim() || null
         }))
       };
 
@@ -167,7 +168,7 @@ const AdminExams = () => {
       {/* Top Navbar */}
       <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
-          منصة الاختبارات <span>لوحة التحكم</span>
+          منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
         <div className="nav-links">
           <Link to="/admin/dashboard" className="nav-btn">الرئيسية</Link>
@@ -389,6 +390,21 @@ const AdminExams = () => {
                             required
                           />
                         </div>
+                      </div>
+
+                      {/* Explanation (optional) */}
+                      <div className="form-group" style={{ margin: 0, marginTop: '15px' }}>
+                        <label className="form-label" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                          💡 شرح الإجابة (اختياري - يظهر للطالب بعد انتهاء الاختبار)
+                        </label>
+                        <textarea
+                          className="form-input"
+                          value={q.explanation || ''}
+                          onChange={(e) => updateQuestionField(idx, 'explanation', e.target.value)}
+                          placeholder="مثال: نختار الإجابة (أ) لأن ..."
+                          rows="2"
+                          style={{ resize: 'vertical', fontSize: '0.9rem' }}
+                        />
                       </div>
 
                     </div>

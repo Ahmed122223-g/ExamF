@@ -242,6 +242,26 @@ const ExamResult = () => {
                         );
                       })}
                     </div>
+
+                    {/* Explanation if available */}
+                    {q.explanation && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(59, 130, 246, 0.06)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        fontSize: '0.88rem',
+                        color: '#93c5fd',
+                        lineHeight: '1.7',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px'
+                      }}>
+                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>💡</span>
+                        <span><strong style={{ color: '#60a5fa' }}>شرح الإجابة:</strong> {q.explanation}</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

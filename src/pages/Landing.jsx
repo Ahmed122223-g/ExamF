@@ -187,7 +187,7 @@ const Landing = () => {
         </div>
 
         <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-dark)', marginBottom: '10px' }}>
-          منصة الاختبارات <span>الآمنة</span>
+          منصة الاختبارات <span>الإلكترونية</span>
         </h1>
         <p style={{ color: 'var(--text-muted-dark)', marginBottom: '35px', fontSize: '1rem', lineHeight: '1.7' }}>
           يرجى إدخال كود أو معرّف الاختبار الموفر لك من قبل المسؤول للبحث عنه وإضافته لقائمتك.

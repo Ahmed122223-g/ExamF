@@ -325,7 +325,7 @@ const AdminResults = () => {
                       </div>
 
                       {/* Choices */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingRight: '35px' }}>
+                      <div className="responsive-grid-choices" style={{ paddingRight: '15px' }}>
                         {['a', 'b', 'c', 'd'].map(optKey => {
                           const isStudentSel = q.selected_answer === optKey;
                           const isCorrectAns = q.correct_answer === optKey;

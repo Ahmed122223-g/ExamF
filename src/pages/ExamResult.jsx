@@ -203,7 +203,7 @@ const ExamResult = () => {
                     </div>
 
                     {/* Show option list with grading highlights */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingRight: '35px' }}>
+                    <div className="responsive-grid-choices" style={{ paddingRight: '15px' }}>
                       {['a', 'b', 'c', 'd'].map(optKey => {
                         const optText = q[`option_${optKey}`];
                         const isStudentSel = q.selected_answer === optKey;

@@ -363,19 +363,10 @@ const TakeExam = () => {
         )}
 
         {/* Timer & Info Banner */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.8)',
-          border: timeLeft < 60 ? '2px solid #ef4444' : '1px solid var(--border-dark)',
-          borderRadius: '16px',
-          padding: '20px 25px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: '20px',
-          zIndex: 100,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-          backdropFilter: 'blur(8px)'
+        <div className="exam-header" style={{
+          borderColor: timeLeft < 60 ? '#ef4444' : 'var(--border-dark)',
+          borderWidth: timeLeft < 60 ? '2px' : '1px',
+          borderStyle: 'solid'
         }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'white', fontWeight: 'bold' }}>{exam.title}</h2>
@@ -439,7 +430,7 @@ const TakeExam = () => {
           </div>
 
           {/* Options List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '47px' }}>
+          <div className="options-list">
             {['a', 'b', 'c', 'd'].map(optKey => {
               const optionText = currentQuestion[`option_${optKey}`];
               const isSelected = answers[currentQuestion.id] === optKey;

@@ -194,7 +194,7 @@ const AdminExams = () => {
                   بيانات الاختبار الأساسية
                 </h2>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="responsive-grid-2">
                   <div className="form-group">
                     <label className="form-label">عنوان الاختبار *</label>
                     <input
@@ -296,7 +296,7 @@ const AdminExams = () => {
                       </div>
 
                       {/* Options inputs */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                      <div className="responsive-grid-choices" style={{ marginBottom: '20px' }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label" style={{ fontSize: '0.85rem' }}>الاختيار أ *</label>
                           <input
@@ -344,7 +344,7 @@ const AdminExams = () => {
                       </div>
 
                       {/* Correct answer & Marks */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div className="responsive-grid-2">
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">الإجابة الصحيحة *</label>
                           <select

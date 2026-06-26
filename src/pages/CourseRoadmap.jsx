@@ -358,7 +358,22 @@ export default function CourseRoadmap() {
                         )}
                       </div>
                       <h4 className="roadmap-card-title">{item.title}</h4>
-                      <p className="roadmap-card-desc">{item.description}</p>
+                      {item.description && (
+                        <p className="roadmap-card-desc" style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          fontSize: '0.85rem',
+                          color: '#9ca3af',
+                          lineHeight: '1.5',
+                          margin: '0.4rem 0 0'
+                        }}>
+                          {item.description.length > 120
+                            ? item.description.slice(0, 120) + '…'
+                            : item.description}
+                        </p>
+                      )}
                     </div>
                     <div className="roadmap-card-footer">
                       <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
@@ -382,9 +397,11 @@ export default function CourseRoadmap() {
             <div className="roadmap-modal-header">
               <span className="roadmap-card-step-badge">استعراض مصادر الدرس</span>
               <h3 className="roadmap-modal-topic-title">{activeModalTopic.title}</h3>
-              <p style={{ marginTop: '0.5rem', color: '#9ca3af', fontSize: '0.9rem' }}>
-                {activeModalTopic.description}
-              </p>
+              {activeModalTopic.description && (
+                <p style={{ marginTop: '0.5rem', color: '#9ca3af', fontSize: '0.9rem', whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>
+                  {activeModalTopic.description}
+                </p>
+              )}
             </div>
 
             {/* ── Tabs ── */}

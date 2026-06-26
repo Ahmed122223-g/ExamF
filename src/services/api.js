@@ -276,6 +276,49 @@ export const apiService = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
+  },
+
+  // ── Card Questions - Admin ────────────────────────────────────────────────
+  getCardQuestionsAdmin: async (courseId, cardDbId, token) => {
+    const res = await API.get(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createCardQuestion: async (courseId, cardDbId, data, token) => {
+    const res = await API.post(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateCardQuestion: async (courseId, cardDbId, questionId, data, token) => {
+    const res = await API.put(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions/${questionId}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteCardQuestion: async (courseId, cardDbId, questionId, token) => {
+    const res = await API.delete(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions/${questionId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // ── Card Questions - Student ──────────────────────────────────────────────
+  getCardQuestionsStudent: async (cardDbId, token) => {
+    const res = await API.get(`/api/courses/cards/${cardDbId}/questions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  submitQuestionAnswer: async (questionId, data, token) => {
+    const res = await API.post(`/api/courses/questions/${questionId}/answer`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
   }
 };
-

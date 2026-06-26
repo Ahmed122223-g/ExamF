@@ -31,6 +31,11 @@ const AdminEditCard = () => {
   // Dynamic Instructors State
   const [instructorsList, setInstructorsList] = useState([]);
 
+  // Card Questions State
+  const [cardDbId, setCardDbId] = useState(null);  // actual DB id (integer)
+  const [questionsList, setQuestionsList] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
   const isNewCard = cardId === 'new';
 
   useEffect(() => {
@@ -119,6 +124,17 @@ const AdminEditCard = () => {
           // Find linked exam if any
           const linkedExam = examsData.find(e => e.course_card_id === currentCard.id);
           setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
+
+          // Store card DB id for questions
+          setCardDbId(currentCard.id);
+
+          // Fetch questions for this card
+          try {
+            const qs = await apiService.getCardQuestionsAdmin(courseId, currentCard.id, token);
+            setQuestionsList(qs.map(q => ({ ...q, _dirty: false })));
+          } catch (e) {
+            setQuestionsList([]);
+          }
         } else {
           // Default initialization for new cards
           setCardTitle('');
@@ -143,6 +159,60 @@ const AdminEditCard = () => {
 
     fetchData();
   }, [courseId, cardId, token, navigate]);
+
+  // ── Question Handlers ────────────────────────────────────────────────────
+  const handleAddQuestion = () => {
+    setQuestionsList(prev => [
+      ...prev,
+      { id: null, question_text: '', question_image_url: '', order: prev.length + 1, _dirty: true, _new: true }
+    ]);
+  };
+
+  const handleRemoveQuestion = async (idx) => {
+    const q = questionsList[idx];
+    if (q.id && !q._new) {
+      // Delete from server
+      try {
+        await apiService.deleteCardQuestion(courseId, cardDbId, q.id, token);
+      } catch (e) {
+        Swal.fire('خطأ', 'فشل في حذف السؤال.', 'error');
+        return;
+      }
+    }
+    setQuestionsList(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleQuestionChange = (idx, field, value) => {
+    setQuestionsList(prev => prev.map((q, i) => {
+      if (i === idx) return { ...q, [field]: value, _dirty: true };
+      return q;
+    }));
+  };
+
+  const handleSaveQuestions = async (cardId_) => {
+    // Save all dirty questions to server after card is saved
+    for (let i = 0; i < questionsList.length; i++) {
+      const q = questionsList[i];
+      if (!q._dirty) continue;
+      try {
+        if (q._new) {
+          await apiService.createCardQuestion(courseId, cardId_, {
+            question_text: q.question_text || null,
+            question_image_url: q.question_image_url || null,
+            order: i + 1
+          }, token);
+        } else if (q.id) {
+          await apiService.updateCardQuestion(courseId, cardId_, q.id, {
+            question_text: q.question_text || null,
+            question_image_url: q.question_image_url || null,
+            order: i + 1
+          }, token);
+        }
+      } catch (e) {
+        console.error('Failed to save question', e);
+      }
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -286,7 +356,10 @@ const AdminEditCard = () => {
         }
       }
 
-      Swal.fire('تم الحفظ!', 'تم حفظ بيانات الكارت بنجاح.', 'success').then(() => {
+      // 3. Save Questions
+      await handleSaveQuestions(savedCard.id);
+
+      Swal.fire('تم الحفظ!', 'تم حفظ بيانات الكارت والأسئلة بنجاح.', 'success').then(() => {
         navigate(`/admin/dashboard?course=${courseId}`);
       });
     } catch (err) {
@@ -498,6 +571,101 @@ const AdminEditCard = () => {
             ))}
           </div>
 
+          {/* ── Questions Section ─────────────────────────────────────────── */}
+          {!isNewCard && (
+            <div style={{ marginTop: '30px', borderTop: '2px solid rgba(239, 68, 68, 0.2)', paddingTop: '25px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', borderRight: '4px solid #ef4444', paddingRight: '10px' }}>
+                  📝 أسئلة هذا الكارت
+                </h3>
+                <button
+                  type="button"
+                  className="btn btn-accent"
+                  style={{ padding: '7px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  onClick={handleAddQuestion}
+                >
+                  <FaPlus /> إضافة سؤال
+                </button>
+              </div>
+
+              {questionsList.length === 0 ? (
+                <p style={{ color: '#4b5563', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                  لا توجد أسئلة مضافة لهذا الكارت بعد. اضغط "إضافة سؤال" لإضافة أول سؤال.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {questionsList.map((q, idx) => (
+                    <div key={idx} style={{ background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '18px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                          سؤال {idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleRemoveQuestion(idx)}
+                        >
+                          <FaTrash /> حذف
+                        </button>
+                      </div>
+
+                      {/* Question Text */}
+                      <div className="form-group" style={{ marginBottom: '12px' }}>
+                        <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
+                          نص السؤال (يمكن نسخ الكود أو النص هنا):
+                        </label>
+                        <textarea
+                          className="form-input"
+                          style={{ minHeight: '90px', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.9rem' }}
+                          placeholder="اكتب نص السؤال هنا... (يمكن نسخ أكواد أو نصوص)"
+                          value={q.question_text || ''}
+                          onChange={(e) => handleQuestionChange(idx, 'question_text', e.target.value)}
+                        />
+                      </div>
+
+                      {/* Question Image URL */}
+                      <div className="form-group">
+                        <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
+                          🖼️ رابط صورة السؤال (اختياري — إذا كان السؤال صورة):
+                        </label>
+                        <input
+                          type="url"
+                          className="form-input"
+                          placeholder="https://example.com/question-image.png"
+                          value={q.question_image_url || ''}
+                          onChange={(e) => handleQuestionChange(idx, 'question_image_url', e.target.value)}
+                        />
+                        {q.question_image_url && (
+                          <div style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <img
+                              src={q.question_image_url}
+                              alt="معاينة السؤال"
+                              style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', background: '#fff' }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '10px' }}>
+                💡 ملاحظة: الأسئلة ستُحفظ عند الضغط على "حفظ الكارت".
+              </p>
+            </div>
+          )}
+
+          {isNewCard && (
+            <div style={{ padding: '15px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '10px', marginTop: '15px' }}>
+              <p style={{ color: '#f59e0b', fontSize: '0.85rem', margin: 0 }}>
+                ⚠️ بعد حفظ الكارت ستتمكن من إضافة الأسئلة عن طريق إعادة فتحه للتعديل.
+              </p>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '15px', marginTop: '25px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px' }}>
             <button className="btn btn-primary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={handleSave} disabled={saving}>
               <FaSave /> {saving ? 'جاري الحفظ...' : 'حفظ الكارت'}
@@ -506,6 +674,7 @@ const AdminEditCard = () => {
               إلغاء
             </button>
           </div>
+
         </div>
       </main>
     </div>

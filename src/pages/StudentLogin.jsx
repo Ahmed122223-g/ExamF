@@ -108,11 +108,17 @@ const StudentLogin = () => {
             </div>
           </div>
 
+          <div style={{ textAlign: 'left', marginTop: '-10px' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', textDecoration: 'none' }}>
+              نسيت كلمة المرور؟
+            </Link>
+          </div>
+
           <button
             type="submit"
             className="btn btn-accent"
             disabled={loading}
-            style={{ padding: '12px', fontSize: '1.1rem', marginTop: '10px' }}
+            style={{ padding: '12px', fontSize: '1.1rem', marginTop: '5px' }}
           >
             {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>

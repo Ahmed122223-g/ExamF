@@ -13,6 +13,7 @@ import AdminEditCard from './pages/AdminEditCard';
 
 import StudentLogin from './pages/StudentLogin';
 import StudentRegister from './pages/StudentRegister';
+import StudentForgotPassword from './pages/StudentForgotPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import CourseRoadmap from './pages/CourseRoadmap';
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<StudentLogin />} />
         <Route path="/register" element={<StudentRegister />} />
+        <Route path="/forgot-password" element={<StudentForgotPassword />} />
         <Route 
           path="/dashboard" 
           element={

@@ -33,6 +33,21 @@ export const apiService = {
     return res.data;
   },
 
+  studentForgotPassword: async (email) => {
+    const res = await API.post('/api/students/forgot-password', { email });
+    return res.data;
+  },
+
+  studentVerifyResetCode: async (email, code) => {
+    const res = await API.post('/api/students/verify-reset-code', { email, code });
+    return res.data;
+  },
+
+  studentResetPassword: async (email, code, password, confirmPassword) => {
+    const res = await API.post('/api/students/reset-password', { email, code, password, confirm_password: confirmPassword });
+    return res.data;
+  },
+
   studentGetDashboard: async (token) => {
     const res = await API.get('/api/students/dashboard', {
       headers: { Authorization: `Bearer ${token}` }

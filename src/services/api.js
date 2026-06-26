@@ -153,5 +153,72 @@ export const apiService = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
+  },
+
+  // Course Services
+  registerCourse: async (courseCode, token) => {
+    const res = await API.post('/api/courses/register', { course_code: courseCode }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getMyCourses: async (token) => {
+    const res = await API.get('/api/courses/my-courses', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getCourseRoadmap: async (courseId, token) => {
+    const res = await API.get(`/api/courses/${courseId}/roadmap`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  toggleCardCompletion: async (cardDbId, token) => {
+    const res = await API.post(`/api/courses/cards/${cardDbId}/complete`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // Admin Course Services
+  getAdminCourses: async (token) => {
+    const res = await API.get('/api/admin/courses', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createCourse: async (courseData, token) => {
+    const res = await API.post('/api/admin/courses', courseData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getCourseCardsAdmin: async (courseId, token) => {
+    const res = await API.get(`/api/admin/courses/${courseId}/cards`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateCourseCardAdmin: async (courseId, cardId, cardData, token) => {
+    const res = await API.post(`/api/admin/courses/${courseId}/cards/${cardId}`, cardData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  linkExamToCourse: async (examId, courseId, courseCardId, token) => {
+    const res = await API.post(`/api/admin/exams/${examId}/link-course`, {}, {
+      params: { course_id: courseId, course_card_id: courseCardId },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
   }
 };
+

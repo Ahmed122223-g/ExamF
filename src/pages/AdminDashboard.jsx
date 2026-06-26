@@ -1,44 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const courseParam = searchParams.get('course');
+
   const [stats, setStats] = useState(null);
   const [exams, setExams] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseCards, setCourseCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'courses'
   
+  // Create Course Form Modal State
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [newCourseTitle, setNewCourseTitle] = useState('');
+  const [newCourseCode, setNewCourseCode] = useState('');
+  const [newCourseDesc, setNewCourseDesc] = useState('');
+  const [creatingCourse, setCreatingCourse] = useState(false);
+
+  // Edit Card Modal State
+  const [editingCard, setEditingCard] = useState(null);
+  const [cardTitle, setCardTitle] = useState('');
+  const [cardDesc, setCardDesc] = useState('');
+  const [cardPhase, setCardPhase] = useState('basics');
+  const [cardOrder, setCardOrder] = useState(1);
+  const [cardInstructors, setCardInstructors] = useState({});
+  const [linkedExamId, setLinkedExamId] = useState('');
+  const [savingCard, setSavingCard] = useState(false);
+
   const token = localStorage.getItem('admin_token');
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const statsData = await apiService.getDashboardStats(token);
+      setStats(statsData);
+      
+      const examsData = await apiService.getExams(token);
+      setExams(examsData);
+
+      const coursesData = await apiService.getAdminCourses(token);
+      setCourses(coursesData);
+
+      if (courseParam) {
+        const matched = coursesData.find(c => c.id.toString() === courseParam.toString());
+        if (matched) {
+          setSelectedCourse(matched);
+          const cards = await apiService.getCourseCardsAdmin(matched.id, token);
+          setCourseCards(cards);
+          setActiveTab('courses');
+        }
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('admin_token');
+        navigate('/admin/login');
+      } else {
+        Swal.fire('خطأ!', 'فشل في تحميل بيانات لوحة التحكم.', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
       navigate('/admin/login');
       return;
     }
-
-    const fetchData = async () => {
-      try {
-        const statsData = await apiService.getDashboardStats(token);
-        setStats(statsData);
-        
-        const examsData = await apiService.getExams(token);
-        setExams(examsData);
-      } catch (err) {
-        if (err.response?.status === 401) {
-          localStorage.removeItem('admin_token');
-          navigate('/admin/login');
-        } else {
-          Swal.fire('خطأ!', 'فشل في تحميل بيانات لوحة التحكم.', 'error');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [token, navigate]);
+  }, [token, navigate, courseParam]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -83,10 +120,310 @@ const AdminDashboard = () => {
     });
   };
 
+  // Manage Course Content
+  const handleManageCourse = async (course) => {
+    try {
+      setLoading(true);
+      setSelectedCourse(course);
+      const cards = await apiService.getCourseCardsAdmin(course.id, token);
+      setCourseCards(cards);
+    } catch (err) {
+      Swal.fire('خطأ', 'فشل في جلب محتوى كروت الكورس.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCourseSubmit = async (e) => {
+    e.preventDefault();
+    if (!newCourseTitle.trim() || !newCourseCode.trim()) {
+      Swal.fire('تنبيه', 'يرجى كتابة عنوان الكورس والرمز البرمجي.', 'warning');
+      return;
+    }
+
+    setCreatingCourse(true);
+    try {
+      await apiService.createCourse({
+        title: newCourseTitle.trim(),
+        course_code: newCourseCode.trim().toUpperCase(),
+        description: newCourseDesc.trim()
+      }, token);
+
+      Swal.fire('تم الإنشاء!', 'تم إنشاء الكورس بنجاح وتوليد 21 كارت افتراضي له.', 'success');
+      setShowCreateCourseModal(false);
+      setNewCourseTitle('');
+      setNewCourseCode('');
+      setNewCourseDesc('');
+      fetchData();
+    } catch (err) {
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إنشاء الكورس.', 'error');
+    } finally {
+      setCreatingCourse(false);
+    }
+  };
+
+  // Open Edit Card Modal
+  const openEditCard = (card) => {
+    setEditingCard(card);
+    setCardTitle(card.title || '');
+    setCardDesc(card.description || '');
+    setCardPhase(card.phase || 'basics');
+    setCardOrder(card.order || 1);
+    
+    // Parse instructors JSON
+    let instructorsObj = {};
+    if (card.instructors_data) {
+      try {
+        instructorsObj = JSON.parse(card.instructors_data);
+      } catch (e) {
+        instructorsObj = {};
+      }
+    }
+    setCardInstructors(instructorsObj);
+
+    // Find linked exam if any
+    const linkedExam = exams.find(e => e.course_card_id === card.id);
+    setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
+  };
+
+  // Update instructor detail
+  const handleUpdateInstructorName = (key, val) => {
+    setCardInstructors(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        name: val
+      }
+    }));
+  };
+
+  const handleAddVideo = (instructorKey) => {
+    setCardInstructors(prev => {
+      const instructor = prev[instructorKey] || { name: '', videos: [] };
+      const currentVideos = instructor.videos || [];
+      const newIndex = currentVideos.length + 1;
+      return {
+        ...prev,
+        [instructorKey]: {
+          ...instructor,
+          videos: [...currentVideos, { title: `الدرس ${newIndex}`, url: '' }]
+        }
+      };
+    });
+  };
+
+  const handleRemoveVideo = (instructorKey, index) => {
+    setCardInstructors(prev => {
+      const instructor = prev[instructorKey];
+      if (!instructor) return prev;
+      const updatedVideos = (instructor.videos || []).filter((_, i) => i !== index);
+      // Re-number titles to keep them clean
+      const cleanedVideos = updatedVideos.map((vid, idx) => ({
+        ...vid,
+        title: `الدرس ${idx + 1}`
+      }));
+      return {
+        ...prev,
+        [instructorKey]: {
+          ...instructor,
+          videos: cleanedVideos
+        }
+      };
+    });
+  };
+
+  const handleVideoUrlChange = (instructorKey, index, urlVal) => {
+    setCardInstructors(prev => {
+      const instructor = prev[instructorKey];
+      if (!instructor) return prev;
+      const copyVids = [...(instructor.videos || [])];
+      copyVids[index].url = urlVal;
+      return {
+        ...prev,
+        [instructorKey]: {
+          ...instructor,
+          videos: copyVids
+        }
+      };
+    });
+  };
+
+  const handleSaveCard = async () => {
+    if (!cardTitle.trim()) {
+      Swal.fire('تنبيه', 'يرجى تحديد عنوان الكارت.', 'warning');
+      return;
+    }
+
+    setSavingCard(true);
+    try {
+      // 1. Update Card Info
+      await apiService.updateCourseCardAdmin(selectedCourse.id, editingCard.card_id, {
+        card_id: editingCard.card_id,
+        title: cardTitle.trim(),
+        description: cardDesc.trim(),
+        phase: cardPhase,
+        order: parseInt(cardOrder),
+        instructors_data: JSON.stringify(cardInstructors)
+      }, token);
+
+      // 2. Update Exam Linkage
+      if (linkedExamId) {
+        await apiService.linkExamToCourse(parseInt(linkedExamId), selectedCourse.id, editingCard.id, token);
+      } else {
+        // Find if this card has any exams, unlink them
+        const currentlyLinkedExams = exams.filter(e => e.course_card_id === editingCard.id);
+        for (const ex of currentlyLinkedExams) {
+          await apiService.linkExamToCourse(ex.id, 0, 0, token);
+        }
+      }
+
+      Swal.fire('تم الحفظ!', 'تم تحديث الكارت والاختبارات المرتبطة بنجاح.', 'success');
+      setEditingCard(null);
+      // Reload card list
+      handleManageCourse(selectedCourse);
+      // Refresh exams list to keep state fresh
+      const examsData = await apiService.getExams(token);
+      setExams(examsData);
+    } catch (err) {
+      console.error(err);
+      const errDetail = err.response?.data?.detail;
+      const errorMsg = typeof errDetail === 'string'
+        ? errDetail
+        : (typeof errDetail === 'object' ? JSON.stringify(errDetail) : 'فشل في حفظ الكارت.');
+      Swal.fire('خطأ', errorMsg, 'error');
+    } finally {
+      setSavingCard(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#090d16' }}>
         <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  // If a course is selected for card management, show its custom cards list
+  if (selectedCourse) {
+    const basicsCards = courseCards.filter(c => c.phase === 'basics');
+    const oopCards = courseCards.filter(c => c.phase === 'oop');
+    const dsaCards = courseCards.filter(c => c.phase === 'dsa');
+
+    return (
+      <div className="app-container">
+        {/* Top Navbar */}
+        <nav className="navbar">
+          <Link to="/admin/dashboard" className="nav-brand">
+            منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
+          </Link>
+          <div className="nav-links">
+            <button onClick={() => setSelectedCourse(null)} className="nav-btn">
+              <FaArrowRight /> العودة للكورسات
+            </button>
+            <button onClick={handleLogout} className="nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FaSignOutAlt /> خروج
+            </button>
+          </div>
+        </nav>
+
+        <main className="main-content">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <div>
+              <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>محتوى كورس: {selectedCourse.title} ({selectedCourse.course_code})</h1>
+              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تعديل كروت وخطوات خارطة الطريق وربط المحاضرات والاختبارات.</p>
+            </div>
+            <button className="btn btn-secondary" onClick={() => setSelectedCourse(null)}>
+              العودة لقائمة الكورسات
+            </button>
+          </div>
+
+          {/* BASICS */}
+          <div className="glass-card" style={{ marginBottom: '30px' }}>
+            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #8b5cf6', paddingRight: '10px' }}>
+              الأساسيات (Basics)
+            </h2>
+            <div className="responsive-grid-2">
+              {basicsCards.map(card => {
+                const isLinked = exams.some(e => e.course_card_id === card.id);
+                return (
+                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="badge badge-success">خطوة {card.order}</span>
+                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                    </div>
+                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
+                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
+                      {card.description || 'بدون وصف.'}
+                    </p>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>إدارة الفيديوهات والاختبارات</span>
+                      <span>تعديل ←</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* OOP */}
+          <div className="glass-card" style={{ marginBottom: '30px' }}>
+            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
+              البرمجة كائنية التوجه (OOP)
+            </h2>
+            <div className="responsive-grid-2">
+              {oopCards.map(card => {
+                const isLinked = exams.some(e => e.course_card_id === card.id);
+                return (
+                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="badge badge-success">خطوة {card.order}</span>
+                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                    </div>
+                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
+                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
+                      {card.description || 'بدون وصف.'}
+                    </p>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>إدارة الفيديوهات والاختبارات</span>
+                      <span>تعديل ←</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* DSA */}
+          <div className="glass-card" style={{ marginBottom: '30px' }}>
+            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #ec4899', paddingRight: '10px' }}>
+              تراكيب البيانات والخوارزميات (DSA)
+            </h2>
+            <div className="responsive-grid-2">
+              {dsaCards.map(card => {
+                const isLinked = exams.some(e => e.course_card_id === card.id);
+                return (
+                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="badge badge-success">خطوة {card.order}</span>
+                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                    </div>
+                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
+                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
+                      {card.description || 'بدون وصف.'}
+                    </p>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>إدارة الفيديوهات والاختبارات</span>
+                      <span>تعديل ←</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </main>
+
+
       </div>
     );
   }
@@ -100,8 +437,8 @@ const AdminDashboard = () => {
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
         <div className="nav-links">
-          <Link to="/admin/dashboard" className="nav-btn active">الرئيسية</Link>
-          <Link to="/admin/exams" className="nav-btn">إدارة الاختبارات</Link>
+          <button onClick={() => setActiveTab('exams')} className={`nav-btn ${activeTab === 'exams' ? 'active' : ''}`}>إدارة الاختبارات</button>
+          <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات والخرائط</button>
           <Link to="/admin/results" className="nav-btn">النتائج والتقارير</Link>
           <button onClick={handleLogout} className="nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <FaSignOutAlt />
@@ -113,153 +450,283 @@ const AdminDashboard = () => {
       {/* Main Content Area */}
       <main className="main-content">
         
-        {/* Header Title with quick Create Button */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
-          <div>
-            <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>مرحباً بك في لوحة تحكم المسؤول 👋</h1>
-            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إحصائيات المنصة وأحدث الاختبارات النشطة</p>
-          </div>
-          <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <FaPlus />
-            إنشاء اختبار جديد
-          </Link>
-        </div>
-
-        {/* Statistical Counters grid */}
-        {stats && (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon" style={{ color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
-                <FaClipboardList />
+        {activeTab === 'exams' ? (
+          <>
+            {/* Header Title with quick Create Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+              <div>
+                <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>مرحباً بك في لوحة تحكم المسؤول 👋</h1>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إحصائيات المنصة وأحدث الاختبارات النشطة</p>
               </div>
-              <div className="stat-info">
-                <h3>إجمالي الاختبارات</h3>
-                <p>{stats.total_exams}</p>
-              </div>
-            </div>
-            
-            <div className="stat-card">
-              <div className="stat-icon" style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
-                <FaUserGraduate />
-              </div>
-              <div className="stat-info">
-                <h3>عدد مشاركات الطلاب</h3>
-                <p>{stats.total_submissions}</p>
-              </div>
+              <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <FaPlus />
+                إنشاء اختبار جديد
+              </Link>
             </div>
 
-            <div className="stat-card">
-              <div className="stat-icon" style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
-                <FaChartBar />
-              </div>
-              <div className="stat-info">
-                <h3>متوسط درجات الطلاب</h3>
-                <p>{stats.average_percentage}%</p>
-              </div>
-            </div>
+            {/* Statistical Counters grid */}
+            {stats && (
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                    <FaClipboardList />
+                  </div>
+                  <div className="stat-info">
+                    <h3>إجمالي الاختبارات</h3>
+                    <p>{stats.total_exams}</p>
+                  </div>
+                </div>
+                
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                    <FaUserGraduate />
+                  </div>
+                  <div className="stat-info">
+                    <h3>عدد مشاركات الطلاب</h3>
+                    <p>{stats.total_submissions}</p>
+                  </div>
+                </div>
 
-            <div className="stat-card">
-              <div className="stat-icon" style={{ color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
-                ⚡
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ color: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                    <FaChartBar />
+                  </div>
+                  <div className="stat-info">
+                    <h3>متوسط درجات الطلاب</h3>
+                    <p>{stats.average_percentage}%</p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon" style={{ color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
+                    ⚡
+                  </div>
+                  <div className="stat-info">
+                    <h3>اختبارات جارية الآن</h3>
+                    <p>{stats.active_exams_count}</p>
+                  </div>
+                </div>
               </div>
-              <div className="stat-info">
-                <h3>اختبارات جارية الآن</h3>
-                <p>{stats.active_exams_count}</p>
-              </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Exams List Glass Card */}
-        <div className="glass-card" style={{ padding: '25px' }}>
-          <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '10px' }}>
-            جدول الاختبارات المتاحة
-          </h2>
+            {/* Exams List Glass Card */}
+            <div className="glass-card" style={{ padding: '25px' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '10px' }}>
+                جدول الاختبارات المتاحة
+              </h2>
 
-          {exams.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted-dark)' }}>
-              <p style={{ fontSize: '1.1rem', marginBottom: '15px' }}>لا توجد أي اختبارات منشأة حالياً.</p>
-              <Link to="/admin/exams?action=create" className="btn btn-primary">أنشئ أول اختبار الآن</Link>
-            </div>
-          ) : (
-            <div className="table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>كود الاختبار</th>
-                    <th>عنوان الاختبار</th>
-                    <th>تاريخ ووقت البدء (UTC)</th>
-                    <th>مدة الاختبار</th>
-                    <th>الأسئلة</th>
-                    <th>الدرجة الكلية</th>
-                    <th style={{ textAlign: 'center' }}>العمليات</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {exams.map(exam => {
-                    const localStartStr = new Date(exam.start_time).toLocaleString('ar-EG', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-
-                    return (
-                      <tr key={exam.id}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent-color)', letterSpacing: '1px' }}>
-                              {exam.exam_code}
-                            </span>
-                            <button
-                              onClick={() => handleCopyCode(exam.exam_code)}
-                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
-                              title="نسخ كود الاختبار"
-                            >
-                              <FaCopy />
-                            </button>
-                          </div>
-                        </td>
-                        <td><strong>{exam.title}</strong></td>
-                        <td>{localStartStr}</td>
-                        <td>{exam.duration_minutes} دقيقة</td>
-                        <td>{exam.total_questions} أسئلة</td>
-                        <td>{exam.total_marks} درجة</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                            <Link to={`/admin/results?exam_id=${exam.id}`} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
-                              النتائج
-                            </Link>
-                            <Link to={`/admin/exams/${exam.id}/stats`} className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#8b5cf6', color: 'white' }}>
-                              الإحصائيات
-                            </Link>
-                            <a 
-                              href={apiService.getExportUrl(exam.id)}
-                              className="btn"
-                              style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#10b981', color: 'white' }}
-                              title="تحميل شيت إكسيل"
-                            >
-                              <FaFileExcel />
-                            </a>
-                            <button
-                              onClick={() => handleDeleteExam(exam.id)}
-                              className="btn btn-danger"
-                              style={{ padding: '6px 12px', fontSize: '0.85rem' }}
-                              title="حذف الاختبار"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        </td>
+              {exams.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted-dark)' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: '15px' }}>لا توجد أي اختبارات منشأة حالياً.</p>
+                  <Link to="/admin/exams?action=create" className="btn btn-primary">أنشئ أول اختبار الآن</Link>
+                </div>
+              ) : (
+                <div className="table-container">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>كود الاختبار</th>
+                        <th>عنوان الاختبار</th>
+                        <th>تاريخ ووقت البدء (UTC)</th>
+                        <th>مدة الاختبار</th>
+                        <th>الأسئلة</th>
+                        <th>الدرجة الكلية</th>
+                        <th style={{ textAlign: 'center' }}>العمليات</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {exams.map(exam => {
+                        const localStartStr = new Date(exam.start_time).toLocaleString('ar-EG', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+
+                        return (
+                          <tr key={exam.id}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent-color)', letterSpacing: '1px' }}>
+                                  {exam.exam_code}
+                                </span>
+                                <button
+                                  onClick={() => handleCopyCode(exam.exam_code)}
+                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+                                  title="نسخ كود الاختبار"
+                                >
+                                  <FaCopy />
+                                </button>
+                              </div>
+                            </td>
+                            <td><strong>{exam.title}</strong></td>
+                            <td>{localStartStr}</td>
+                            <td>{exam.duration_minutes} دقيقة</td>
+                            <td>{exam.total_questions} أسئلة</td>
+                            <td>{exam.total_marks} درجة</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                <Link to={`/admin/results?exam_id=${exam.id}`} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+                                  النتائج
+                                </Link>
+                                <Link to={`/admin/exams/${exam.id}/stats`} className="btn" style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#8b5cf6', color: 'white' }}>
+                                  الإحصائيات
+                                </Link>
+                                <a 
+                                  href={apiService.getExportUrl(exam.id)}
+                                  className="btn"
+                                  style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#10b981', color: 'white' }}
+                                  title="تحميل شيت إكسيل"
+                                >
+                                  <FaFileExcel />
+                                </a>
+                                <button
+                                  onClick={() => handleDeleteExam(exam.id)}
+                                  className="btn btn-danger"
+                                  style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                  title="حذف الاختبار"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          /* COURSES TAB VIEW */
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+              <div>
+                <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>إدارة الكورسات وخرائط الطريق 🗺️</h1>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إضافة كورس جديد بمحددات مخصصة والتحكم في دروس ومهام الفترات التدريبية</p>
+              </div>
+              <button onClick={() => setShowCreateCourseModal(true)} className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <FaPlus />
+                إضافة كورس جديد
+              </button>
+            </div>
+
+            <div className="glass-card" style={{ padding: '25px' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
+                قائمة الكورسات التدريبية الحالية
+              </h2>
+
+              {courses.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted-dark)' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: '15px' }}>لا توجد أي كورسات منشأة حالياً.</p>
+                  <button className="btn btn-primary" onClick={() => setShowCreateCourseModal(true)}>أنشئ أول كورس الآن</button>
+                </div>
+              ) : (
+                <div className="table-container">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>رمز الكورس</th>
+                        <th>اسم الكورس</th>
+                        <th>الوصف العام</th>
+                        <th style={{ textAlign: 'center' }}>العمليات لإدارة المحتوى</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {courses.map(course => (
+                        <tr key={course.id}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent-color)', letterSpacing: '1px' }}>
+                                {course.course_code}
+                              </span>
+                              <button
+                                onClick={() => handleCopyCode(course.course_code)}
+                                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+                                title="نسخ كود الكورس للطلاب"
+                              >
+                                <FaCopy />
+                              </button>
+                            </div>
+                          </td>
+                          <td><strong>{course.title}</strong></td>
+                          <td>{course.description || 'لا يوجد وصف.'}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                              <button 
+                                onClick={() => handleManageCourse(course)}
+                                className="btn btn-primary" 
+                                style={{ padding: '6px 15px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                              >
+                                <FaBook /> إدارة المحتوى والخرائط
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Create Course Modal */}
+            {showCreateCourseModal && (
+              <div className="roadmap-modal-overlay">
+                <div className="roadmap-modal-content" style={{ background: '#111827' }}>
+                  <button className="roadmap-modal-close" onClick={() => setShowCreateCourseModal(false)}>×</button>
+                  <h2 style={{ color: 'white', marginBottom: '20px', fontWeight: 'bold' }}>إضافة كورس تدريبي جديد</h2>
+                  <form onSubmit={handleCreateCourseSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div className="form-group">
+                      <label className="form-label">اسم الكورس</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        required 
+                        value={newCourseTitle} 
+                        onChange={(e) => setNewCourseTitle(e.target.value)} 
+                        placeholder="مثال: أساسيات C++ الاحترافية"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">رمز الكورس البرمجي (Course Code)</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        required 
+                        value={newCourseCode} 
+                        onChange={(e) => setNewCourseCode(e.target.value)} 
+                        placeholder="مثال: CPP101"
+                        style={{ textTransform: 'uppercase' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">الوصف العام</label>
+                      <textarea 
+                        className="form-input" 
+                        style={{ minHeight: '80px', resize: 'vertical' }}
+                        value={newCourseDesc} 
+                        onChange={(e) => setNewCourseDesc(e.target.value)} 
+                        placeholder="وصف مختصر لمراحل ونتائج التعلم من الكورس"
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                      <button type="submit" className="btn btn-accent" style={{ flex: 1 }} disabled={creatingCourse}>
+                        {creatingCourse ? 'جاري الإنشاء...' : 'تأكيد إضافة الكورس'}
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ width: '100px' }} onClick={() => setShowCreateCourseModal(false)}>
+                        إلغاء
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
       </main>
     </div>

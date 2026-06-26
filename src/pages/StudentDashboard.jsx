@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt } from 'react-icons/fa';
+import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt, FaBookOpen } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const StudentDashboard = () => {
-  const [examCode, setExamCode] = useState('');
+  const [courseCode, setCourseCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [studentData, setStudentData] = useState(null);
   const [attempts, setAttempts] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -23,6 +24,9 @@ const StudentDashboard = () => {
       const data = await apiService.studentGetDashboard(token);
       setStudentData(data);
       setAttempts(data.attempts || []);
+
+      const myCourses = await apiService.getMyCourses(token);
+      setCourses(myCourses || []);
     } catch (err) {
       console.error(err);
       if (err.response?.status === 401) {
@@ -57,37 +61,31 @@ const StudentDashboard = () => {
     navigate('/login');
   };
 
-  const handleAddExam = async (e) => {
+  const handleRegisterCourse = async (e) => {
     e.preventDefault();
-    if (!examCode.trim()) return;
+    if (!courseCode.trim()) return;
 
     setLoading(true);
     const token = localStorage.getItem('student_token');
 
     try {
-      // 1. Verify exam code exists
-      const exam = await apiService.verifyExam(examCode.trim());
-      
-      // 2. Register/Link the exam to this student's account
-      await apiService.registerStudent(exam.id, token);
-      
+      const res = await apiService.registerCourse(courseCode.trim().toUpperCase(), token);
       Swal.fire({
         icon: 'success',
-        title: 'تم إضافة الاختبار',
-        text: `تم تسجيلك بنجاح في اختبار: ${exam.title}`,
+        title: 'تم التسجيل في الكورس',
+        text: res.message || 'تم تسجيلك بنجاح في الكورس.',
         timer: 2000,
         showConfirmButton: false
       });
       
-      setExamCode('');
-      // Reload dashboard lists
+      setCourseCode('');
       fetchDashboardData();
     } catch (err) {
       console.error(err);
       Swal.fire({
         icon: 'error',
         title: 'عذراً',
-        text: err.response?.data?.detail || 'كود الاختبار غير صحيح أو غير متاح حالياً.'
+        text: err.response?.data?.detail || 'كود الكورس غير صحيح أو غير متاح حالياً.'
       });
     } finally {
       setLoading(false);
@@ -113,7 +111,6 @@ const StudentDashboard = () => {
 
   const handleReviewExam = (examId) => {
     const examToken = sessionStorage.getItem(`student_token_${examId}`);
-    // If we have an exam-specific token in session, use it, otherwise use student token (backend supports both)
     const token = examToken || localStorage.getItem('student_token');
     sessionStorage.setItem(`student_token_${examId}`, token);
     navigate(`/register-student/${examId}`);
@@ -149,23 +146,23 @@ const StudentDashboard = () => {
         </button>
       </div>
 
-      {/* Add / Search Exam */}
+      {/* Add / Search Course */}
       <div className="glass-card" style={{ padding: '25px', marginBottom: '35px' }}>
         <h2 style={{ fontSize: '1.3rem', color: 'white', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FaPlus style={{ color: 'var(--accent-color)' }} /> تسجيل واكتشاف اختبار جديد
+          <FaPlus style={{ color: 'var(--accent-color)' }} /> تسجيل في كورس جديد
         </h2>
         <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginBottom: '20px' }}>
-          أدخل كود الاختبار الموفر لك من قبل المسؤول لتسجيله وإضافته لقائمتك الخاصة.
+          أدخل كود الكورس الموفر لك من قبل المسؤول للانضمام إليه واستعراض خارطة الطريق والدروس والاختبارات.
         </p>
 
-        <form onSubmit={handleAddExam} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+        <form onSubmit={handleRegisterCourse} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
             <input
               type="text"
               className="form-input"
-              value={examCode}
-              onChange={(e) => setExamCode(e.target.value)}
-              placeholder="مثال: MATH101"
+              value={courseCode}
+              onChange={(e) => setCourseCode(e.target.value)}
+              placeholder="مثال: CPP101"
               required
               disabled={loading}
               style={{ paddingRight: '40px', width: '100%', textTransform: 'uppercase' }}
@@ -175,29 +172,73 @@ const StudentDashboard = () => {
           <button 
             type="submit" 
             className="btn btn-accent" 
-            disabled={loading || !examCode.trim()} 
+            disabled={loading || !courseCode.trim()} 
             style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}
           >
-            إضافة الاختبار
+            الانضمام للكورس
           </button>
         </form>
+      </div>
+
+      {/* Registered Courses List */}
+      <div style={{ marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <FaBookOpen /> كورساتي المسجلة ({courses.length})
+        </h2>
+
+        {courses.length === 0 ? (
+          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted-dark)' }}>
+            <p style={{ fontSize: '1.1rem', margin: 0 }}>لا توجد أي كورسات مسجلة بحسابك حالياً.</p>
+            <p style={{ fontSize: '0.9rem', marginTop: '10px' }}>يرجى إدخال كود الكورس في الأعلى للبدء.</p>
+          </div>
+        ) : (
+          <div className="responsive-grid-2">
+            {courses.map((course) => (
+              <div 
+                key={course.id}
+                className="glass-card"
+                style={{
+                  padding: '25px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '15px',
+                  borderTop: '4px solid #06b6d4'
+                }}
+              >
+                <div>
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    {course.course_code}
+                  </span>
+                  <h3 style={{ fontSize: '1.3rem', color: 'white', marginTop: '10px', marginBottom: '8px', fontWeight: 'bold' }}>
+                    {course.title}
+                  </h3>
+                  <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', lineHeights: '1.5', minHeight: '40px' }}>
+                    {course.description || 'لا يوجد وصف متاح للكورس.'}
+                  </p>
+                </div>
+                <Link to={`/course/${course.id}/roadmap`} className="btn btn-primary" style={{ width: '100%', textDecoration: 'none' }}>
+                  عرض خارطة الطريق ←
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Attempts / Registered Exams List */}
       <div>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FaClipboardList /> اختباراتي المسجلة ({attempts.length})
+          <FaClipboardList /> سجل اختباراتي ({attempts.length})
         </h2>
 
         {attempts.length === 0 ? (
-          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted-dark)' }}>
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>لا توجد أي اختبارات مسجلة بحسابك حالياً.</p>
-            <p style={{ fontSize: '0.9rem', marginTop: '10px' }}>يرجى إدخال كود الاختبار في الأعلى للبدء.</p>
+          <div className="glass-card" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted-dark)' }}>
+            <p style={{ fontSize: '1rem', margin: 0 }}>لا توجد اختبارات مسجلة سابقة. ابدأ بالدخول للاختبارات من داخل مسارات الكورسات.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {attempts.map((attempt) => {
-              // Calculate status tags
               const hasEnded = new Date(attempt.end_time_utc) < new Date();
               
               return (

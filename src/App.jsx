@@ -9,10 +9,12 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminExams from './pages/AdminExams';
 import AdminResults from './pages/AdminResults';
 import AdminStats from './pages/AdminStats';
+import AdminEditCard from './pages/AdminEditCard';
 
 import StudentLogin from './pages/StudentLogin';
 import StudentRegister from './pages/StudentRegister';
 import StudentDashboard from './pages/StudentDashboard';
+import CourseRoadmap from './pages/CourseRoadmap';
 
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
@@ -39,6 +41,14 @@ function App() {
           element={
             <StudentRoute>
               <StudentDashboard />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/course/:courseId/roadmap" 
+          element={
+            <StudentRoute>
+              <CourseRoadmap />
             </StudentRoute>
           } 
         />
@@ -99,6 +109,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminStats />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/courses/:courseId/cards/:cardId" 
+          element={
+            <AdminRoute>
+              <AdminEditCard />
             </AdminRoute>
           } 
         />

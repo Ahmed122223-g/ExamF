@@ -343,12 +343,12 @@ const AdminDashboard = () => {
         </nav>
 
         <main className="main-content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>محتوى كورس: {selectedCourse.title} ({selectedCourse.course_code})</h1>
+              <h1 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', color: 'white', fontWeight: '800' }}>محتوى كورس: {selectedCourse.title} ({selectedCourse.course_code})</h1>
               <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تعديل الأقسام والدروس وربط المحاضرات والاختبارات.</p>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button 
                 className="btn btn-accent" 
                 onClick={openAddSectionModal}

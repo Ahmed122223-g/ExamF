@@ -344,9 +344,99 @@
 .cd-btn-sm    { padding: 8px 18px; font-size: 0.85rem; margin-right: auto; }
 
 /* ─── Responsive ─── */
-@media (max-width: 640px) {
-  .cd-navbar { padding: 12px 16px; }
-  .cd-hero { padding: 40px 16px 32px; }
-  .cd-container { padding: 28px 16px 60px; }
-  .cd-description-box { padding: 18px 20px; }
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+  .cd-hero { padding: 48px 20px 36px; }
+  .cd-container { max-width: 100%; padding: 32px 20px 60px; }
+  .cd-title { font-size: clamp(1.5rem, 4vw, 2.5rem); }
 }
+
+/* Large Mobile / Small Tablet (≤ 768px) */
+@media (max-width: 768px) {
+  .cd-navbar { padding: 12px 16px; }
+  .cd-back-btn { padding: 7px 14px; font-size: 0.85rem; }
+
+  .cd-hero { padding: 36px 16px 28px; }
+  .cd-title { font-size: clamp(1.3rem, 5vw, 2rem); margin-bottom: 16px; }
+  .cd-description-box { padding: 16px 18px; }
+  .cd-description { font-size: 0.95rem; line-height: 1.75; }
+
+  .cd-container { padding: 24px 16px 60px; }
+
+  .cd-tabs { margin-bottom: 24px; }
+  .cd-tab { padding: 11px 14px; font-size: 0.9rem; }
+
+  .cd-instructor-header { padding: 12px 16px; flex-wrap: wrap; gap: 6px; }
+  .cd-instructor-name { font-size: 0.95rem; }
+
+  .cd-video-link { padding: 10px 14px; font-size: 0.88rem; }
+
+  .cd-question-card { padding: 18px; }
+  .cd-question-text { font-size: 0.9rem; }
+
+  .cd-answer-actions { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .cd-btn-sm { margin-right: 0; width: 100%; }
+
+  .cd-status-banner { padding: 16px 18px; }
+  .cd-status-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  .cd-form-group label { font-size: 0.85rem; }
+  .cd-file-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  .cd-completion-bar { padding: 14px 16px; }
+  .cd-completion-label { font-size: 0.88rem; gap: 10px; }
+}
+
+/* Mobile (≤ 480px) */
+@media (max-width: 480px) {
+  .cd-navbar { padding: 10px 12px; }
+  .cd-nav-badges { gap: 6px; }
+  .cd-badge { padding: 4px 10px; font-size: 0.75rem; }
+
+  .cd-hero { padding: 28px 12px 22px; }
+  .cd-step-badge { font-size: 0.78rem; padding: 5px 14px; }
+  .cd-title { font-size: clamp(1.15rem, 6vw, 1.6rem); margin-bottom: 14px; }
+  .cd-description-box { padding: 14px 14px; border-radius: 12px; }
+  .cd-description { font-size: 0.9rem; }
+
+  .cd-container { padding: 18px 12px 50px; }
+
+  .cd-tabs { margin-bottom: 18px; }
+  .cd-tab { padding: 10px 10px; font-size: 0.82rem; }
+
+  .cd-section-title { font-size: 1rem; }
+
+  .cd-instructor-card { border-radius: 12px; }
+  .cd-video-link { padding: 9px 12px; font-size: 0.83rem; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .cd-watch-label { font-size: 0.8rem; }
+
+  .cd-question-card { padding: 14px; border-radius: 12px; }
+  .cd-question-num { font-size: 0.88rem; }
+  .cd-answered-badge { font-size: 0.72rem; }
+
+  .cd-textarea { font-size: 0.88rem; padding: 10px 12px; }
+  .cd-code-input { font-size: 0.82rem; }
+
+  .cd-btn { border-radius: 10px; }
+  .cd-btn-wide { padding: 13px; font-size: 0.95rem; }
+
+  .cd-status-label { font-size: 0.92rem; }
+  .cd-grade-pill { padding: 4px 10px; font-size: 0.85rem; }
+
+  .cd-pre { font-size: 0.8rem; padding: 12px; }
+  .cd-file-btn { font-size: 0.8rem; padding: 7px 12px; }
+
+  .cd-completion-bar { border-radius: 10px; }
+  .cd-exam-link { flex-direction: column; gap: 6px; align-items: flex-start; }
+}
+
+/* Extra Small (< 360px) */
+@media (max-width: 360px) {
+  .cd-hero { padding: 22px 10px 18px; }
+  .cd-title { font-size: 1.1rem; }
+  .cd-container { padding: 14px 10px 40px; }
+  .cd-tab { padding: 9px 8px; font-size: 0.78rem; }
+  .cd-description { font-size: 0.85rem; }
+}
+

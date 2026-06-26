@@ -125,7 +125,7 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '30px 15px', direction: 'rtl', color: 'white' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(12px, 4vw, 30px) clamp(10px, 3vw, 20px)', direction: 'rtl', color: 'white' }}>
       
       {/* Top Navbar */}
       <div className="glass-card" style={{ padding: '15px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>

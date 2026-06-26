@@ -426,3 +426,91 @@ body {
     padding-right: 0px;
   }
 }
+
+/* ═══════════════════════════════════════
+   GLOBAL RESPONSIVE SYSTEM
+   Breakpoints:
+   xl  ≥ 1280px
+   lg  ≥ 1024px
+   md  ≥ 768px
+   sm  ≥ 480px
+   xs  < 480px
+═══════════════════════════════════════ */
+
+/* ── Fluid base ── */
+html { font-size: 16px; }
+img, video { max-width: 100%; height: auto; }
+table { border-collapse: collapse; }
+
+/* ── Container ── */
+.main-content {
+  padding: 30px 24px;
+}
+
+/* ── Glass card ── */
+.glass-card {
+  padding: 24px;
+}
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  html { font-size: 15px; }
+  .main-content { padding: 24px 20px; max-width: 100%; }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
+
+/* ── Large Mobile / Small Tablet (≤ 768px) ── */
+@media (max-width: 768px) {
+  html { font-size: 14.5px; }
+
+  .main-content { padding: 20px 16px; }
+  .glass-card { padding: 18px 16px; }
+
+  .navbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .nav-links {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .nav-btn { padding: 7px 12px; font-size: 0.9rem; }
+
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .stat-card { padding: 14px; gap: 12px; }
+  .stat-info p { font-size: 1.5rem; }
+
+  /* Tables scroll on mobile */
+  .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .custom-table th,
+  .custom-table td { padding: 10px 12px; font-size: 0.85rem; white-space: nowrap; }
+
+  .btn { padding: 10px 18px; font-size: 0.92rem; }
+  .form-input { padding: 10px 14px; font-size: 0.95rem; }
+}
+
+/* ── Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
+
+  .main-content { padding: 14px 12px; }
+  .glass-card { padding: 14px 12px; border-radius: 12px; }
+
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 12px; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .stat-icon { width: 40px; height: 40px; font-size: 1.2rem; border-radius: 8px; }
+  .stat-info p { font-size: 1.3rem; }
+
+  .btn { padding: 9px 16px; font-size: 0.88rem; }
+}
+
+/* ── Extra Small (< 360px) ── */
+@media (max-width: 360px) {
+  html { font-size: 13px; }
+  .main-content { padding: 10px 10px; }
+  .stats-grid { grid-template-columns: 1fr; }
+}
+

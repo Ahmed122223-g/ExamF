@@ -376,3 +376,79 @@
 .back-nav-btn:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* ═══════════════════════════════════════
+   ROADMAP RESPONSIVE STYLES
+═══════════════════════════════════════ */
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+  .roadmap-flow {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .roadmap-card { min-height: 200px; }
+}
+
+/* Large Mobile / Small Tablet (≤ 768px) */
+@media (max-width: 768px) {
+  .roadmap-flow {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .roadmap-card {
+    padding: 1.1rem;
+    min-height: 180px;
+    border-radius: 12px;
+  }
+  .roadmap-card-title { font-size: 1rem; }
+  .roadmap-card-step-badge { font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+  .roadmap-card-btn { font-size: 0.82rem; }
+
+  .roadmap-section-title { font-size: 1.3rem; }
+  .roadmap-section-header { gap: 0.7rem; margin-bottom: 1.2rem; }
+
+  /* Simulation panel */
+  .roadmap-simulation-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .roadmap-sim-actions { flex-wrap: wrap; }
+
+  /* Modal */
+  .roadmap-modal-overlay { padding: 0.75rem; }
+  .roadmap-modal-content {
+    max-width: 100%;
+    padding: 1.4rem 1.2rem;
+    border-radius: 18px;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+}
+
+/* Mobile (≤ 480px) */
+@media (max-width: 480px) {
+  .roadmap-flow {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  .roadmap-card {
+    padding: 1rem;
+    min-height: auto;
+  }
+  .roadmap-card-title { font-size: 0.95rem; }
+  .roadmap-section-title { font-size: 1.15rem; }
+  .roadmap-section-icon { font-size: 1.2rem; padding: 0.4rem; }
+  .roadmap-lock-badge { font-size: 0.7rem; }
+
+  .roadmap-modal-content { padding: 1.1rem; border-radius: 14px; }
+  .roadmap-modal-topic-title { font-size: 1.2rem; }
+}
+
+/* Extra Small (< 360px) */
+@media (max-width: 360px) {
+  .roadmap-card { padding: 0.85rem; }
+  .roadmap-card-title { font-size: 0.9rem; }
+  .roadmap-flow { gap: 0.7rem; }
+}
+

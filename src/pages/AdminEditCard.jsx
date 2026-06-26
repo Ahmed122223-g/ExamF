@@ -19,6 +19,7 @@ const AdminEditCard = () => {
   const [cardPhase, setCardPhase] = useState('basics');
   const [cardOrder, setCardOrder] = useState(1);
   const [linkedExamId, setLinkedExamId] = useState('');
+  const [cardSectionId, setCardSectionId] = useState(null);
   const [saving, setSaving] = useState(false);
 
   // New Unlock States
@@ -69,6 +70,7 @@ const AdminEditCard = () => {
           setCardDesc(currentCard.description || '');
           setCardPhase(currentCard.phase || 'basics');
           setCardOrder(currentCard.order || 1);
+          setCardSectionId(currentCard.section_id || null);
 
           // Unlock settings
           if (currentCard.unlock_date) {
@@ -256,7 +258,8 @@ const AdminEditCard = () => {
         order: parseInt(cardOrder) || 1,
         instructors_data: JSON.stringify(instructorsObj),
         unlock_date: finalUnlockDate,
-        unlock_days: finalUnlockDays
+        unlock_days: finalUnlockDays,
+        section_id: cardSectionId
       };
 
       let savedCard = null;

@@ -11,6 +11,7 @@ const AdminEditCard = () => {
 
   const [course, setCourse] = useState(null);
   const [exams, setExams] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Card details state
@@ -54,6 +55,10 @@ const AdminEditCard = () => {
         // Get exams list for linking dropdown
         const examsData = await apiService.getExams(token);
         setExams(examsData);
+
+        // Get sections for this course
+        const sectionsData = await apiService.getCourseSectionsAdmin(courseId, token);
+        setSections(sectionsData);
 
         if (!isNewCard) {
           // Get cards for this course to find the specific card
@@ -363,6 +368,24 @@ const AdminEditCard = () => {
               <label className="form-label" style={{ color: '#fff', fontWeight: 'bold' }}>الترتيب</label>
               <input type="number" className="form-input" value={cardOrder} onChange={(e) => setCardOrder(parseInt(e.target.value) || 1)} />
             </div>
+          </div>
+
+          {/* Section Assignment */}
+          <div className="form-group" style={{ background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '20px', borderRadius: '12px' }}>
+            <label className="form-label" style={{ color: '#8b5cf6', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+              📂 القسم المنتمي إليه هذا الكارت:
+            </label>
+            <select
+              className="form-input"
+              value={cardSectionId ?? ''}
+              onChange={(e) => setCardSectionId(e.target.value ? parseInt(e.target.value) : null)}
+              style={{ borderColor: 'rgba(139, 92, 246, 0.4)' }}
+            >
+              <option value="">-- بدون قسم (سيظهر في قسم غير مُصنّف) --</option>
+              {sections.map(sec => (
+                <option key={sec.id} value={sec.id}>{sec.title}</option>
+              ))}
+            </select>
           </div>
 
           {/* Unlock Settings Section */}

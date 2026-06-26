@@ -324,57 +324,118 @@ const AdminDashboard = () => {
               <button className="btn btn-primary" onClick={openAddSectionModal}>أضف أول قسم الآن</button>
             </div>
           ) : (
-            courseSections.map((sec, secIdx) => {
-              const secCards = courseCards.filter(c => c.section_id === sec.id);
-              const colors = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b'];
-              const borderColor = colors[secIdx % colors.length];
+            <>
+              {courseSections.map((sec, secIdx) => {
+                const secCards = courseCards.filter(c => c.section_id === sec.id);
+                const colors = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b'];
+                const borderColor = colors[secIdx % colors.length];
 
-              return (
-                <div key={sec.id} className="glass-card" style={{ marginBottom: '30px', padding: '25px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <div>
-                      <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', borderRight: `4px solid ${borderColor}`, paddingRight: '10px' }}>
-                        {sec.title}
-                      </h2>
-                      {sec.description && (
-                        <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', paddingRight: '14px' }}>
-                          {sec.description}
-                        </p>
-                      )}
+                return (
+                  <div key={sec.id} className="glass-card" style={{ marginBottom: '30px', padding: '25px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <div>
+                        <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', borderRight: `4px solid ${borderColor}`, paddingRight: '10px' }}>
+                          {sec.title}
+                        </h2>
+                        {sec.description && (
+                          <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', paddingRight: '14px' }}>
+                            {sec.description}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                          className="btn" 
+                          onClick={() => openEditSectionModal(sec)}
+                          style={{ padding: '5px 12px', fontSize: '0.8rem', backgroundColor: '#3b82f6', color: 'white' }}
+                        >
+                          تعديل القسم
+                        </button>
+                        <button 
+                          className="btn btn-danger" 
+                          onClick={() => handleDeleteSection(sec.id)}
+                          style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+                        >
+                          حذف القسم
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button 
-                        className="btn" 
-                        onClick={() => openEditSectionModal(sec)}
-                        style={{ padding: '5px 12px', fontSize: '0.8rem', backgroundColor: '#3b82f6', color: 'white' }}
-                      >
-                        تعديل القسم
-                      </button>
-                      <button 
-                        className="btn btn-danger" 
-                        onClick={() => handleDeleteSection(sec.id)}
-                        style={{ padding: '5px 12px', fontSize: '0.8rem' }}
-                      >
-                        حذف القسم
-                      </button>
-                    </div>
+
+                    {secCards.length === 0 ? (
+                      <p style={{ color: '#4b5563', fontSize: '0.9rem', fontStyle: 'italic', paddingRight: '14px', marginTop: '10px' }}>
+                        لا توجد كروت أو دروس مضافة في هذا القسم بعد.
+                      </p>
+                    ) : (
+                      <div className="responsive-grid-2" style={{ marginTop: '15px' }}>
+                        {secCards.map(card => {
+                          const isLinked = exams.some(e => e.course_card_id === card.id);
+                          return (
+                            <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                  <span className="badge badge-success">خطوة {card.order}</span>
+                                  {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                                  {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                                </div>
+                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                  {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                                  <button 
+                                    className="btn btn-danger" 
+                                    style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCard(card.id);
+                                    }}
+                                    title="حذف الكارت"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                </div>
+                              </div>
+                              <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
+                              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
+                                {card.description || 'بدون وصف.'}
+                              </p>
+                              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
+                                <span>إدارة الفيديوهات والاختبارات</span>
+                                <span>تعديل ←</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
+                );
+              })}
 
-                  {secCards.length === 0 ? (
-                    <p style={{ color: '#4b5563', fontSize: '0.9rem', fontStyle: 'italic', paddingRight: '14px', marginTop: '10px' }}>
-                      لا توجد كروت أو دروس مضافة في هذا القسم بعد.
-                    </p>
-                  ) : (
+              {/* Unassigned cards (section_id = null or points to deleted section) */}
+              {(() => {
+                const sectionIds = new Set(courseSections.map(s => s.id));
+                const unassignedCards = courseCards.filter(c => !c.section_id || !sectionIds.has(c.section_id));
+                if (unassignedCards.length === 0) return null;
+                return (
+                  <div className="glass-card" style={{ marginBottom: '30px', padding: '25px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <div>
+                        <h2 style={{ fontSize: '1.25rem', color: '#f59e0b', fontWeight: '800', borderRight: '4px solid #f59e0b', paddingRight: '10px' }}>
+                          ⚠️ كروت غير مُصنّفة ({unassignedCards.length})
+                        </h2>
+                        <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', paddingRight: '14px' }}>
+                          هذه الكروت ليس لها قسم محدد — اضغط عليها وعيّن لها قسماً من صفحة التعديل.
+                        </p>
+                      </div>
+                    </div>
                     <div className="responsive-grid-2" style={{ marginTop: '15px' }}>
-                      {secCards.map(card => {
+                      {unassignedCards.map(card => {
                         const isLinked = exams.some(e => e.course_card_id === card.id);
                         return (
-                          <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                          <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(245, 158, 11, 0.03)', padding: '15px', border: '1px solid rgba(245, 158, 11, 0.2)' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <span className="badge badge-success">خطوة {card.order}</span>
+                                <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' }}>بدون قسم</span>
                                 {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
-                                {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
                               </div>
                               <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
@@ -395,18 +456,18 @@ const AdminDashboard = () => {
                             <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
                               {card.description || 'بدون وصف.'}
                             </p>
-                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
-                              <span>إدارة الفيديوهات والاختبارات</span>
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#f59e0b', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>اضغط لتعيين قسم لهذا الكارت</span>
                               <span>تعديل ←</span>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
-              );
-            })
+                  </div>
+                );
+              })()}
+            </>
           )}
 
           {/* Section Create/Edit Modal */}

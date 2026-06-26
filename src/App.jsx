@@ -16,6 +16,7 @@ import StudentRegister from './pages/StudentRegister';
 import StudentForgotPassword from './pages/StudentForgotPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import CourseRoadmap from './pages/CourseRoadmap';
+import CardDetail from './pages/CardDetail';
 
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
@@ -51,6 +52,14 @@ function App() {
           element={
             <StudentRoute>
               <CourseRoadmap />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/course/:courseId/card/:cardDbId" 
+          element={
+            <StudentRoute>
+              <CardDetail />
             </StudentRoute>
           } 
         />

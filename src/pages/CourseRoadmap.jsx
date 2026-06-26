@@ -3,6 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import './CourseRoadmap.css';
 
+// Section icons by index (cycles through if more than array length)
+const SECTION_ICONS = ['🚀', '⚙️', '📊', '💡', '🎯', '🔥', '🏆', '📚'];
+
 export default function CourseRoadmap() {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -12,8 +15,6 @@ export default function CourseRoadmap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeModalTopic, setActiveModalTopic] = useState(null);
-  
-
 
   // Fetch roadmap data
   const fetchRoadmap = async () => {
@@ -38,8 +39,6 @@ export default function CourseRoadmap() {
       setLoading(false);
     }
   }, [courseId, token]);
-
-
 
   if (loading) {
     return (
@@ -66,11 +65,12 @@ export default function CourseRoadmap() {
 
   if (!roadmap) return null;
 
-  // Flattened array to compute absolute ordering indexes
-  const allBasics = roadmap.basics?.items || [];
-  const allOop = roadmap.oop?.items || [];
-  const allDsa = roadmap.dsa?.items || [];
-  const allItems = [...allBasics, ...allOop, ...allDsa];
+  // ---- Dynamic sections support ----
+  // Backend returns roadmap.sections = [{id, title, description, items: [...]}, ...]
+  const sections = roadmap.sections || [];
+
+  // Flatten all items across all sections for global index / unlock logic
+  const allItems = sections.flatMap(sec => sec.items || []);
 
   // Calculate actual elapsed days since registration
   const getElapsedDays = () => {
@@ -84,9 +84,7 @@ export default function CourseRoadmap() {
 
   const elapsedDays = getElapsedDays();
 
-  const getItemGlobalIndex = (id) => {
-    return allItems.findIndex(item => item.id === id);
-  };
+  const getItemGlobalIndex = (id) => allItems.findIndex(item => item.id === id);
 
   // Logic: Unlocked if:
   // 1. First item (index === 0)
@@ -102,7 +100,7 @@ export default function CourseRoadmap() {
 
     // Check specific calendar date unlock
     if (item.unlock_date) {
-      const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const todayStr = new Date().toISOString().split('T')[0];
       if (todayStr >= item.unlock_date) return true;
     }
 
@@ -115,7 +113,7 @@ export default function CourseRoadmap() {
     if (!item.unlock_date && (item.unlock_days === null || item.unlock_days === undefined)) {
       if (index <= elapsedDays) return true;
     }
-    
+
     // Check if the previous lesson was completed
     const prevItem = allItems[index - 1];
     return prevItem && prevItem.is_completed === true;
@@ -129,12 +127,7 @@ export default function CourseRoadmap() {
       setRoadmap(data);
       // Update activeModalTopic if it is open
       if (activeModalTopic) {
-        // find the updated card data
-        const updatedItems = [
-          ...(data.basics?.items || []),
-          ...(data.oop?.items || []),
-          ...(data.dsa?.items || [])
-        ];
+        const updatedItems = (data.sections || []).flatMap(sec => sec.items || []);
         const matched = updatedItems.find(it => it.db_id === cardDbId);
         if (matched) {
           setActiveModalTopic(matched);
@@ -145,7 +138,7 @@ export default function CourseRoadmap() {
     }
   };
 
-
+  const unlockedCount = allItems.filter(item => isItemUnlocked(item.id)).length;
 
   return (
     <div className="app-container" style={{ position: 'relative' }}>
@@ -173,216 +166,91 @@ export default function CourseRoadmap() {
 
       {/* Day counter info */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-muted-dark)', fontSize: '0.9rem' }}>
-        <span>📅 اليوم {elapsedDays + 1} في الكورس &nbsp;•&nbsp; تم فتح {allItems.filter(item => isItemUnlocked(item.id)).length} من {allItems.length} درساً</span>
+        <span>📅 اليوم {elapsedDays + 1} في الكورس &nbsp;•&nbsp; تم فتح {unlockedCount} من {allItems.length} درساً</span>
       </div>
 
-      {/* SECTION 1: Basics */}
-      {roadmap.basics && (
-        <section className="roadmap-section">
-          <div className="roadmap-section-header">
-            <div className="roadmap-section-icon">🚀</div>
-            <div>
-              <h2 className="roadmap-section-title">{roadmap.basics.title}</h2>
-              <p className="roadmap-section-desc">{roadmap.basics.description}</p>
-            </div>
-          </div>
-          
-          <div className="roadmap-flow">
-            {roadmap.basics.items.map((item, index) => {
-              const unlocked = isItemUnlocked(item.id);
-              const globalIdx = getItemGlobalIndex(item.id);
-              const daysRemaining = globalIdx - elapsedDays;
-
-              return (
-                <div
-                  key={item.id}
-                  className={`roadmap-card ${!unlocked ? 'locked' : ''} ${item.is_completed ? 'completed-glow' : ''}`}
-                  onClick={() => unlocked && setActiveModalTopic(item)}
-                  style={item.is_completed ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                      <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
-                      {!unlocked && (
-                        <span className="roadmap-lock-badge">
-                          {item.unlock_date 
-                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
-                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
-                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
-                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
-                          }
-                        </span>
-                      )}
-                      {unlocked && item.is_completed && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                          ✓ مكتمل
-                        </span>
-                      )}
-                    </div>
-                    <h4 className="roadmap-card-title">{item.title}</h4>
-                    <p className="roadmap-card-desc">{item.description}</p>
-                  </div>
-                  <div className="roadmap-card-footer">
-                    <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
-                      {unlocked ? '📂 استعرض المحاضرين والدروس ←' : '🔒 مغلق'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* Capstone Project */}
-            {roadmap.basics.project && (
-              <div className="roadmap-project-card">
-                <span className="roadmap-project-badge">عمل تطبيقي</span>
-                <h4 className="roadmap-project-title">{roadmap.basics.project.title}</h4>
-                <p className="roadmap-project-desc">{roadmap.basics.project.description}</p>
-              </div>
-            )}
-          </div>
-        </section>
+      {/* No sections message */}
+      {sections.length === 0 && (
+        <div className="glass-card" style={{ textAlign: 'center', padding: '50px' }}>
+          <p style={{ color: '#9ca3af', fontSize: '1.1rem' }}>لا توجد أقسام أو دروس مضافة لهذا الكورس بعد.</p>
+          <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => navigate('/dashboard')}>
+            العودة للوحة التحكم
+          </button>
+        </div>
       )}
 
-      {/* SECTION 2: OOP */}
-      {roadmap.oop && (
-        <section className="roadmap-section">
+      {/* Dynamic Sections */}
+      {sections.map((sec, secIdx) => (
+        <section key={sec.id} className="roadmap-section">
           <div className="roadmap-section-header">
-            <div className="roadmap-section-icon">⚙️</div>
+            <div className="roadmap-section-icon">{SECTION_ICONS[secIdx % SECTION_ICONS.length]}</div>
             <div>
-              <h2 className="roadmap-section-title">{roadmap.oop.title}</h2>
-              <p className="roadmap-section-desc">{roadmap.oop.description}</p>
+              <h2 className="roadmap-section-title">{sec.title}</h2>
+              {sec.description && (
+                <p className="roadmap-section-desc">{sec.description}</p>
+              )}
             </div>
           </div>
 
           <div className="roadmap-flow">
-            {roadmap.oop.items.map((item, index) => {
-              const unlocked = isItemUnlocked(item.id);
-              const globalIdx = getItemGlobalIndex(item.id);
-              const daysRemaining = globalIdx - elapsedDays;
+            {(sec.items || []).length === 0 ? (
+              <p style={{ color: '#6b7280', fontStyle: 'italic', padding: '20px 0' }}>
+                لا توجد دروس مضافة في هذا القسم بعد.
+              </p>
+            ) : (
+              (sec.items || []).map((item, index) => {
+                const unlocked = isItemUnlocked(item.id);
+                const globalIdx = getItemGlobalIndex(item.id);
+                const daysRemaining = globalIdx - elapsedDays;
 
-              return (
-                <div
-                  key={item.id}
-                  className={`roadmap-card ${!unlocked ? 'locked' : ''} ${item.is_completed ? 'completed-glow' : ''}`}
-                  onClick={() => unlocked && setActiveModalTopic(item)}
-                  style={item.is_completed ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                      <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
-                      {!unlocked && (
-                        <span className="roadmap-lock-badge">
-                          {item.unlock_date 
-                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
-                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
-                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
-                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
-                          }
-                        </span>
-                      )}
-                      {unlocked && item.is_completed && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                          ✓ مكتمل
-                        </span>
-                      )}
+                return (
+                  <div
+                    key={item.id}
+                    className={`roadmap-card ${!unlocked ? 'locked' : ''} ${item.is_completed ? 'completed-glow' : ''}`}
+                    onClick={() => unlocked && setActiveModalTopic(item)}
+                    style={item.is_completed ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                        <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
+                        {!unlocked && (
+                          <span className="roadmap-lock-badge">
+                            {item.unlock_date
+                              ? `🔒 يفتح بتاريخ: ${item.unlock_date}`
+                              : (item.unlock_days !== null && item.unlock_days !== undefined)
+                                ? `🔒 يفتح بعد ${item.unlock_days} يوم`
+                                : `🔒 سيفتح بعد ${daysRemaining} يوم`
+                            }
+                          </span>
+                        )}
+                        {unlocked && item.is_completed && (
+                          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                            ✓ مكتمل
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="roadmap-card-title">{item.title}</h4>
+                      <p className="roadmap-card-desc">{item.description}</p>
                     </div>
-                    <h4 className="roadmap-card-title">{item.title}</h4>
-                    <p className="roadmap-card-desc">{item.description}</p>
+                    <div className="roadmap-card-footer">
+                      <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
+                        {unlocked ? '📂 استعرض المحاضرين والدروس ←' : '🔒 مغلق'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="roadmap-card-footer">
-                    <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
-                      {unlocked ? '📂 استعرض المحاضرين والدروس ←' : '🔒 مغلق'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* Capstone Project */}
-            {roadmap.oop.project && (
-              <div className="roadmap-project-card">
-                <span className="roadmap-project-badge">عمل تطبيقي</span>
-                <h4 className="roadmap-project-title">{roadmap.oop.project.title}</h4>
-                <p className="roadmap-project-desc">{roadmap.oop.project.description}</p>
-              </div>
+                );
+              })
             )}
           </div>
         </section>
-      )}
-
-      {/* SECTION 3: DSA */}
-      {roadmap.dsa && (
-        <section className="roadmap-section">
-          <div className="roadmap-section-header">
-            <div className="roadmap-section-icon">📊</div>
-            <div>
-              <h2 className="roadmap-section-title">{roadmap.dsa.title}</h2>
-              <p className="roadmap-section-desc">{roadmap.dsa.description}</p>
-            </div>
-          </div>
-
-          <div className="roadmap-flow">
-            {roadmap.dsa.items.map((item, index) => {
-              const unlocked = isItemUnlocked(item.id);
-              const globalIdx = getItemGlobalIndex(item.id);
-              const daysRemaining = globalIdx - elapsedDays;
-
-              return (
-                <div
-                  key={item.id}
-                  className={`roadmap-card ${!unlocked ? 'locked' : ''} ${item.is_completed ? 'completed-glow' : ''}`}
-                  onClick={() => unlocked && setActiveModalTopic(item)}
-                  style={item.is_completed ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                      <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
-                      {!unlocked && (
-                        <span className="roadmap-lock-badge">
-                          {item.unlock_date 
-                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
-                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
-                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
-                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
-                          }
-                        </span>
-                      )}
-                      {unlocked && item.is_completed && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                          ✓ مكتمل
-                        </span>
-                      )}
-                    </div>
-                    <h4 className="roadmap-card-title">{item.title}</h4>
-                    <p className="roadmap-card-desc">{item.description}</p>
-                  </div>
-                  <div className="roadmap-card-footer">
-                    <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
-                      {unlocked ? '📂 استعرض المحاضرين والدروس ←' : '🔒 مغلق'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* Capstone Project */}
-            {roadmap.dsa.project && (
-              <div className="roadmap-project-card">
-                <span className="roadmap-project-badge">عمل تطبيقي</span>
-                <h4 className="roadmap-project-title">{roadmap.dsa.project.title}</h4>
-                <p className="roadmap-project-desc">{roadmap.dsa.project.description}</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+      ))}
 
       {/* Modal detail overlay */}
       {activeModalTopic && (
         <div className="roadmap-modal-overlay" onClick={() => setActiveModalTopic(null)}>
           <div className="roadmap-modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="roadmap-modal-close" onClick={() => setActiveModalTopic(null)}>×</button>
-            
+
             <div className="roadmap-modal-header">
               <span className="roadmap-card-step-badge">استعراض مصادر الدرس</span>
               <h3 className="roadmap-modal-topic-title">{activeModalTopic.title}</h3>

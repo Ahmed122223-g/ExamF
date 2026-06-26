@@ -120,6 +120,31 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleDeleteCard = async (cardDbId) => {
+    Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: 'حذف هذا الكارت سيؤدي إلى إزالة كل تفاصيله ومقاطع الفيديو المرتبطة به نهائياً!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، احذفه',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#334155'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await apiService.deleteCourseCardAdmin(selectedCourse.id, cardDbId, token);
+          // Reload card list
+          const cards = await apiService.getCourseCardsAdmin(selectedCourse.id, token);
+          setCourseCards(cards);
+          Swal.fire('تم الحذف!', 'تم حذف الكارت بنجاح.', 'success');
+        } catch (err) {
+          Swal.fire('خطأ!', 'فشل في حذف الكارت.', 'error');
+        }
+      }
+    });
+  };
+
   // Manage Course Content
   const handleManageCourse = async (course) => {
     try {
@@ -333,9 +358,18 @@ const AdminDashboard = () => {
               <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>محتوى كورس: {selectedCourse.title} ({selectedCourse.course_code})</h1>
               <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تعديل كروت وخطوات خارطة الطريق وربط المحاضرات والاختبارات.</p>
             </div>
-            <button className="btn btn-secondary" onClick={() => setSelectedCourse(null)}>
-              العودة لقائمة الكورسات
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                className="btn btn-accent" 
+                onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/new`)}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <FaPlus /> إضافة كارت جديد
+              </button>
+              <button className="btn btn-secondary" onClick={() => setSelectedCourse(null)}>
+                العودة لقائمة الكورسات
+              </button>
+            </div>
           </div>
 
           {/* BASICS */}
@@ -349,8 +383,25 @@ const AdminDashboard = () => {
                 return (
                   <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span className="badge badge-success">خطوة {card.order}</span>
-                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <span className="badge badge-success">خطوة {card.order}</span>
+                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                        <button 
+                          className="btn btn-danger" 
+                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCard(card.id);
+                          }}
+                          title="حذف الكارت"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                     <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
                     <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
@@ -377,8 +428,25 @@ const AdminDashboard = () => {
                 return (
                   <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span className="badge badge-success">خطوة {card.order}</span>
-                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <span className="badge badge-success">خطوة {card.order}</span>
+                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                        <button 
+                          className="btn btn-danger" 
+                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCard(card.id);
+                          }}
+                          title="حذف الكارت"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                     <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
                     <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
@@ -405,8 +473,25 @@ const AdminDashboard = () => {
                 return (
                   <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span className="badge badge-success">خطوة {card.order}</span>
-                      {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <span className="badge badge-success">خطوة {card.order}</span>
+                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                        <button 
+                          className="btn btn-danger" 
+                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCard(card.id);
+                          }}
+                          title="حذف الكارت"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                     <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
                     <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>

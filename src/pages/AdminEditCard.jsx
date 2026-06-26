@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaSignOutAlt } from 'react-icons/fa';
+import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminEditCard = () => {
@@ -10,7 +10,6 @@ const AdminEditCard = () => {
   const token = localStorage.getItem('admin_token');
 
   const [course, setCourse] = useState(null);
-  const [card, setCard] = useState(null);
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,9 +18,18 @@ const AdminEditCard = () => {
   const [cardDesc, setCardDesc] = useState('');
   const [cardPhase, setCardPhase] = useState('basics');
   const [cardOrder, setCardOrder] = useState(1);
-  const [cardInstructors, setCardInstructors] = useState({});
   const [linkedExamId, setLinkedExamId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // New Unlock States
+  const [unlockType, setUnlockType] = useState('immediate'); // 'immediate' | 'date' | 'days'
+  const [unlockDate, setUnlockDate] = useState('');
+  const [unlockDays, setUnlockDays] = useState('');
+
+  // Dynamic Instructors State
+  const [instructorsList, setInstructorsList] = useState([]);
+
+  const isNewCard = cardId === 'new';
 
   useEffect(() => {
     if (!token) {
@@ -42,40 +50,81 @@ const AdminEditCard = () => {
         }
         setCourse(currentCourse);
 
-        // Get cards for this course to find the specific card
-        const cardsData = await apiService.getCourseCardsAdmin(courseId, token);
-        const currentCard = cardsData.find(c => c.card_id === cardId || c.id.toString() === cardId.toString());
-        if (!currentCard) {
-          Swal.fire('خطأ', 'الكارت غير موجود.', 'error');
-          navigate('/admin/dashboard');
-          return;
-        }
-        setCard(currentCard);
-
-        // Fill state values
-        setCardTitle(currentCard.title || '');
-        setCardDesc(currentCard.description || '');
-        setCardPhase(currentCard.phase || 'basics');
-        setCardOrder(currentCard.order || 1);
-
-        // Parse instructors JSON
-        let instructorsObj = {};
-        if (currentCard.instructors_data) {
-          try {
-            instructorsObj = JSON.parse(currentCard.instructors_data);
-          } catch (e) {
-            instructorsObj = {};
-          }
-        }
-        setCardInstructors(instructorsObj);
-
         // Get exams list for linking dropdown
         const examsData = await apiService.getExams(token);
         setExams(examsData);
 
-        // Find linked exam if any
-        const linkedExam = examsData.find(e => e.course_card_id === currentCard.id);
-        setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
+        if (!isNewCard) {
+          // Get cards for this course to find the specific card
+          const cardsData = await apiService.getCourseCardsAdmin(courseId, token);
+          const currentCard = cardsData.find(c => c.card_id === cardId || c.id.toString() === cardId.toString());
+          if (!currentCard) {
+            Swal.fire('خطأ', 'الكارت غير موجود.', 'error');
+            navigate(`/admin/dashboard?course=${courseId}`);
+            return;
+          }
+
+          // Fill state values
+          setCardTitle(currentCard.title || '');
+          setCardDesc(currentCard.description || '');
+          setCardPhase(currentCard.phase || 'basics');
+          setCardOrder(currentCard.order || 1);
+
+          // Unlock settings
+          if (currentCard.unlock_date) {
+            setUnlockType('date');
+            setUnlockDate(currentCard.unlock_date);
+          } else if (currentCard.unlock_days !== null && currentCard.unlock_days !== undefined) {
+            setUnlockType('days');
+            setUnlockDays(currentCard.unlock_days.toString());
+          } else {
+            setUnlockType('immediate');
+          }
+
+          // Parse instructors JSON
+          let instructorsObj = {};
+          if (currentCard.instructors_data) {
+            try {
+              instructorsObj = JSON.parse(currentCard.instructors_data);
+            } catch (e) {
+              instructorsObj = {};
+            }
+          }
+          
+          // Convert dict to list
+          const list = Object.keys(instructorsObj).map(key => ({
+            key: key,
+            name: instructorsObj[key].name || '',
+            videos: instructorsObj[key].videos || []
+          }));
+          
+          // If empty list, initialize with default instructors to make it easy for the admin
+          if (list.length === 0) {
+            setInstructorsList([
+              { key: 'elzero', name: 'أسامة الزيرو', videos: [] },
+              { key: 'abu_hadhoud', name: 'أبو هدهود', videos: [] },
+              { key: 'el_desouki', name: 'محمد الدسوقي', videos: [] }
+            ]);
+          } else {
+            setInstructorsList(list);
+          }
+
+          // Find linked exam if any
+          const linkedExam = examsData.find(e => e.course_card_id === currentCard.id);
+          setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
+        } else {
+          // Default initialization for new cards
+          setCardTitle('');
+          setCardDesc('');
+          setCardPhase('basics');
+          setCardOrder(1);
+          setUnlockType('immediate');
+          setInstructorsList([
+            { key: 'elzero', name: 'أسامة الزيرو', videos: [] },
+            { key: 'abu_hadhoud', name: 'أبو هدهود', videos: [] },
+            { key: 'el_desouki', name: 'محمد الدسوقي', videos: [] }
+          ]);
+        }
 
       } catch (err) {
         console.error(err);
@@ -94,64 +143,72 @@ const AdminEditCard = () => {
     navigate('/admin/login');
   };
 
-  const handleUpdateInstructorName = (key, val) => {
-    setCardInstructors(prev => ({
+  // Add a new dynamic instructor
+  const handleAddInstructor = () => {
+    const key = `inst_${Date.now()}`;
+    setInstructorsList(prev => [
       ...prev,
-      [key]: {
-        ...prev[key],
-        name: val
+      { key, name: 'محاضر جديد', videos: [] }
+    ]);
+  };
+
+  // Remove an instructor
+  const handleRemoveInstructor = (key) => {
+    setInstructorsList(prev => prev.filter(inst => inst.key !== key));
+  };
+
+  const handleUpdateInstructorName = (key, val) => {
+    setInstructorsList(prev => prev.map(inst => {
+      if (inst.key === key) {
+        return { ...inst, name: val };
       }
+      return inst;
     }));
   };
 
   const handleAddVideo = (instructorKey) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey] || { name: '', videos: [] };
-      const currentVideos = instructor.videos || [];
-      const newIndex = currentVideos.length + 1;
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
-          videos: [...currentVideos, { title: `الدرس ${newIndex}`, url: '' }]
-        }
-      };
-    });
+    setInstructorsList(prev => prev.map(inst => {
+      if (inst.key === instructorKey) {
+        const videos = inst.videos || [];
+        const newIndex = videos.length + 1;
+        return {
+          ...inst,
+          videos: [...videos, { title: `الدرس ${newIndex}`, url: '' }]
+        };
+      }
+      return inst;
+    }));
   };
 
   const handleRemoveVideo = (instructorKey, index) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey];
-      if (!instructor) return prev;
-      const updatedVideos = (instructor.videos || []).filter((_, i) => i !== index);
-      const cleanedVideos = updatedVideos.map((vid, idx) => ({
-        ...vid,
-        title: `الدرس ${idx + 1}`
-      }));
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
+    setInstructorsList(prev => prev.map(inst => {
+      if (inst.key === instructorKey) {
+        const updatedVideos = (inst.videos || []).filter((_, i) => i !== index);
+        const cleanedVideos = updatedVideos.map((vid, idx) => ({
+          ...vid,
+          title: `الدرس ${idx + 1}`
+        }));
+        return {
+          ...inst,
           videos: cleanedVideos
-        }
-      };
-    });
+        };
+      }
+      return inst;
+    }));
   };
 
   const handleVideoUrlChange = (instructorKey, index, urlVal) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey];
-      if (!instructor) return prev;
-      const copyVids = [...(instructor.videos || [])];
-      copyVids[index].url = urlVal;
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
+    setInstructorsList(prev => prev.map(inst => {
+      if (inst.key === instructorKey) {
+        const copyVids = [...(inst.videos || [])];
+        copyVids[index].url = urlVal;
+        return {
+          ...inst,
           videos: copyVids
-        }
-      };
-    });
+        };
+      }
+      return inst;
+    }));
   };
 
   const handleSave = async () => {
@@ -162,28 +219,66 @@ const AdminEditCard = () => {
 
     setSaving(true);
     try {
-      // 1. Update Card Info
-      await apiService.updateCourseCardAdmin(courseId, card.card_id, {
-        card_id: card.card_id,
+      // 1. Prepare unlock variables
+      let finalUnlockDate = null;
+      let finalUnlockDays = null;
+
+      if (unlockType === 'date') {
+        if (!unlockDate) {
+          Swal.fire('تنبيه', 'يرجى اختيار تاريخ فتح الكارت.', 'warning');
+          setSaving(false);
+          return;
+        }
+        finalUnlockDate = unlockDate;
+      } else if (unlockType === 'days') {
+        if (!unlockDays) {
+          Swal.fire('تنبيه', 'يرجى تحديد عدد الأيام.', 'warning');
+          setSaving(false);
+          return;
+        }
+        finalUnlockDays = parseInt(unlockDays) || 0;
+      }
+
+      // Convert instructors list back to dictionary
+      const instructorsObj = {};
+      instructorsList.forEach(inst => {
+        instructorsObj[inst.key] = {
+          name: inst.name,
+          videos: inst.videos || []
+        };
+      });
+
+      const cardPayload = {
+        card_id: isNewCard ? "" : cardId,
         title: cardTitle.trim(),
         description: cardDesc.trim(),
         phase: cardPhase,
-        order: parseInt(cardOrder),
-        instructors_data: JSON.stringify(cardInstructors)
-      }, token);
+        order: parseInt(cardOrder) || 1,
+        instructors_data: JSON.stringify(instructorsObj),
+        unlock_date: finalUnlockDate,
+        unlock_days: finalUnlockDays
+      };
+
+      let savedCard = null;
+
+      if (isNewCard) {
+        savedCard = await apiService.createCourseCardAdmin(courseId, cardPayload, token);
+      } else {
+        savedCard = await apiService.updateCourseCardAdmin(courseId, cardId, cardPayload, token);
+      }
 
       // 2. Update Exam Linkage
       if (linkedExamId) {
-        await apiService.linkExamToCourse(parseInt(linkedExamId), parseInt(courseId), card.id, token);
+        await apiService.linkExamToCourse(parseInt(linkedExamId), parseInt(courseId), savedCard.id, token);
       } else {
-        const currentlyLinkedExams = exams.filter(e => e.course_card_id === card.id);
+        // Unlink exams previously linked to this card
+        const currentlyLinkedExams = exams.filter(e => e.course_card_id === savedCard.id);
         for (const ex of currentlyLinkedExams) {
           await apiService.linkExamToCourse(ex.id, 0, 0, token);
         }
       }
 
-      Swal.fire('تم الحفظ!', 'تم تحديث بيانات الكارت بنجاح.', 'success').then(() => {
-        // Go back to the dashboard course management view
+      Swal.fire('تم الحفظ!', 'تم حفظ بيانات الكارت بنجاح.', 'success').then(() => {
         navigate(`/admin/dashboard?course=${courseId}`);
       });
     } catch (err) {
@@ -206,7 +301,7 @@ const AdminEditCard = () => {
     );
   }
 
-  if (!course || !card) return null;
+  if (!course) return null;
 
   return (
     <div className="app-container">
@@ -229,8 +324,12 @@ const AdminEditCard = () => {
       <main className="main-content" style={{ maxWidth: '900px', margin: '40px auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div>
-            <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>تعديل كارت: {card.title}</h1>
-            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>كورس: {course.title} ({course.course_code}) • خطوة {cardOrder}</p>
+            <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>
+              {isNewCard ? 'إضافة كارت جديد' : `تعديل كارت: ${cardTitle}`}
+            </h1>
+            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>
+              كورس: {course.title} ({course.course_code})
+            </p>
           </div>
           <button className="btn btn-secondary" onClick={() => navigate(`/admin/dashboard?course=${courseId}`)}>
             إلغاء والعودة
@@ -240,12 +339,12 @@ const AdminEditCard = () => {
         <div className="glass-card" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="form-group">
             <label className="form-label" style={{ color: '#fff', fontWeight: 'bold' }}>العنوان</label>
-            <input type="text" className="form-input" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
+            <input type="text" className="form-input" value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} placeholder="مثال: المتغيرات وأنواع البيانات" />
           </div>
 
           <div className="form-group">
             <label className="form-label" style={{ color: '#fff', fontWeight: 'bold' }}>الوصف</label>
-            <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={cardDesc} onChange={(e) => setCardDesc(e.target.value)} />
+            <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={cardDesc} onChange={(e) => setCardDesc(e.target.value)} placeholder="شرح مبسط للمواضيع المغطاة في هذا الدرس" />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
@@ -261,6 +360,41 @@ const AdminEditCard = () => {
               <label className="form-label" style={{ color: '#fff', fontWeight: 'bold' }}>الترتيب</label>
               <input type="number" className="form-input" value={cardOrder} onChange={(e) => setCardOrder(parseInt(e.target.value) || 1)} />
             </div>
+          </div>
+
+          {/* Unlock Settings Section */}
+          <div className="form-group" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '20px', borderRadius: '12px' }}>
+            <label className="form-label" style={{ color: '#10b981', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+              ⚙️ إعدادات فتح الكارت للطلاب:
+            </label>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '12px' }}>
+              <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="radio" name="unlock_type" value="immediate" checked={unlockType === 'immediate'} onChange={() => setUnlockType('immediate')} />
+                يفتح تلقائياً (بالترتيب)
+              </label>
+              <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="radio" name="unlock_type" value="date" checked={unlockType === 'date'} onChange={() => setUnlockType('date')} />
+                تاريخ ميلادي محدد
+              </label>
+              <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="radio" name="unlock_type" value="days" checked={unlockType === 'days'} onChange={() => setUnlockType('days')} />
+                بعد عدد أيام من التسجيل
+              </label>
+            </div>
+
+            {unlockType === 'date' && (
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#fff', fontSize: '0.9rem' }}>اختر تاريخ فتح الدرس:</label>
+                <input type="date" className="form-input" value={unlockDate} onChange={(e) => setUnlockDate(e.target.value)} style={{ borderColor: 'rgba(16, 185, 129, 0.4)' }} />
+              </div>
+            )}
+
+            {unlockType === 'days' && (
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#fff', fontSize: '0.9rem' }}>عدد الأيام بعد التسجيل (مثلاً: 3 تعني في اليوم الثالث للطلاب):</label>
+                <input type="number" min="0" className="form-input" value={unlockDays} onChange={(e) => setUnlockDays(e.target.value)} placeholder="مثال: 5" style={{ borderColor: 'rgba(16, 185, 129, 0.4)' }} />
+              </div>
+            )}
           </div>
 
           {/* Linking Exam */}
@@ -283,57 +417,64 @@ const AdminEditCard = () => {
 
           {/* Instructors Section */}
           <div style={{ marginTop: '10px' }}>
-            <h3 style={{ color: 'white', fontSize: '1.25rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
-              <FaVideo style={{ color: '#06b6d4' }} /> روابط الفيديوهات والمحاضرين:
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h3 style={{ color: 'white', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
+                <FaVideo style={{ color: '#06b6d4' }} /> المحاضرون الفيديوهات في هذا الكارت:
+              </h3>
+              <button type="button" className="btn btn-accent" style={{ padding: '6px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }} onClick={handleAddInstructor}>
+                <FaPlus /> إضافة محاضر جديد
+              </button>
+            </div>
             
-            {['elzero', 'abu_hadhoud', 'el_desouki'].map(key => {
-              const inst = cardInstructors[key] || { name: key === 'elzero' ? 'أسامة الزيرو' : key === 'abu_hadhoud' ? 'أبو هدهود' : 'محمد الدسوقي', videos: [] };
-              return (
-                <div key={key} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ background: 'transparent', border: 'none', color: '#06b6d4', fontWeight: 'bold', fontSize: '1.1rem', padding: 0, width: 'auto' }}
-                      value={inst.name}
-                      onChange={(e) => handleUpdateInstructorName(key, e.target.value)}
-                    />
-                    <button type="button" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.85rem' }} onClick={() => handleAddVideo(key)}>
+            {instructorsList.map(inst => (
+              <div key={inst.key} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#06b6d4', fontWeight: 'bold', fontSize: '1.1rem', padding: '5px 10px', width: 'auto', borderRadius: '6px' }}
+                    value={inst.name}
+                    onChange={(e) => handleUpdateInstructorName(inst.key, e.target.value)}
+                  />
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="button" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.85rem' }} onClick={() => handleAddVideo(inst.key)}>
                       + إضافة درس/فيديو
                     </button>
+                    <button type="button" className="btn btn-danger" style={{ padding: '6px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }} onClick={() => handleRemoveInstructor(inst.key)}>
+                      <FaTrash /> حذف المحاضر
+                    </button>
                   </div>
-
-                  {inst.videos && inst.videos.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {inst.videos.map((vid, vidIdx) => (
-                        <div key={vidIdx} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <span style={{ width: '90px', color: 'var(--text-muted-dark)', fontSize: '0.95rem', fontWeight: '500' }}>{vid.title}</span>
-                          <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="رابط يوتيوب للدرس" 
-                            style={{ flex: 1, padding: '10px 14px', fontSize: '0.95rem' }}
-                            value={vid.url}
-                            onChange={(e) => handleVideoUrlChange(key, vidIdx, e.target.value)}
-                          />
-                          <button type="button" className="btn btn-danger" style={{ padding: '10px 15px' }} onClick={() => handleRemoveVideo(key, vidIdx)}>
-                            حذف
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ color: '#4b5563', fontSize: '0.9rem', fontStyle: 'italic' }}>لا توجد فيديوهات مضافة لهذا المحاضر بعد.</p>
-                  )}
                 </div>
-              );
-            })}
+
+                {inst.videos && inst.videos.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {inst.videos.map((vid, vidIdx) => (
+                      <div key={vidIdx} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <span style={{ width: '90px', color: 'var(--text-muted-dark)', fontSize: '0.95rem', fontWeight: '500' }}>{vid.title}</span>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="رابط يوتيوب للدرس" 
+                          style={{ flex: 1, padding: '10px 14px', fontSize: '0.95rem' }}
+                          value={vid.url}
+                          onChange={(e) => handleVideoUrlChange(inst.key, vidIdx, e.target.value)}
+                        />
+                        <button type="button" className="btn btn-danger" style={{ padding: '10px 15px' }} onClick={() => handleRemoveVideo(inst.key, vidIdx)}>
+                          حذف
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#4b5563', fontSize: '0.9rem', fontStyle: 'italic' }}>لا توجد فيديوهات مضافة لهذا المحاضر بعد.</p>
+                )}
+              </div>
+            ))}
           </div>
 
           <div style={{ display: 'flex', gap: '15px', marginTop: '25px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px' }}>
             <button className="btn btn-primary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={handleSave} disabled={saving}>
-              <FaSave /> {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+              <FaSave /> {saving ? 'جاري الحفظ...' : 'حفظ الكارت'}
             </button>
             <button className="btn btn-secondary" style={{ width: '120px' }} onClick={() => navigate(`/admin/dashboard?course=${courseId}`)}>
               إلغاء

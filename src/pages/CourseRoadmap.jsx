@@ -88,11 +88,33 @@ export default function CourseRoadmap() {
     return allItems.findIndex(item => item.id === id);
   };
 
-  // Logic: Unlocked if it is the first item, OR if elapsedDays allows it, OR if the previous item was completed
+  // Logic: Unlocked if:
+  // 1. First item (index === 0)
+  // 2. Calendar date unlock matches/passed
+  // 3. Relative days unlock matches/passed
+  // 4. Fallback index-based sequential days unlock
+  // 5. Or if the previous item was completed
   const isItemUnlocked = (id) => {
+    const item = allItems.find(it => it.id === id);
+    if (!item) return false;
     const index = getItemGlobalIndex(id);
     if (index === 0) return true;
-    if (index <= elapsedDays) return true;
+
+    // Check specific calendar date unlock
+    if (item.unlock_date) {
+      const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      if (todayStr >= item.unlock_date) return true;
+    }
+
+    // Check relative day unlock
+    if (item.unlock_days !== null && item.unlock_days !== undefined) {
+      if (elapsedDays >= item.unlock_days) return true;
+    }
+
+    // Default sequential day unlock if no custom parameters are set
+    if (!item.unlock_date && (item.unlock_days === null || item.unlock_days === undefined)) {
+      if (index <= elapsedDays) return true;
+    }
     
     // Check if the previous lesson was completed
     const prevItem = allItems[index - 1];
@@ -183,7 +205,12 @@ export default function CourseRoadmap() {
                       <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
                       {!unlocked && (
                         <span className="roadmap-lock-badge">
-                          🔒 سيفتح بعد {daysRemaining} يوم
+                          {item.unlock_date 
+                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
+                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
+                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
+                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
+                          }
                         </span>
                       )}
                       {unlocked && item.is_completed && (
@@ -245,7 +272,12 @@ export default function CourseRoadmap() {
                       <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
                       {!unlocked && (
                         <span className="roadmap-lock-badge">
-                          🔒 سيفتح بعد {daysRemaining} يوم
+                          {item.unlock_date 
+                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
+                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
+                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
+                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
+                          }
                         </span>
                       )}
                       {unlocked && item.is_completed && (
@@ -307,7 +339,12 @@ export default function CourseRoadmap() {
                       <span className="roadmap-card-step-badge">خطوة {index + 1}</span>
                       {!unlocked && (
                         <span className="roadmap-lock-badge">
-                          🔒 سيفتح بعد {daysRemaining} يوم
+                          {item.unlock_date 
+                            ? `🔒 يفتح بتاريخ: ${item.unlock_date}` 
+                            : (item.unlock_days !== null && item.unlock_days !== undefined) 
+                              ? `🔒 يفتح بعد ${item.unlock_days} يوم` 
+                              : `🔒 سيفتح بعد ${daysRemaining} يوم`
+                          }
                         </span>
                       )}
                       {unlocked && item.is_completed && (

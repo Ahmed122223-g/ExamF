@@ -221,6 +221,20 @@ export const apiService = {
     return res.data;
   },
 
+  createCourseCardAdmin: async (courseId, cardData, token) => {
+    const res = await API.post(`/api/admin/courses/${courseId}/cards`, cardData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteCourseCardAdmin: async (courseId, cardDbId, token) => {
+    const res = await API.delete(`/api/admin/courses/${courseId}/cards/${cardDbId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   updateCourseCardAdmin: async (courseId, cardId, cardData, token) => {
     const res = await API.post(`/api/admin/courses/${courseId}/cards/${cardId}`, cardData, {
       headers: { Authorization: `Bearer ${token}` }

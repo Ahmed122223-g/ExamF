@@ -13,6 +13,7 @@ const AdminDashboard = () => {
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseSections, setCourseSections] = useState([]);
   const [courseCards, setCourseCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'courses'
@@ -24,15 +25,13 @@ const AdminDashboard = () => {
   const [newCourseDesc, setNewCourseDesc] = useState('');
   const [creatingCourse, setCreatingCourse] = useState(false);
 
-  // Edit Card Modal State
-  const [editingCard, setEditingCard] = useState(null);
-  const [cardTitle, setCardTitle] = useState('');
-  const [cardDesc, setCardDesc] = useState('');
-  const [cardPhase, setCardPhase] = useState('basics');
-  const [cardOrder, setCardOrder] = useState(1);
-  const [cardInstructors, setCardInstructors] = useState({});
-  const [linkedExamId, setLinkedExamId] = useState('');
-  const [savingCard, setSavingCard] = useState(false);
+  // Section Modal State
+  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+  const [sectionTitle, setSectionTitle] = useState('');
+  const [sectionDesc, setSectionDesc] = useState('');
+  const [sectionOrder, setSectionOrder] = useState(1);
+  const [savingSection, setSavingSection] = useState(false);
 
   const token = localStorage.getItem('admin_token');
 
@@ -52,6 +51,8 @@ const AdminDashboard = () => {
         const matched = coursesData.find(c => c.id.toString() === courseParam.toString());
         if (matched) {
           setSelectedCourse(matched);
+          const sections = await apiService.getCourseSectionsAdmin(matched.id, token);
+          setCourseSections(sections);
           const cards = await apiService.getCourseCardsAdmin(matched.id, token);
           setCourseCards(cards);
           setActiveTab('courses');
@@ -109,7 +110,6 @@ const AdminDashboard = () => {
         try {
           await apiService.deleteExam(examId, token);
           setExams(prev => prev.filter(e => e.id !== examId));
-          // Refresh stats
           const statsData = await apiService.getDashboardStats(token);
           setStats(statsData);
           Swal.fire('تم الحذف!', 'تم حذف الاختبار وجميع البيانات بنجاح.', 'success');
@@ -134,7 +134,6 @@ const AdminDashboard = () => {
       if (result.isConfirmed) {
         try {
           await apiService.deleteCourseCardAdmin(selectedCourse.id, cardDbId, token);
-          // Reload card list
           const cards = await apiService.getCourseCardsAdmin(selectedCourse.id, token);
           setCourseCards(cards);
           Swal.fire('تم الحذف!', 'تم حذف الكارت بنجاح.', 'success');
@@ -150,6 +149,8 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       setSelectedCourse(course);
+      const sections = await apiService.getCourseSectionsAdmin(course.id, token);
+      setCourseSections(sections);
       const cards = await apiService.getCourseCardsAdmin(course.id, token);
       setCourseCards(cards);
     } catch (err) {
@@ -174,7 +175,7 @@ const AdminDashboard = () => {
         description: newCourseDesc.trim()
       }, token);
 
-      Swal.fire('تم الإنشاء!', 'تم إنشاء الكورس بنجاح وتوليد 21 كارت افتراضي له.', 'success');
+      Swal.fire('تم الإنشاء!', 'تم إنشاء الكورس بنجاح وتوليد 3 أقسام افتراضية و 21 كارت له.', 'success');
       setShowCreateCourseModal(false);
       setNewCourseTitle('');
       setNewCourseCode('');
@@ -187,138 +188,80 @@ const AdminDashboard = () => {
     }
   };
 
-  // Open Edit Card Modal
-  const openEditCard = (card) => {
-    setEditingCard(card);
-    setCardTitle(card.title || '');
-    setCardDesc(card.description || '');
-    setCardPhase(card.phase || 'basics');
-    setCardOrder(card.order || 1);
-    
-    // Parse instructors JSON
-    let instructorsObj = {};
-    if (card.instructors_data) {
-      try {
-        instructorsObj = JSON.parse(card.instructors_data);
-      } catch (e) {
-        instructorsObj = {};
-      }
-    }
-    setCardInstructors(instructorsObj);
-
-    // Find linked exam if any
-    const linkedExam = exams.find(e => e.course_card_id === card.id);
-    setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
+  // Section CRUD Functions
+  const openAddSectionModal = () => {
+    setEditingSection(null);
+    setSectionTitle('');
+    setSectionDesc('');
+    setSectionOrder(courseSections.length + 1);
+    setShowSectionModal(true);
   };
 
-  // Update instructor detail
-  const handleUpdateInstructorName = (key, val) => {
-    setCardInstructors(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        name: val
-      }
-    }));
+  const openEditSectionModal = (sec) => {
+    setEditingSection(sec);
+    setSectionTitle(sec.title || '');
+    setSectionDesc(sec.description || '');
+    setSectionOrder(sec.order || 1);
+    setShowSectionModal(true);
   };
 
-  const handleAddVideo = (instructorKey) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey] || { name: '', videos: [] };
-      const currentVideos = instructor.videos || [];
-      const newIndex = currentVideos.length + 1;
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
-          videos: [...currentVideos, { title: `الدرس ${newIndex}`, url: '' }]
-        }
-      };
-    });
-  };
-
-  const handleRemoveVideo = (instructorKey, index) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey];
-      if (!instructor) return prev;
-      const updatedVideos = (instructor.videos || []).filter((_, i) => i !== index);
-      // Re-number titles to keep them clean
-      const cleanedVideos = updatedVideos.map((vid, idx) => ({
-        ...vid,
-        title: `الدرس ${idx + 1}`
-      }));
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
-          videos: cleanedVideos
-        }
-      };
-    });
-  };
-
-  const handleVideoUrlChange = (instructorKey, index, urlVal) => {
-    setCardInstructors(prev => {
-      const instructor = prev[instructorKey];
-      if (!instructor) return prev;
-      const copyVids = [...(instructor.videos || [])];
-      copyVids[index].url = urlVal;
-      return {
-        ...prev,
-        [instructorKey]: {
-          ...instructor,
-          videos: copyVids
-        }
-      };
-    });
-  };
-
-  const handleSaveCard = async () => {
-    if (!cardTitle.trim()) {
-      Swal.fire('تنبيه', 'يرجى تحديد عنوان الكارت.', 'warning');
+  const handleSaveSection = async (e) => {
+    e.preventDefault();
+    if (!sectionTitle.trim()) {
+      Swal.fire('تنبيه', 'يرجى كتابة عنوان القسم.', 'warning');
       return;
     }
-
-    setSavingCard(true);
+    setSavingSection(true);
     try {
-      // 1. Update Card Info
-      await apiService.updateCourseCardAdmin(selectedCourse.id, editingCard.card_id, {
-        card_id: editingCard.card_id,
-        title: cardTitle.trim(),
-        description: cardDesc.trim(),
-        phase: cardPhase,
-        order: parseInt(cardOrder),
-        instructors_data: JSON.stringify(cardInstructors)
-      }, token);
-
-      // 2. Update Exam Linkage
-      if (linkedExamId) {
-        await apiService.linkExamToCourse(parseInt(linkedExamId), selectedCourse.id, editingCard.id, token);
+      if (editingSection) {
+        await apiService.updateCourseSectionAdmin(selectedCourse.id, editingSection.id, {
+          title: sectionTitle.trim(),
+          description: sectionDesc.trim(),
+          order: parseInt(sectionOrder) || 1
+        }, token);
+        Swal.fire('تم التعديل!', 'تم تحديث القسم بنجاح.', 'success');
       } else {
-        // Find if this card has any exams, unlink them
-        const currentlyLinkedExams = exams.filter(e => e.course_card_id === editingCard.id);
-        for (const ex of currentlyLinkedExams) {
-          await apiService.linkExamToCourse(ex.id, 0, 0, token);
+        await apiService.createCourseSectionAdmin(selectedCourse.id, {
+          title: sectionTitle.trim(),
+          description: sectionDesc.trim(),
+          order: parseInt(sectionOrder) || 1
+        }, token);
+        Swal.fire('تم الإنشاء!', 'تم إنشاء القسم بنجاح.', 'success');
+      }
+      setShowSectionModal(false);
+      const sections = await apiService.getCourseSectionsAdmin(selectedCourse.id, token);
+      setCourseSections(sections);
+    } catch (err) {
+      Swal.fire('خطأ', 'فشل في حفظ القسم.', 'error');
+    } finally {
+      setSavingSection(false);
+    }
+  };
+
+  const handleDeleteSection = async (secId) => {
+    Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: 'حذف القسم سيؤدي إلى حذف هذا القسم وجميع الكروت والدروس المترابطة به نهائياً!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، احذفه',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#334155'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await apiService.deleteCourseSectionAdmin(selectedCourse.id, secId, token);
+          const sections = await apiService.getCourseSectionsAdmin(selectedCourse.id, token);
+          setCourseSections(sections);
+          const cards = await apiService.getCourseCardsAdmin(selectedCourse.id, token);
+          setCourseCards(cards);
+          Swal.fire('تم الحذف!', 'تم حذف القسم بنجاح.', 'success');
+        } catch (err) {
+          Swal.fire('خطأ!', 'فشل في حذف القسم.', 'error');
         }
       }
-
-      Swal.fire('تم الحفظ!', 'تم تحديث الكارت والاختبارات المرتبطة بنجاح.', 'success');
-      setEditingCard(null);
-      // Reload card list
-      handleManageCourse(selectedCourse);
-      // Refresh exams list to keep state fresh
-      const examsData = await apiService.getExams(token);
-      setExams(examsData);
-    } catch (err) {
-      console.error(err);
-      const errDetail = err.response?.data?.detail;
-      const errorMsg = typeof errDetail === 'string'
-        ? errDetail
-        : (typeof errDetail === 'object' ? JSON.stringify(errDetail) : 'فشل في حفظ الكارت.');
-      Swal.fire('خطأ', errorMsg, 'error');
-    } finally {
-      setSavingCard(false);
-    }
+    });
   };
 
   if (loading) {
@@ -329,12 +272,8 @@ const AdminDashboard = () => {
     );
   }
 
-  // If a course is selected for card management, show its custom cards list
+  // Manage Course Sections dynamic view
   if (selectedCourse) {
-    const basicsCards = courseCards.filter(c => c.phase === 'basics');
-    const oopCards = courseCards.filter(c => c.phase === 'oop');
-    const dsaCards = courseCards.filter(c => c.phase === 'dsa');
-
     return (
       <div className="app-container">
         {/* Top Navbar */}
@@ -356,13 +295,20 @@ const AdminDashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
             <div>
               <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>محتوى كورس: {selectedCourse.title} ({selectedCourse.course_code})</h1>
-              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تعديل كروت وخطوات خارطة الطريق وربط المحاضرات والاختبارات.</p>
+              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تعديل الأقسام والدروس وربط المحاضرات والاختبارات.</p>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button 
                 className="btn btn-accent" 
-                onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/new`)}
+                onClick={openAddSectionModal}
                 style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <FaPlus /> إضافة قسم جديد
+              </button>
+              <button 
+                className="btn" 
+                onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/new`)}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#10b981', color: 'white' }}
               >
                 <FaPlus /> إضافة كارت جديد
               </button>
@@ -372,150 +318,157 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* BASICS */}
-          <div className="glass-card" style={{ marginBottom: '30px' }}>
-            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #8b5cf6', paddingRight: '10px' }}>
-              الأساسيات (Basics)
-            </h2>
-            <div className="responsive-grid-2">
-              {basicsCards.map(card => {
-                const isLinked = exams.some(e => e.course_card_id === card.id);
-                return (
-                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <span className="badge badge-success">خطوة {card.order}</span>
-                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
-                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
-                      </div>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
-                        <button 
-                          className="btn btn-danger" 
-                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCard(card.id);
-                          }}
-                          title="حذف الكارت"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </div>
-                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
-                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
-                      {card.description || 'بدون وصف.'}
-                    </p>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>إدارة الفيديوهات والاختبارات</span>
-                      <span>تعديل ←</span>
-                    </div>
-                  </div>
-                );
-              })}
+          {courseSections.length === 0 ? (
+            <div className="glass-card" style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: 'white', fontSize: '1.1rem', marginBottom: '15px' }}>لا توجد أي أقسام مضافة لهذا الكورس بعد.</p>
+              <button className="btn btn-primary" onClick={openAddSectionModal}>أضف أول قسم الآن</button>
             </div>
-          </div>
+          ) : (
+            courseSections.map((sec, secIdx) => {
+              const secCards = courseCards.filter(c => c.section_id === sec.id);
+              const colors = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b'];
+              const borderColor = colors[secIdx % colors.length];
 
-          {/* OOP */}
-          <div className="glass-card" style={{ marginBottom: '30px' }}>
-            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
-              البرمجة كائنية التوجه (OOP)
-            </h2>
-            <div className="responsive-grid-2">
-              {oopCards.map(card => {
-                const isLinked = exams.some(e => e.course_card_id === card.id);
-                return (
-                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <span className="badge badge-success">خطوة {card.order}</span>
-                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
-                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
-                      </div>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
-                        <button 
-                          className="btn btn-danger" 
-                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCard(card.id);
-                          }}
-                          title="حذف الكارت"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
+              return (
+                <div key={sec.id} className="glass-card" style={{ marginBottom: '30px', padding: '25px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', borderRight: `4px solid ${borderColor}`, paddingRight: '10px' }}>
+                        {sec.title}
+                      </h2>
+                      {sec.description && (
+                        <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', paddingRight: '14px' }}>
+                          {sec.description}
+                        </p>
+                      )}
                     </div>
-                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
-                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
-                      {card.description || 'بدون وصف.'}
-                    </p>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>إدارة الفيديوهات والاختبارات</span>
-                      <span>تعديل ←</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        className="btn" 
+                        onClick={() => openEditSectionModal(sec)}
+                        style={{ padding: '5px 12px', fontSize: '0.8rem', backgroundColor: '#3b82f6', color: 'white' }}
+                      >
+                        تعديل القسم
+                      </button>
+                      <button 
+                        className="btn btn-danger" 
+                        onClick={() => handleDeleteSection(sec.id)}
+                        style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+                      >
+                        حذف القسم
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* DSA */}
-          <div className="glass-card" style={{ marginBottom: '30px' }}>
-            <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #ec4899', paddingRight: '10px' }}>
-              تراكيب البيانات والخوارزميات (DSA)
-            </h2>
-            <div className="responsive-grid-2">
-              {dsaCards.map(card => {
-                const isLinked = exams.some(e => e.course_card_id === card.id);
-                return (
-                  <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <span className="badge badge-success">خطوة {card.order}</span>
-                        {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
-                        {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
-                      </div>
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
-                        <button 
-                          className="btn btn-danger" 
-                          style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCard(card.id);
-                          }}
-                          title="حذف الكارت"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </div>
-                    <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
-                    <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
-                      {card.description || 'بدون وصف.'}
+                  {secCards.length === 0 ? (
+                    <p style={{ color: '#4b5563', fontSize: '0.9rem', fontStyle: 'italic', paddingRight: '14px', marginTop: '10px' }}>
+                      لا توجد كروت أو دروس مضافة في هذا القسم بعد.
                     </p>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>إدارة الفيديوهات والاختبارات</span>
-                      <span>تعديل ←</span>
+                  ) : (
+                    <div className="responsive-grid-2" style={{ marginTop: '15px' }}>
+                      {secCards.map(card => {
+                        const isLinked = exams.some(e => e.course_card_id === card.id);
+                        return (
+                          <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                <span className="badge badge-success">خطوة {card.order}</span>
+                                {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                                {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                              </div>
+                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
+                                <button 
+                                  className="btn btn-danger" 
+                                  style={{ padding: '2px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteCard(card.id);
+                                  }}
+                                  title="حذف الكارت"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                            </div>
+                            <h3 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{card.title}</h3>
+                            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: '38px' }}>
+                              {card.description || 'بدون وصف.'}
+                            </p>
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '10px', fontSize: '0.85rem', color: '#06b6d4', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>إدارة الفيديوهات والاختبارات</span>
+                              <span>تعديل ←</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+
+          {/* Section Create/Edit Modal */}
+          {showSectionModal && (
+            <div className="roadmap-modal-overlay">
+              <div className="roadmap-modal-content" style={{ background: '#111827' }}>
+                <button className="roadmap-modal-close" onClick={() => setShowSectionModal(false)}>×</button>
+                <h2 style={{ color: 'white', marginBottom: '20px', fontWeight: 'bold' }}>
+                  {editingSection ? 'تعديل بيانات القسم' : 'إضافة قسم جديد'}
+                </h2>
+                <form onSubmit={handleSaveSection} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div className="form-group">
+                    <label className="form-label">اسم القسم</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      required 
+                      value={sectionTitle} 
+                      onChange={(e) => setSectionTitle(e.target.value)} 
+                      placeholder="مثال: الأساسيات والمدخلات الأولى"
+                    />
                   </div>
-                );
-              })}
+                  <div className="form-group">
+                    <label className="form-label">الوصف (اختياري)</label>
+                    <textarea 
+                      className="form-input" 
+                      style={{ minHeight: '80px', resize: 'vertical' }}
+                      value={sectionDesc} 
+                      onChange={(e) => setSectionDesc(e.target.value)} 
+                      placeholder="توضيح عام لما يغطيه هذا القسم للطلاب"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">ترتيب القسم في خارطة الطريق</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      required 
+                      value={sectionOrder} 
+                      onChange={(e) => setSectionOrder(e.target.value)} 
+                      placeholder="مثال: 1"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                    <button type="submit" className="btn btn-accent" style={{ flex: 1 }} disabled={savingSection}>
+                      {savingSection ? 'جاري الحفظ...' : 'تأكيد الحفظ'}
+                    </button>
+                    <button type="button" className="btn btn-secondary" style={{ width: '100px' }} onClick={() => setShowSectionModal(false)}>
+                      إلغاء
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-          </div>
+          )}
         </main>
-
-
       </div>
     );
   }
 
   return (
     <div className="app-container">
-      
       {/* Top Navbar */}
       <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
@@ -526,8 +479,7 @@ const AdminDashboard = () => {
           <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات والخرائط</button>
           <Link to="/admin/results" className="nav-btn">النتائج والتقارير</Link>
           <button onClick={handleLogout} className="nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaSignOutAlt />
-            خروج
+            <FaSignOutAlt /> خروج
           </button>
         </div>
       </nav>
@@ -537,19 +489,16 @@ const AdminDashboard = () => {
         
         {activeTab === 'exams' ? (
           <>
-            {/* Header Title with quick Create Button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
               <div>
                 <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>مرحباً بك في لوحة تحكم المسؤول 👋</h1>
                 <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إحصائيات المنصة وأحدث الاختبارات النشطة</p>
               </div>
               <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <FaPlus />
-                إنشاء اختبار جديد
+                <FaPlus /> إنشاء اختبار جديد
               </Link>
             </div>
 
-            {/* Statistical Counters grid */}
             {stats && (
               <div className="stats-grid">
                 <div className="stat-card">
@@ -594,7 +543,6 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Exams List Glass Card */}
             <div className="glass-card" style={{ padding: '25px' }}>
               <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '10px' }}>
                 جدول الاختبارات المتاحة
@@ -686,7 +634,6 @@ const AdminDashboard = () => {
             </div>
           </>
         ) : (
-          /* COURSES TAB VIEW */
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
               <div>
@@ -694,8 +641,7 @@ const AdminDashboard = () => {
                 <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إضافة كورس جديد بمحددات مخصصة والتحكم في دروس ومهام الفترات التدريبية</p>
               </div>
               <button onClick={() => setShowCreateCourseModal(true)} className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <FaPlus />
-                إضافة كورس جديد
+                <FaPlus /> إضافة كورس جديد
               </button>
             </div>
 

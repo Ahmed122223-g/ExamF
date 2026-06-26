@@ -214,6 +214,34 @@ export const apiService = {
     return res.data;
   },
 
+  getCourseSectionsAdmin: async (courseId, token) => {
+    const res = await API.get(`/api/admin/courses/${courseId}/sections`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createCourseSectionAdmin: async (courseId, sectionData, token) => {
+    const res = await API.post(`/api/admin/courses/${courseId}/sections`, sectionData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateCourseSectionAdmin: async (courseId, sectionId, sectionData, token) => {
+    const res = await API.put(`/api/admin/courses/${courseId}/sections/${sectionId}`, sectionData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteCourseSectionAdmin: async (courseId, sectionId, token) => {
+    const res = await API.delete(`/api/admin/courses/${courseId}/sections/${sectionId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   getCourseCardsAdmin: async (courseId, token) => {
     const res = await API.get(`/api/admin/courses/${courseId}/cards`, {
       headers: { Authorization: `Bearer ${token}` }

@@ -16,7 +16,17 @@ const AdminDashboard = () => {
   const [courseSections, setCourseSections] = useState([]);
   const [courseCards, setCourseCards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'courses'
+  const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'courses' | 'projects'
+  
+  // Project Submissions State
+  const [projectSubmissions, setProjectSubmissions] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewGrade, setReviewGrade] = useState('');
+  const [reviewStatus, setReviewStatus] = useState('approved');
+  const [reviewFeedback, setReviewFeedback] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
   
   // Create Course Form Modal State
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
@@ -46,6 +56,9 @@ const AdminDashboard = () => {
 
       const coursesData = await apiService.getAdminCourses(token);
       setCourses(coursesData);
+
+      const projectsData = await apiService.getProjectSubmissionsAdmin(token).catch(() => []);
+      setProjectSubmissions(projectsData);
 
       if (courseParam) {
         const matched = coursesData.find(c => c.id.toString() === courseParam.toString());
@@ -185,6 +198,44 @@ const AdminDashboard = () => {
       Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إنشاء الكورس.', 'error');
     } finally {
       setCreatingCourse(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      setLoadingProjects(true);
+      const data = await apiService.getProjectSubmissionsAdmin(token);
+      setProjectSubmissions(data);
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', 'فشل في تحميل تسليمات المشاريع.', 'error');
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedSubmission) return;
+    if (reviewStatus === 'rejected' && !reviewFeedback.trim()) {
+      Swal.fire('تنبيه', 'يجب كتابة ملاحظة توضح سبب الرفض.', 'warning');
+      return;
+    }
+    try {
+      setSubmittingReview(true);
+      await apiService.reviewProjectSubmissionAdmin(selectedSubmission.id, {
+        status: reviewStatus,
+        grade: parseInt(reviewGrade) || 0,
+        feedback_note: reviewFeedback.trim() || null
+      }, token);
+      Swal.fire('تم التقييم!', 'تم حفظ تقييم المشروع بنجاح.', 'success');
+      setReviewModalOpen(false);
+      fetchProjects();
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في حفظ التقييم.', 'error');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -538,6 +589,7 @@ const AdminDashboard = () => {
         <div className="nav-links">
           <button onClick={() => setActiveTab('exams')} className={`nav-btn ${activeTab === 'exams' ? 'active' : ''}`}>إدارة الاختبارات</button>
           <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات والخرائط</button>
+          <button onClick={() => { setActiveTab('projects'); fetchProjects(); }} className={`nav-btn ${activeTab === 'projects' ? 'active' : ''}`}>مراجعة المشاريع</button>
           <Link to="/admin/results" className="nav-btn">النتائج والتقارير</Link>
           <button onClick={handleLogout} className="nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <FaSignOutAlt /> خروج
@@ -694,6 +746,93 @@ const AdminDashboard = () => {
               )}
             </div>
           </>
+        ) : activeTab === 'projects' ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+              <div>
+                <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>مراجعة وتقييم المشاريع 🏆</h1>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>تقييم وتصحيح حلول المشاريع المرفوعة من قبل الطلاب وإرسال الملاحظات والدرجات</p>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '25px' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
+                طلبات تسليم المشاريع المعلقة والمكتملة
+              </h2>
+
+              {loadingProjects ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}><div className="spinner"></div></div>
+              ) : projectSubmissions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted-dark)' }}>
+                  <p style={{ fontSize: '1.1rem' }}>لا توجد أي مشاريع مرفوعة للمراجعة حالياً.</p>
+                </div>
+              ) : (
+                <div className="table-container">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>الطالب</th>
+                        <th>كارت المشروع</th>
+                        <th>تاريخ الرفع</th>
+                        <th>الدرجة</th>
+                        <th>الحالة</th>
+                        <th style={{ textAlign: 'center' }}>العمليات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projectSubmissions.map(sub => {
+                        const submittedStr = new Date(sub.submitted_at).toLocaleString('ar-EG', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+
+                        return (
+                          <tr key={sub.id}>
+                            <td><strong>{sub.student_name}</strong></td>
+                            <td>{sub.card_title}</td>
+                            <td>{submittedStr}</td>
+                            <td>{sub.grade !== null ? `${sub.grade} درجة` : 'لم يقيم بعد'}</td>
+                            <td>
+                              <span className={`status-badge ${sub.status}`} style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '0.85rem',
+                                fontWeight: 'bold',
+                                backgroundColor: sub.status === 'approved' ? 'rgba(16, 185, 129, 0.15)' : sub.status === 'rejected' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: sub.status === 'approved' ? '#10b981' : sub.status === 'rejected' ? '#ef4444' : '#f59e0b'
+                              }}>
+                                {sub.status === 'approved' ? 'مقبول ✅' : sub.status === 'rejected' ? 'مرفوض ❌' : 'قيد المراجعة ⏳'}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                <button
+                                  onClick={() => {
+                                    setSelectedSubmission(sub);
+                                    setReviewGrade(sub.grade !== null ? sub.grade.toString() : '');
+                                    setReviewStatus(sub.status || 'approved');
+                                    setReviewFeedback(sub.feedback_note || '');
+                                    setReviewModalOpen(true);
+                                  }}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                >
+                                  استعراض وتقييم
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
@@ -819,6 +958,119 @@ const AdminDashboard = () => {
             )}
           </>
         )}
+
+      {/* Review Project Modal */}
+      {reviewModalOpen && selectedSubmission && (
+        <div className="modal-overlay" onClick={() => setReviewModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px', width: '95%', direction: 'rtl', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', overflowY: 'auto', maxHeight: '90vh' }}>
+            <h3 className="modal-title" style={{ color: 'white', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>
+              📝 مراجعة وتقييم مشروع: {selectedSubmission.card_title}
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
+              <div>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>اسم الطالب:</p>
+                <p style={{ color: 'white', fontWeight: 'bold', fontSize: '1.1rem' }}>{selectedSubmission.student_name}</p>
+              </div>
+
+              {selectedSubmission.solution_text && (
+                <div>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>💻 الكود أو شرح الحل المقدم:</p>
+                  <pre style={{
+                    background: 'rgba(0,0,0,0.4)',
+                    color: '#10b981',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    fontFamily: 'monospace',
+                    overflowX: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '200px',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                  }}>
+                    {selectedSubmission.solution_text}
+                  </pre>
+                </div>
+              )}
+
+              {selectedSubmission.solution_file_name && (
+                <div>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '8px' }}>📂 الملف المرفوع:</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.02)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{selectedSubmission.solution_file_name}</span>
+                    <button
+                      onClick={() => {
+                        try {
+                          const link = document.createElement('a');
+                          link.href = selectedSubmission.solution_file_base64 || '';
+                          link.download = selectedSubmission.solution_file_name;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        } catch (e) {
+                          Swal.fire('خطأ', 'فشل في تحميل الملف.', 'error');
+                        }
+                      }}
+                      className="btn"
+                      style={{ backgroundColor: '#0284c7', color: 'white', padding: '4px 10px', fontSize: '0.8rem' }}
+                    >
+                      تحميل الملف
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: '#94a3b8', display: 'block', marginBottom: '5px' }}>التقييم والدرجة</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={reviewGrade}
+                      onChange={e => setReviewGrade(e.target.value)}
+                      placeholder="أدخل درجة الطالب في المشروع"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: '#94a3b8', display: 'block', marginBottom: '5px' }}>حالة المشروع</label>
+                    <select
+                      className="form-input"
+                      value={reviewStatus}
+                      onChange={e => setReviewStatus(e.target.value)}
+                    >
+                      <option value="approved">مقبول ومكتمل (Approved)</option>
+                      <option value="rejected">مرفوض للتعديل (Rejected)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#94a3b8', display: 'block', marginBottom: '5px' }}>
+                    📝 ملاحظات أو سبب الرفض:
+                    {reviewStatus === 'rejected' && <span style={{ color: '#ef4444' }}> (مطلوب عند الرفض)</span>}
+                  </label>
+                  <textarea
+                    className="form-input"
+                    value={reviewFeedback}
+                    onChange={e => setReviewFeedback(e.target.value)}
+                    placeholder="اكتب ملاحظاتك للطالب، أسباب الرفض أو نصائح لتحسين الكود"
+                    style={{ minHeight: '100px', resize: 'vertical' }}
+                    required={reviewStatus === 'rejected'}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                  <button type="button" onClick={() => setReviewModalOpen(false)} className="btn btn-secondary">إلغاء</button>
+                  <button type="submit" disabled={submittingReview} className="btn btn-accent">
+                    {submittingReview ? 'جاري حفظ التقييم...' : 'حفظ وإرسال التقييم'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       </main>
     </div>

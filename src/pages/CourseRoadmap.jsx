@@ -20,6 +20,13 @@ export default function CourseRoadmap() {
   const [questionAnswers, setQuestionAnswers] = useState({}); // {questionId: {text, file, fileName}}
   const [submittingAnswer, setSubmittingAnswer] = useState(null); // questionId being submitted
 
+  // Project States
+  const [projectSubmission, setProjectSubmission] = useState(null);
+  const [solutionText, setSolutionText] = useState('');
+  const [solutionFile, setSolutionFile] = useState(null);
+  const [solutionFileName, setSolutionFileName] = useState('');
+  const [submittingProject, setSubmittingProject] = useState(false);
+
   // Fetch roadmap data
   const fetchRoadmap = async () => {
     try {
@@ -102,6 +109,14 @@ export default function CourseRoadmap() {
     const index = getItemGlobalIndex(id);
     if (index === 0) return true;
 
+    // Check if any previous card was a project card and is NOT completed/approved
+    for (let i = 0; i < index; i++) {
+      const prev = allItems[i];
+      if (prev.is_project && !prev.is_completed) {
+        return false;
+      }
+    }
+
     // Check specific calendar date unlock
     if (item.unlock_date) {
       const todayStr = new Date().toISOString().split('T')[0];
@@ -147,7 +162,14 @@ export default function CourseRoadmap() {
     setModalTab('videos');
     setCardQuestions([]);
     setQuestionAnswers({});
-    // Fetch questions for this card
+    
+    if (item.is_project) {
+      setProjectSubmission(item.project_submission || null);
+      setSolutionText(item.project_submission?.solution_text || '');
+      setSolutionFileName(item.project_submission?.solution_file_name || '');
+      setSolutionFile(null);
+      return;
+    }
     try {
       const qs = await apiService.getCardQuestionsStudent(item.db_id, token);
       setCardQuestions(qs);
@@ -212,6 +234,35 @@ export default function CourseRoadmap() {
       alert(e.response?.data?.detail || 'فشل في حفظ الإجابة.');
     } finally {
       setSubmittingAnswer(null);
+    }
+  };
+
+  const handleProjectSubmit = async (e) => {
+    e.preventDefault();
+    if (!solutionText && !solutionFile) {
+      alert('يرجى كتابة شرح الحل أو رفع ملف المشروع.');
+      return;
+    }
+    setSubmittingProject(true);
+    try {
+      await apiService.submitProjectSolution(activeModalTopic.db_id, {
+        solution_text: solutionText || null,
+        solution_file_base64: solutionFile || null,
+        solution_file_name: solutionFileName || null
+      }, token);
+      alert('تم تقديم حل المشروع بنجاح، بانتظار مراجعة الإدارة ⏳');
+      const data = await apiService.getCourseRoadmap(courseId, token);
+      setRoadmap(data);
+      const updatedItems = (data.sections || []).flatMap(sec => sec.items || []);
+      const matched = updatedItems.find(it => it.db_id === activeModalTopic.db_id);
+      if (matched) {
+        setActiveModalTopic(matched);
+        setProjectSubmission(matched.project_submission || null);
+      }
+    } catch (err) {
+      alert(err.response?.data?.detail || 'فشل في إرسال حل المشروع.');
+    } finally {
+      setSubmittingProject(false);
     }
   };
 
@@ -337,37 +388,162 @@ export default function CourseRoadmap() {
             </div>
 
             {/* ── Tabs ── */}
-            <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1rem' }}>
-              <button
-                onClick={() => setModalTab('videos')}
-                style={{
-                  flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
-                  background: modalTab === 'videos' ? 'rgba(6,182,212,0.15)' : 'transparent',
-                  color: modalTab === 'videos' ? '#06b6d4' : '#9ca3af',
-                  borderBottom: modalTab === 'videos' ? '2px solid #06b6d4' : '2px solid transparent',
-                  transition: 'all 0.2s'
-                }}
-              >
-                🎥 الفيديوهات
-              </button>
-              <button
-                onClick={() => setModalTab('questions')}
-                style={{
-                  flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
-                  background: modalTab === 'questions' ? 'rgba(168,85,247,0.15)' : 'transparent',
-                  color: modalTab === 'questions' ? '#a855f7' : '#9ca3af',
-                  borderBottom: modalTab === 'questions' ? '2px solid #a855f7' : '2px solid transparent',
-                  transition: 'all 0.2s'
-                }}
-              >
-                📝 الأسئلة {cardQuestions.length > 0 && `(${cardQuestions.length})`}
-              </button>
-            </div>
+            {!activeModalTopic.is_project && (
+              <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1rem' }}>
+                <button
+                  onClick={() => setModalTab('videos')}
+                  style={{
+                    flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
+                    background: modalTab === 'videos' ? 'rgba(6,182,212,0.15)' : 'transparent',
+                    color: modalTab === 'videos' ? '#06b6d4' : '#9ca3af',
+                    borderBottom: modalTab === 'videos' ? '2px solid #06b6d4' : '2px solid transparent',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🎥 الفيديوهات
+                </button>
+                <button
+                  onClick={() => setModalTab('questions')}
+                  style={{
+                    flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem',
+                    background: modalTab === 'questions' ? 'rgba(168,85,247,0.15)' : 'transparent',
+                    color: modalTab === 'questions' ? '#a855f7' : '#9ca3af',
+                    borderBottom: modalTab === 'questions' ? '2px solid #a855f7' : '2px solid transparent',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  📝 الأسئلة {cardQuestions.length > 0 && `(${cardQuestions.length})`}
+                </button>
+              </div>
+            )}
 
             <div className="roadmap-modal-body" style={{ maxHeight: '350px', overflowY: 'auto', paddingLeft: '0.5rem' }}>
 
+              {/* ─── Project Submission Interface ─── */}
+              {activeModalTopic.is_project && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', direction: 'rtl' }}>
+                  <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '15px', borderRadius: '10px' }}>
+                    <h4 style={{ color: '#f59e0b', marginBottom: '8px', fontWeight: 'bold' }}>🎯 مطلوب المشروع:</h4>
+                    <p style={{ color: '#e5e7eb', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                      {activeModalTopic.description}
+                    </p>
+                  </div>
+
+                  {projectSubmission && (
+                    <div style={{
+                      padding: '15px',
+                      borderRadius: '10px',
+                      background: projectSubmission.status === 'approved' ? 'rgba(16, 185, 129, 0.07)' : projectSubmission.status === 'rejected' ? 'rgba(239, 68, 68, 0.07)' : 'rgba(245, 158, 11, 0.07)',
+                      border: projectSubmission.status === 'approved' ? '1px solid rgba(16, 185, 129, 0.2)' : projectSubmission.status === 'rejected' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(245, 158, 11, 0.2)',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 'bold', color: projectSubmission.status === 'approved' ? '#10b981' : projectSubmission.status === 'rejected' ? '#ef4444' : '#f59e0b' }}>
+                          حالة المشروع: {projectSubmission.status === 'approved' ? 'تم القبول ✅' : projectSubmission.status === 'rejected' ? 'مرفوض للتعديل ❌' : 'قيد المراجعة ⏳'}
+                        </span>
+                        {projectSubmission.grade !== null && (
+                          <span style={{ fontWeight: 'bold', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '4px 10px', borderRadius: '6px' }}>
+                            الدرجة: {projectSubmission.grade} درجة
+                          </span>
+                        )}
+                      </div>
+
+                      {projectSubmission.feedback_note && (
+                        <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem', display: 'block', marginBottom: '5px' }}>💬 ملاحظات المعلم:</span>
+                          <p style={{ color: '#fff', fontSize: '0.9rem', lineHeight: '1.5' }}>{projectSubmission.feedback_note}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Submission form if not submitted or if rejected */}
+                  {(!projectSubmission || projectSubmission.status === 'rejected') ? (
+                    <form onSubmit={handleProjectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div className="form-group">
+                        <label style={{ color: '#9ca3af', fontSize: '0.85rem', display: 'block', marginBottom: '5px' }}>✏️ شرح الحل أو الكود البرمجي:</label>
+                        <textarea
+                          className="form-input"
+                          value={solutionText}
+                          onChange={e => setSolutionText(e.target.value)}
+                          placeholder="اكتب كود الحل هنا أو اكتب شرحاً موجزاً عما قمت به في المشروع..."
+                          style={{ minHeight: '120px', background: 'rgba(0,0,0,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'monospace', padding: '10px', borderRadius: '8px' }}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ color: '#9ca3af', fontSize: '0.85rem', display: 'block', marginBottom: '5px' }}>📂 ارفع ملف المشروع (مثال: zip, rar, pdf, cpp, txt):</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input
+                            type="file"
+                            id="project-file-input"
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                alert('حجم الملف كبير جداً. الحد الأقصى 2MB.');
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                setSolutionFile(ev.target.result);
+                                setSolutionFileName(file.name);
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => document.getElementById('project-file-input').click()}
+                            style={{ fontSize: '0.85rem', padding: '8px 15px' }}
+                          >
+                            اختر ملف
+                          </button>
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>
+                            {solutionFileName || 'لم يتم اختيار ملف بعد'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={submittingProject}
+                        className="btn btn-accent"
+                        style={{ marginTop: '10px', width: '100%', padding: '12px' }}
+                      >
+                        {submittingProject ? 'جاري رفع وتسليم المشروع...' : 'تسليم المشروع للإدارة'}
+                      </button>
+                    </form>
+                  ) : (
+                    // Display submitted solutions
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '15px', borderRadius: '10px', marginTop: '10px' }}>
+                      <p style={{ color: '#6b7280', fontSize: '0.8rem', fontStyle: 'italic', marginBottom: '10px' }}>
+                        تم قفل إمكانية التعديل لأن المشروع قيد المراجعة أو تم قبوله بالفعل.
+                      </p>
+                      {projectSubmission.solution_text && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem', display: 'block', marginBottom: '5px' }}>💻 الحل المقدم:</span>
+                          <pre style={{ background: 'rgba(0,0,0,0.3)', color: '#10b981', padding: '12px', borderRadius: '6px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', maxHeight: '150px' }}>
+                            {projectSubmission.solution_text}
+                          </pre>
+                        </div>
+                      )}
+                      {projectSubmission.solution_file_name && (
+                        <div>
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem', display: 'block', marginBottom: '5px' }}>📂 الملف المرفوع:</span>
+                          <span style={{ color: '#38bdf8', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                            📄 {projectSubmission.solution_file_name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ─── Videos Tab ─── */}
-              {modalTab === 'videos' && (
+              {modalTab === 'videos' && !activeModalTopic.is_project && (
                 <>
                   <h4 style={{ color: '#fff', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                     اختر مسار الشرح الذي تفضله:
@@ -572,21 +748,27 @@ export default function CourseRoadmap() {
             </div>
 
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.2rem', marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  id={`complete-check-${activeModalTopic.id}`}
-                  checked={!!activeModalTopic.is_completed}
-                  onChange={() => toggleTopicCompletion(activeModalTopic.db_id)}
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                />
-                <label
-                  htmlFor={`complete-check-${activeModalTopic.id}`}
-                  style={{ fontWeight: 'bold', cursor: 'pointer', color: activeModalTopic.is_completed ? '#10b981' : '#9ca3af' }}
-                >
-                  لقد أتممت دراسة مقاطع هذا الكارت (يفتح الكارت التالي مباشرة)
-                </label>
-              </div>
+              {!activeModalTopic.is_project ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    id={`complete-check-${activeModalTopic.id}`}
+                    checked={!!activeModalTopic.is_completed}
+                    onChange={() => toggleTopicCompletion(activeModalTopic.db_id)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <label
+                    htmlFor={`complete-check-${activeModalTopic.id}`}
+                    style={{ fontWeight: 'bold', cursor: 'pointer', color: activeModalTopic.is_completed ? '#10b981' : '#9ca3af' }}
+                  >
+                    لقد أتممت دراسة مقاطع هذا الكارت (يفتح الكارت التالي مباشرة)
+                  </label>
+                </div>
+              ) : (
+                <div style={{ color: '#f59e0b', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                  🏆 كارت مشروع: لا يمكن تعيينه كمكتمل يدوياً
+                </div>
+              )}
               <button
                 className="roadmap-sim-btn"
                 style={{ background: 'rgba(255,255,255,0.08)', padding: '8px 16px' }}

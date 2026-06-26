@@ -22,6 +22,7 @@ const AdminEditCard = () => {
   const [linkedExamId, setLinkedExamId] = useState('');
   const [cardSectionId, setCardSectionId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [isProject, setIsProject] = useState(false);
 
   // New Unlock States
   const [unlockType, setUnlockType] = useState('immediate'); // 'immediate' | 'date' | 'days'
@@ -81,6 +82,7 @@ const AdminEditCard = () => {
           setCardPhase(currentCard.phase || 'basics');
           setCardOrder(currentCard.order || 1);
           setCardSectionId(currentCard.section_id || null);
+          setIsProject(currentCard.is_project || false);
 
           // Unlock settings
           if (currentCard.unlock_date) {
@@ -142,6 +144,7 @@ const AdminEditCard = () => {
           setCardPhase('basics');
           setCardOrder(1);
           setUnlockType('immediate');
+          setIsProject(false);
           setInstructorsList([
             { key: 'elzero', name: 'أسامة الزيرو', videos: [] },
             { key: 'abu_hadhoud', name: 'أبو هدهود', videos: [] },
@@ -334,7 +337,8 @@ const AdminEditCard = () => {
         instructors_data: JSON.stringify(instructorsObj),
         unlock_date: finalUnlockDate,
         unlock_days: finalUnlockDays,
-        section_id: cardSectionId
+        section_id: cardSectionId,
+        is_project: isProject
       };
 
       let savedCard = null;
@@ -426,6 +430,23 @@ const AdminEditCard = () => {
           <div className="form-group">
             <label className="form-label" style={{ color: '#fff', fontWeight: 'bold' }}>الوصف</label>
             <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={cardDesc} onChange={(e) => setCardDesc(e.target.value)} placeholder="شرح مبسط للمواضيع المغطاة في هذا الدرس" />
+          </div>
+
+          {/* Checkbox for Project Card */}
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '12px 18px', borderRadius: '10px' }}>
+            <input
+              type="checkbox"
+              id="is_project_checkbox"
+              checked={isProject}
+              onChange={(e) => setIsProject(e.target.checked)}
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+            />
+            <label htmlFor="is_project_checkbox" style={{ color: '#f59e0b', fontWeight: 'bold', cursor: 'pointer', margin: 0 }}>
+              🏆 هذا الكارت عبارة عن مشروع (Project Card)
+            </label>
+            <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginRight: '10px' }}>
+              (يقفل التقدم للمستخدمين حتى تقوم بتصحيح حلولهم يدوياً)
+            </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>

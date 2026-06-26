@@ -320,5 +320,34 @@ export const apiService = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
+  },
+
+  // ── Project Submissions ──
+  getProjectSubmission: async (cardDbId, token) => {
+    const res = await API.get(`/api/courses/cards/${cardDbId}/project-submission`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  submitProjectSolution: async (cardDbId, data, token) => {
+    const res = await API.post(`/api/courses/cards/${cardDbId}/project-submit`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getProjectSubmissionsAdmin: async (token) => {
+    const res = await API.get(`/api/admin/project-submissions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  reviewProjectSubmissionAdmin: async (submissionId, data, token) => {
+    const res = await API.post(`/api/admin/project-submissions/${submissionId}/review`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
   }
 };

@@ -85,8 +85,12 @@ const TakeExam = () => {
 
   // Helper to fetch server time
   const axiosGetServerTime = async () => {
-    const res = await apiService.verifyExam(examId); // endpoint returns time information too
-    return { server_time: res.start_time }; // fallback server time sync
+    try {
+      const res = await apiService.getServerTime();
+      return { server_time: res.server_time };
+    } catch (e) {
+      return { server_time: new Date().toISOString() };
+    }
   };
 
   // Timer Countdown

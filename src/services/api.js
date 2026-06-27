@@ -11,6 +11,11 @@ export const apiService = {
     return res.data;
   },
 
+  getServerTime: async () => {
+    const res = await API.get('/api/exams/server-time');
+    return res.data;
+  },
+
   registerStudent: async (examId, token) => {
     const res = await API.post(`/api/exams/${examId}/register`, {}, {
       headers: { Authorization: `Bearer ${token}` }

@@ -402,4 +402,28 @@ export const apiService = {
     });
     return res.data;
   },
+
+  // ── Question Answers Review - Admin ───────────────────────────────────────
+  getCardsWithAnswersAdmin: async (token) => {
+    const res = await API.get('/api/admin/cards-with-answers', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  sendAnswerFeedbackAdmin: async (answerId, feedbackText, token) => {
+    const res = await API.post(`/api/admin/question-answers/${answerId}/feedback`,
+      { feedback_text: feedbackText },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data;
+  },
+
+  // ── My Question Feedback - Student ────────────────────────────────────────
+  getMyAnswerFeedback: async (cardDbId, token) => {
+    const res = await API.get(`/api/courses/cards/${cardDbId}/my-feedback`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
 };

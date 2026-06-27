@@ -19,6 +19,8 @@ import StudentDashboard from './pages/StudentDashboard';
 import CourseRoadmap from './pages/CourseRoadmap';
 import CardDetail from './pages/CardDetail';
 import Notifications from './pages/Notifications';
+import AdminReview from './pages/AdminReview';
+import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
 
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
@@ -97,6 +99,14 @@ function App() {
             </StudentRoute>
           } 
         />
+        <Route 
+          path="/card-feedback/:cardDbId" 
+          element={
+            <StudentRoute>
+              <QuestionFeedbackDetail />
+            </StudentRoute>
+          } 
+        />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -146,6 +156,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminStudents />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/review" 
+          element={
+            <AdminRoute>
+              <AdminReview />
             </AdminRoute>
           } 
         />

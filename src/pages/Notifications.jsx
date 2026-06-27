@@ -130,13 +130,16 @@ export default function Notifications() {
                 {group.notifications.map(n => (
                   <div
                     key={n.id}
-                    onClick={() => !n.is_read && markRead(n.id)}
+                    onClick={async () => {
+                      if (!n.is_read) await markRead(n.id);
+                      if (n.action_url) navigate(n.action_url);
+                    }}
                     style={{
                       background: n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(59,130,246,0.08)',
                       border: `1px solid ${n.is_read ? 'rgba(255,255,255,0.08)' : 'rgba(59,130,246,0.3)'}`,
                       borderRadius: '12px',
                       padding: 'clamp(12px,2.5vw,18px)',
-                      cursor: n.is_read ? 'default' : 'pointer',
+                      cursor: (n.action_url || !n.is_read) ? 'pointer' : 'default',
                       transition: 'all 0.2s',
                       display: 'flex',
                       gap: '12px',
@@ -160,10 +163,17 @@ export default function Notifications() {
                       }}>
                         {n.message}
                       </p>
-                      <span style={{ color: '#6b7280', fontSize: '0.78rem' }}>
-                        🕐 {formatDate(n.created_at)}
-                        {!n.is_read && <span style={{ color: '#3b82f6', marginRight: '8px', fontSize: '0.75rem' }}>• انقر للتعليم كمقروء</span>}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#6b7280', fontSize: '0.78rem' }}>
+                          🕐 {formatDate(n.created_at)}
+                          {!n.is_read && <span style={{ color: '#3b82f6', marginRight: '8px', fontSize: '0.75rem' }}>• انقر للتعليم كمقروء</span>}
+                        </span>
+                        {n.action_url && (
+                          <span style={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(167,139,250,0.12)', padding: '2px 8px', borderRadius: '50px', border: '1px solid rgba(167,139,250,0.25)' }}>
+                            📋 اضغط لعرض التفاصيل
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

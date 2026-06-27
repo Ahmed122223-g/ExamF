@@ -589,7 +589,7 @@ const AdminDashboard = () => {
         <div className="nav-links">
           <button onClick={() => setActiveTab('exams')} className={`nav-btn ${activeTab === 'exams' ? 'active' : ''}`}>إدارة الاختبارات</button>
           <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات والخرائط</button>
-          <button onClick={() => { setActiveTab('projects'); fetchProjects(); }} className={`nav-btn ${activeTab === 'projects' ? 'active' : ''}`}>مراجعة المشاريع</button>
+          <Link to="/admin/review" className="nav-btn">مراجعة المشاريع والأسئلة 📋</Link>
           <Link to="/admin/results" className="nav-btn">النتائج والتقارير</Link>
           <Link to="/admin/students" className="nav-btn">👥 الطلاب والتنبيهات</Link>
           <button onClick={handleLogout} className="nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>

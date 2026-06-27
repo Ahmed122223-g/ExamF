@@ -153,8 +153,10 @@ export default function Notifications() {
                         color: n.is_read ? '#d1d5db' : 'white',
                         fontWeight: n.is_read ? 400 : 600,
                         margin: '0 0 6px',
-                        lineHeight: '1.6',
-                        fontSize: 'clamp(0.88rem,2vw,0.98rem)'
+                        lineHeight: '1.7',
+                        fontSize: 'clamp(0.88rem,2vw,0.98rem)',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
                       }}>
                         {n.message}
                       </p>

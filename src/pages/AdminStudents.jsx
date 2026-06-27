@@ -236,7 +236,7 @@ export default function AdminStudents() {
                 {sentNotifs.map(n => (
                   <div key={n.id} className="glass-card" style={{ padding: 'clamp(12px,2vw,18px)', display: 'flex', gap: '14px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
-                      <p style={{ color: 'white', margin: '0 0 6px', fontWeight: 600, fontSize: 'clamp(0.85rem,2vw,0.95rem)' }}>{n.message}</p>
+                      <p style={{ color: 'white', margin: '0 0 6px', fontWeight: 600, fontSize: 'clamp(0.85rem,2vw,0.95rem)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{n.message}</p>
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '0.78rem', color: '#9ca3af' }}>
                         <span>👤 {n.student_name} ({n.student_email})</span>
                         <span>📚 {n.course_title}</span>

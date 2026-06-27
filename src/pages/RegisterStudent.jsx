@@ -451,6 +451,7 @@ const RegisterStudent = () => {
                 {formatCountdown(timeLeftToStart)}
               </div>
             </div>
+          ) : (
             /* CASE 3: Exam is Active and Ready to Start */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{

@@ -499,7 +499,7 @@ const RegisterStudent = () => {
                 {registering ? 'جاري تهيئة الامتحان...' : 'موافق، ادخل إلى الامتحان الآن 🚀'}
               </button>
             </div>
-          )}
+          )
         )}
       </div>
     </div>

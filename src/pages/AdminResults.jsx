@@ -199,7 +199,10 @@ const AdminResults = () => {
 
                       return (
                         <tr key={r.id}>
-                          <td><strong>{r.student_name}</strong></td>
+                          <td>
+                            <strong>{r.student_name}</strong>
+                            <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '2px' }}>{r.student_email}</div>
+                          </td>
                           <td>{r.exam_title}</td>
                           <td style={{ fontWeight: 'bold' }}>{r.score} / {r.total_marks}</td>
                           <td>{percent.toFixed(1)}%</td>
@@ -276,6 +279,7 @@ const AdminResults = () => {
 
               <h2 style={{ fontSize: '1.4rem', color: 'white', fontWeight: '800', marginBottom: '10px', borderBottom: '1px solid var(--border-dark)', paddingBottom: '15px' }}>
                 ورقة إجابة الطالب: <span style={{ color: 'var(--accent-color)' }}>{selectedResult.student_name}</span>
+                <span style={{ fontSize: '0.9rem', color: '#94a3b8', marginRight: '10px', fontWeight: 'normal' }}>({selectedResult.student_email})</span>
               </h2>
 
               {/* Student Metadata Summary */}

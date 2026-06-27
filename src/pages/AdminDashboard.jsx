@@ -792,7 +792,10 @@ const AdminDashboard = () => {
 
                         return (
                           <tr key={sub.id}>
-                            <td><strong>{sub.student_name}</strong></td>
+                            <td>
+                              <strong>{sub.student_name}</strong>
+                              <div style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '2px' }}>{sub.student_email}</div>
+                            </td>
                             <td>{sub.card_title}</td>
                             <td>{submittedStr}</td>
                             <td>{sub.grade !== null ? `${sub.grade} درجة` : 'لم يقيم بعد'}</td>

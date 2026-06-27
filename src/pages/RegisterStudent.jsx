@@ -78,42 +78,27 @@ const RegisterStudent = () => {
     return () => clearInterval(timer);
   }, [timeLeftToStart]);
 
-  // 3. Register Student Name
+  // 3. Register Student for the Exam
   const handleRegister = async (e) => {
-    e.preventDefault();
-    const name = studentName.trim();
-    if (!name) return;
-
-    const words = name.split(/\s+/);
-    if (words.length < 3) {
-      Swal.fire('تنبيه!', 'يرجى إدخال اسمك ثلاثياً على الأقل لضمان تسجيل النتيجة باسمك الصحيح.', 'warning');
+    if (e && e.preventDefault) e.preventDefault();
+    
+    const mainToken = localStorage.getItem('student_token');
+    if (!mainToken) {
+      Swal.fire('تنبيه!', 'يرجى تسجيل الدخول لحساب الطالب أولاً.', 'warning');
+      navigate('/login');
       return;
     }
 
     setRegistering(true);
     try {
-      const data = await apiService.registerStudent(examId, name);
+      // API call registerStudent takes (examId, mainToken)
+      const data = await apiService.registerStudent(examId, mainToken);
       
+      // Store session token generated specifically for this exam taking session
       sessionStorage.setItem(`student_token_${examId}`, data.access_token);
-      sessionStorage.setItem(`student_name_${examId}`, name);
+      sessionStorage.setItem(`student_name_${examId}`, data.student_name || 'طالب');
       
-      Swal.fire({
-        title: 'جاهز لبدء الاختبار؟',
-        text: 'بمجرد الدخول، سيتم تفعيل نظام الحماية لمنع الغش (سيتم إنهاء الاختبار وتلقي الإجابات تلقائياً في حال الخروج أو تقسيم الشاشة).',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'نعم، ابدأ الآن',
-        cancelButtonText: 'إلغاء',
-        confirmButtonColor: '#3b82f6',
-        cancelButtonColor: '#334155'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate(`/take-exam/${examId}`);
-        } else {
-          setRegistering(false);
-        }
-      });
-
+      navigate(`/take-exam/${examId}`);
     } catch (err) {
       Swal.fire('خطأ!', err.response?.data?.detail || 'فشل في الدخول للاختبار.', 'error');
       setRegistering(false);
@@ -466,52 +451,53 @@ const RegisterStudent = () => {
                 {formatCountdown(timeLeftToStart)}
               </div>
             </div>
-          ) : (
             /* CASE 3: Exam is Active and Ready to Start */
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FaUser style={{ color: 'var(--accent-color)', fontSize: '0.9rem' }} />
-                  اسم الطالب الثلاثي بالكامل لبدء الاختبار
-                </label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="اكتب اسمك كاملاً..."
-                  required
-                  disabled={registering}
-                  style={{ fontSize: '1.05rem', padding: '12px 16px' }}
-                />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.05)',
+                border: '1px solid rgba(59, 130, 246, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                color: '#e2e8f0',
+                fontSize: '0.92rem',
+                lineHeight: '1.8'
+              }}>
+                <h4 style={{ color: '#60a5fa', fontWeight: '800', fontSize: '1.1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📋 تعليمات وقوانين الاختبار الهامة:
+                </h4>
+                <ul style={{ paddingRight: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <li>🚫 <strong>منع الغش والالتفاف:</strong> يُمنع تماماً الخروج من وضع ملء الشاشة، أو الانتقال لتبويبات أخرى، أو تصغير المتصفح.</li>
+                  <li>⚠️ <strong>الإرسال التلقائي:</strong> في حال استشعار أي محاولة للخروج من الصفحة، سيقوم النظام فوراً بإغلاق الامتحان وحفظ إجاباتك ورصد محاولة مخالفة وإبلاغ الأدمن.</li>
+                  <li>⏱️ <strong>مؤقت الامتحان:</strong> يبدأ المؤقت التنازلي للامتحان فور ضغطك على زر الدخول، ولن يتوقف المؤقت حتى لو قمت بتحديث الصفحة أو إغلاقها.</li>
+                  <li>💾 <strong>حفظ الإجابات:</strong> يمكنك تعديل إجاباتك في أي وقت خلال الامتحان قبل انتهاء الوقت المخصص أو ضغط زر تسليم الإجابة.</li>
+                </ul>
               </div>
 
               <div style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                backgroundColor: 'rgba(239, 68, 68, 0.06)',
                 border: '1px solid rgba(239, 68, 68, 0.2)',
-                borderRadius: '8px',
-                padding: '12px 15px',
+                borderRadius: '10px',
+                padding: '16px',
                 color: '#f87171',
-                fontSize: '0.85rem',
+                fontSize: '0.88rem',
                 lineHeight: '1.6',
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '10px'
               }}>
-                <span style={{ fontSize: '1.1rem', marginTop: '-2px' }}>⚠️</span>
-                <span>تنبيه أمني هام: يجب عدم إغلاق نافذة الامتحان، أو التحويل لتبويب آخر، أو تصغير النافذة، وإلا سيقوم النظام بإنهاء امتحانك وحفظ إجاباتك الحالية تلقائياً مع رصد المخالفة للأدمن.</span>
+                <span style={{ fontSize: '1.2rem', marginTop: '-2px' }}>⚠️</span>
+                <span>بضغطك على زر الدخول أدناه، فإنك تقر بقراءة التعليمات الأمنية أعلاه وتتحمل مسؤولية أي خروج مفاجئ عن نافذة الامتحان الذي قد يؤدي إلى إنهاء وتقديم ورقتك تلقائياً.</span>
               </div>
 
               <button
-                type="submit"
+                onClick={handleRegister}
                 className="btn btn-accent"
-                disabled={registering || !studentName.trim()}
-                style={{ padding: '14px', fontSize: '1.1rem', marginTop: '10px' }}
+                disabled={registering}
+                style={{ padding: '14px', fontSize: '1.1rem', marginTop: '10px', fontWeight: '800' }}
               >
-                {registering ? 'جاري الدخول...' : 'تسجيل الاسم وبدء الاختبار'}
+                {registering ? 'جاري تهيئة الامتحان...' : 'موافق، ادخل إلى الامتحان الآن 🚀'}
               </button>
-            </form>
-          )
+            </div>
         )}
       </div>
     </div>

@@ -10,6 +10,7 @@ import AdminExams from './pages/AdminExams';
 import AdminResults from './pages/AdminResults';
 import AdminStats from './pages/AdminStats';
 import AdminEditCard from './pages/AdminEditCard';
+import AdminStudents from './pages/AdminStudents';
 
 import StudentLogin from './pages/StudentLogin';
 import StudentRegister from './pages/StudentRegister';
@@ -17,6 +18,7 @@ import StudentForgotPassword from './pages/StudentForgotPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import CourseRoadmap from './pages/CourseRoadmap';
 import CardDetail from './pages/CardDetail';
+import Notifications from './pages/Notifications';
 
 // Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
@@ -87,6 +89,14 @@ function App() {
             </StudentRoute>
           } 
         />
+        <Route 
+          path="/notifications" 
+          element={
+            <StudentRoute>
+              <Notifications />
+            </StudentRoute>
+          } 
+        />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -128,6 +138,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminEditCard />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/students" 
+          element={
+            <AdminRoute>
+              <AdminStudents />
             </AdminRoute>
           } 
         />

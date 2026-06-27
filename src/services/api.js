@@ -349,5 +349,57 @@ export const apiService = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
-  }
+  },
+
+  // ── Notifications - Student ────────────────────────────────────────────────
+  getMyNotifications: async (token) => {
+    const res = await API.get('/api/courses/notifications', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  markNotificationRead: async (notifId, token) => {
+    const res = await API.put(`/api/courses/notifications/${notifId}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  markAllNotificationsRead: async (token) => {
+    const res = await API.put('/api/courses/notifications/read-all', {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // ── Students Overview - Admin ──────────────────────────────────────────────
+  getStudentsOverview: async (token) => {
+    const res = await API.get('/api/admin/students-overview', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getCardQuestionAnswersAdmin: async (cardDbId, token) => {
+    const res = await API.get(`/api/admin/cards/${cardDbId}/question-answers`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // ── Notifications - Admin ──────────────────────────────────────────────────
+  sendNotification: async (data, token) => {
+    const res = await API.post('/api/admin/notifications', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getSentNotificationsAdmin: async (token) => {
+    const res = await API.get('/api/admin/notifications', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
 };

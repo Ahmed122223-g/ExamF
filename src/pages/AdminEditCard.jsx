@@ -36,6 +36,8 @@ const AdminEditCard = () => {
   const [cardDbId, setCardDbId] = useState(null);  // actual DB id (integer)
   const [questionsList, setQuestionsList] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionAnswersList, setQuestionAnswersList] = useState([]);
+  const [activeSubTab, setActiveSubTab] = useState('edit_questions'); // 'edit_questions' | 'view_answers'
 
   const isNewCard = cardId === 'new';
 
@@ -134,6 +136,12 @@ const AdminEditCard = () => {
           try {
             const qs = await apiService.getCardQuestionsAdmin(courseId, currentCard.id, token);
             setQuestionsList(qs.map(q => ({ ...q, _dirty: false })));
+
+            // Fetch students answers for these questions
+            try {
+              const ansData = await apiService.getCardQuestionAnswersAdmin(currentCard.id, token);
+              setQuestionAnswersList(ansData);
+            } catch (_) {}
           } catch (e) {
             setQuestionsList([]);
           }
@@ -595,83 +603,146 @@ const AdminEditCard = () => {
           {/* ── Questions Section ─────────────────────────────────────────── */}
           {!isNewCard && (
             <div style={{ marginTop: '30px', borderTop: '2px solid rgba(239, 68, 68, 0.2)', paddingTop: '25px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', borderRight: '4px solid #ef4444', paddingRight: '10px' }}>
-                  📝 أسئلة هذا الكارت
-                </h3>
+              {/* Sub-tabs for questions */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                 <button
                   type="button"
-                  className="btn btn-accent"
-                  style={{ padding: '7px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                  onClick={handleAddQuestion}
+                  onClick={() => setActiveSubTab('edit_questions')}
+                  style={{
+                    background: activeSubTab === 'edit_questions' ? '#ef4444' : 'transparent',
+                    border: 'none', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold'
+                  }}
                 >
-                  <FaPlus /> إضافة سؤال
+                  ⚙️ تعديل الأسئلة
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('view_answers')}
+                  style={{
+                    background: activeSubTab === 'view_answers' ? '#ef4444' : 'transparent',
+                    border: 'none', color: 'white', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold'
+                  }}
+                >
+                  📥 إجابات الطلاب ({questionAnswersList.reduce((acc, q) => acc + (q.answers?.length || 0), 0)})
                 </button>
               </div>
 
-              {questionsList.length === 0 ? (
-                <p style={{ color: '#4b5563', fontStyle: 'italic', fontSize: '0.9rem' }}>
-                  لا توجد أسئلة مضافة لهذا الكارت بعد. اضغط "إضافة سؤال" لإضافة أول سؤال.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {questionsList.map((q, idx) => (
-                    <div key={idx} style={{ background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '18px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                          سؤال {idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          onClick={() => handleRemoveQuestion(idx)}
-                        >
-                          <FaTrash /> حذف
-                        </button>
-                      </div>
+              {activeSubTab === 'edit_questions' ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                    <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800' }}>
+                      📝 أسئلة الكارت
+                    </h3>
+                    <button
+                      type="button"
+                      className="btn btn-accent"
+                      style={{ padding: '7px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                      onClick={handleAddQuestion}
+                    >
+                      <FaPlus /> إضافة سؤال
+                    </button>
+                  </div>
 
-                      {/* Question Text */}
-                      <div className="form-group" style={{ marginBottom: '12px' }}>
-                        <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
-                          نص السؤال (يمكن نسخ الكود أو النص هنا):
-                        </label>
-                        <textarea
-                          className="form-input"
-                          style={{ minHeight: '90px', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.9rem' }}
-                          placeholder="اكتب نص السؤال هنا... (يمكن نسخ أكواد أو نصوص)"
-                          value={q.question_text || ''}
-                          onChange={(e) => handleQuestionChange(idx, 'question_text', e.target.value)}
-                        />
-                      </div>
+                  {questionsList.length === 0 ? (
+                    <p style={{ color: '#4b5563', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                      لا توجد أسئلة مضافة لهذا الكارت بعد. اضغط "إضافة سؤال" لإضافة أول سؤال.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {questionsList.map((q, idx) => (
+                        <div key={idx} style={{ background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '18px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                              سؤال {idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              onClick={() => handleRemoveQuestion(idx)}
+                            >
+                              <FaTrash /> حذف
+                            </button>
+                          </div>
 
-                      {/* Question Image URL */}
-                      <div className="form-group">
-                        <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
-                          🖼️ رابط صورة السؤال (اختياري — إذا كان السؤال صورة):
-                        </label>
-                        <input
-                          type="url"
-                          className="form-input"
-                          placeholder="https://example.com/question-image.png"
-                          value={q.question_image_url || ''}
-                          onChange={(e) => handleQuestionChange(idx, 'question_image_url', e.target.value)}
-                        />
-                        {q.question_image_url && (
-                          <div style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <img
-                              src={q.question_image_url}
-                              alt="معاينة السؤال"
-                              style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', background: '#fff' }}
-                              onError={(e) => { e.target.style.display = 'none'; }}
+                          {/* Question Text */}
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
+                              نص السؤال (يمكن نسخ الكود أو النص هنا):
+                            </label>
+                            <textarea
+                              className="form-input"
+                              style={{ minHeight: '90px', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.9rem' }}
+                              placeholder="اكتب نص السؤال هنا... (يمكن نسخ أكواد أو نصوص)"
+                              value={q.question_text || ''}
+                              onChange={(e) => handleQuestionChange(idx, 'question_text', e.target.value)}
                             />
                           </div>
-                        )}
-                      </div>
+
+                          {/* Question Image URL */}
+                          <div className="form-group">
+                            <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
+                              🖼️ رابط صورة السؤال (اختياري — إذا كان السؤال صورة):
+                            </label>
+                            <input
+                              type="url"
+                              className="form-input"
+                              placeholder="https://example.com/question-image.png"
+                              value={q.question_image_url || ''}
+                              onChange={(e) => handleQuestionChange(idx, 'question_image_url', e.target.value)}
+                            />
+                            {q.question_image_url && (
+                              <div style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <img
+                                  src={q.question_image_url}
+                                  alt="معاينة السؤال"
+                                  style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', background: '#fff' }}
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {questionAnswersList.map((q, qIdx) => (
+                    <div key={q.question_id} className="glass-card" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
+                      <h4 style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '8px' }}>سؤال {qIdx + 1}: {q.question_text || 'سؤال مصور'}</h4>
+                      {q.answers?.length === 0 ? (
+                        <p style={{ color: '#4b5563', fontStyle: 'italic', fontSize: '0.85rem', margin: 0 }}>لا توجد إجابات مرسلة من الطلاب بعد.</p>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                          {q.answers.map((ans, aIdx) => (
+                            <div key={aIdx} style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#9ca3af', marginBottom: '6px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#fff' }}>👤 {ans.student_name} ({ans.student_email})</span>
+                                <span>🕐 {new Date(ans.submitted_at).toLocaleString('ar-EG')}</span>
+                              </div>
+                              {ans.answer_text && (
+                                <p style={{ color: '#d1d5db', fontSize: '0.9rem', margin: '6px 0', whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px' }}>
+                                  {ans.answer_text}
+                                </p>
+                              )}
+                              {ans.answer_link && (
+                                <div style={{ marginTop: '6px' }}>
+                                  <a href={ans.answer_link} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', fontSize: '0.85rem' }}>
+                                    🔗 رابط إجابة الطالب (اضغط هنا لفتحه)
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
+
 
               <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '10px' }}>
                 💡 ملاحظة: الأسئلة ستُحفظ عند الضغط على "حفظ الكارت".

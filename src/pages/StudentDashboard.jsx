@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt, FaBookOpen } from 'react-icons/fa';
+import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt, FaBookOpen, FaBell } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const StudentDashboard = () => {
@@ -11,6 +11,7 @@ const StudentDashboard = () => {
   const [attempts, setAttempts] = useState([]);
   const [courses, setCourses] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
   const fetchDashboardData = async () => {
@@ -27,6 +28,12 @@ const StudentDashboard = () => {
 
       const myCourses = await apiService.getMyCourses(token);
       setCourses(myCourses || []);
+
+      // Fetch notification unread count
+      try {
+        const notifData = await apiService.getMyNotifications(token);
+        setUnreadCount(notifData.unread_count || 0);
+      } catch (_) {}
     } catch (err) {
       console.error(err);
       if (err.response?.status === 401) {
@@ -137,13 +144,38 @@ const StudentDashboard = () => {
             🎓 {studentData?.student_name}
           </h1>
         </div>
-        <button 
-          onClick={handleLogout} 
-          className="btn btn-danger" 
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.95rem' }}
-        >
-          <FaSignOutAlt /> تسجيل الخروج
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Notification Bell */}
+            <Link
+              to="/notifications"
+              style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '42px', height: '42px', borderRadius: '10px',
+                background: unreadCount > 0 ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${unreadCount > 0 ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                color: unreadCount > 0 ? '#3b82f6' : '#9ca3af', textDecoration: 'none', transition: 'all 0.2s'
+              }}
+              title="التنبيهات"
+            >
+              <FaBell style={{ fontSize: '1rem' }} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: '-6px', left: '-6px',
+                  background: '#ef4444', color: 'white', borderRadius: '50px',
+                  fontSize: '0.65rem', fontWeight: 800, padding: '1px 5px',
+                  minWidth: '18px', textAlign: 'center', lineHeight: '16px'
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+          <button 
+            onClick={handleLogout} 
+            className="btn btn-danger" 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.95rem' }}
+          >
+            <FaSignOutAlt /> تسجيل الخروج
+          </button>
+        </div>
       </div>
 
       {/* Add / Search Course */}

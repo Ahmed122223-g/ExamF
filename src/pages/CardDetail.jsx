@@ -54,8 +54,8 @@ export default function CardDetail() {
         const answersMap = {};
         qs.forEach(q => {
           answersMap[q.id] = q.my_answer
-            ? { text: q.my_answer.answer_text || '', fileName: q.my_answer.answer_file_name || '', file: null }
-            : { text: '', fileName: '', file: null };
+            ? { text: q.my_answer.answer_text || '', link: q.my_answer.answer_link || '' }
+            : { text: '', link: '' };
         });
         setQuestionAnswers(answersMap);
       }
@@ -72,37 +72,22 @@ export default function CardDetail() {
   }, [courseId, cardDbId]);
 
   // ── Handlers ────────────────────────────────────────────────
-  const handleFileChange = (questionId, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('حجم الملف كبير جداً. الحد الأقصى 2MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setQuestionAnswers(prev => ({
-        ...prev,
-        [questionId]: { ...prev[questionId], file: ev.target.result, fileName: file.name }
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSubmitAnswer = async (questionId) => {
     const ans = questionAnswers[questionId] || {};
-    if (!ans.text && !ans.file) { alert('يرجى كتابة إجابة أو رفع ملف.'); return; }
+    if (!ans.text && !ans.link) { alert('يرجى كتابة إجابة أو وضع رابط للحل.'); return; }
     setSubmittingAnswer(questionId);
     try {
       await apiService.submitQuestionAnswer(questionId, {
         answer_text: ans.text || null,
-        answer_file_base64: ans.file || null,
-        answer_file_name: ans.fileName || null
+        answer_link: ans.link || null
       }, token);
       const qs = await apiService.getCardQuestionsStudent(card.db_id, token);
       setCardQuestions(qs);
       const answersMap = {};
       qs.forEach(q => {
         answersMap[q.id] = q.my_answer
-          ? { text: q.my_answer.answer_text || '', fileName: q.my_answer.answer_file_name || '', file: null }
-          : { text: '', fileName: '', file: null };
+          ? { text: q.my_answer.answer_text || '', link: q.my_answer.answer_link || '' }
+          : { text: '', link: '' };
       });
       setQuestionAnswers(answersMap);
     } catch (err) {
@@ -346,7 +331,7 @@ export default function CardDetail() {
               ) : (
                 <div className="cd-questions-list">
                   {cardQuestions.map((q, qIdx) => {
-                    const ans = questionAnswers[q.id] || { text: '', fileName: '', file: null };
+                    const ans = questionAnswers[q.id] || { text: '', link: '' };
                     const answered = q.my_answer != null;
                     return (
                       <div key={q.id} className={`cd-question-card ${answered ? 'cd-question-answered' : ''}`}>
@@ -361,26 +346,49 @@ export default function CardDetail() {
                           </div>
                         )}
                         <div className="cd-answer-area">
-                          <label className="cd-label">✏️ إجابتك:</label>
-                          <textarea
-                            className="cd-textarea"
-                            value={ans.text}
-                            onChange={e => setQuestionAnswers(prev => ({ ...prev, [q.id]: { ...prev[q.id], text: e.target.value } }))}
-                            placeholder="اكتب إجابتك هنا..."
-                            rows={4}
-                          />
-                          <div className="cd-answer-actions">
-                            <label className="cd-file-btn">
-                              📎 رفع ملف
-                              <input type="file" accept=".jpg,.jpeg,.png,.pdf,.txt" onChange={e => handleFileChange(q.id, e)} style={{ display: 'none' }} />
-                            </label>
-                            {(ans.fileName || q.my_answer?.answer_file_name) && (
-                              <span className="cd-attached-name">📄 {ans.fileName || q.my_answer?.answer_file_name}</span>
+                          <div className="cd-form-group">
+                            <label className="cd-label">✏️ إجابتك النصية:</label>
+                            <textarea
+                              className="cd-textarea"
+                              value={ans.text}
+                              onChange={e => setQuestionAnswers(prev => ({
+                                ...prev,
+                                [q.id]: { ...prev[q.id], text: e.target.value }
+                              }))}
+                              placeholder="اكتب إجابتك هنا..."
+                              rows={4}
+                            />
+                          </div>
+
+                          <div className="cd-form-group" style={{ marginTop: '12px' }}>
+                            <label className="cd-label">🔗 أو ضع رابط الحل (جوجل درايف، جيت هاب... إلخ):</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              value={ans.link}
+                              onChange={e => setQuestionAnswers(prev => ({
+                                ...prev,
+                                [q.id]: { ...prev[q.id], link: e.target.value }
+                              }))}
+                              placeholder="https://drive.google.com/..."
+                              style={{ width: '100%', background: '#1e293b', border: '1px solid var(--border-dark)', borderRadius: '8px', padding: '10px 14px', color: 'white' }}
+                            />
+                            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.8rem', marginTop: '6px' }}>
+                              ⚠️ <strong>تنبيه هام للرفع على جوجل درايف:</strong> تأكد من تعديل إعدادات المشاركة لتجعل الرابط <strong>"متاح لأي شخص لديه الرابط" (Anyone with the link can view)</strong> ليتمكن المسؤول من قراءته.
+                            </p>
+                          </div>
+
+                          <div className="cd-answer-actions" style={{ marginTop: '15px' }}>
+                            {q.my_answer?.answer_link && (
+                              <a href={q.my_answer.answer_link} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', fontSize: '0.88rem' }}>
+                                🔗 عرض الرابط المرسل سابقاً
+                              </a>
                             )}
                             <button
                               className="cd-btn cd-btn-purple cd-btn-sm"
                               onClick={() => handleSubmitAnswer(q.id)}
                               disabled={submittingAnswer === q.id}
+                              style={{ marginRight: 'auto' }}
                             >
                               {submittingAnswer === q.id ? 'جاري الإرسال...' : '📤 إرسال الإجابة'}
                             </button>

@@ -21,8 +21,7 @@ export default function CardDetail() {
   // Project state
   const [projectSubmission, setProjectSubmission] = useState(null);
   const [solutionText, setSolutionText] = useState('');
-  const [solutionFile, setSolutionFile] = useState(null);
-  const [solutionFileName, setSolutionFileName] = useState('');
+  const [solutionLink, setSolutionLink] = useState('');
   const [submittingProject, setSubmittingProject] = useState(false);
   const [projectSuccess, setProjectSuccess] = useState('');
 
@@ -99,14 +98,14 @@ export default function CardDetail() {
 
   const handleProjectSubmit = async (e) => {
     e.preventDefault();
-    if (!solutionText && !solutionFile) { alert('يرجى كتابة الحل أو رفع ملف.'); return; }
+    if (!solutionText && !solutionLink) { alert('يرجى كتابة الحل أو إضافة رابط المشروع.'); return; }
+    if (solutionLink && !solutionLink.startsWith('http')) { alert('الرابط غير صحيح. يجب أن يبدأ بـ http:// أو https://'); return; }
     setSubmittingProject(true);
     setProjectSuccess('');
     try {
       await apiService.submitProjectSolution(card.db_id, {
         solution_text: solutionText || null,
-        solution_file_base64: solutionFile || null,
-        solution_file_name: solutionFileName || null
+        solution_link: solutionLink || null,
       }, token);
       setProjectSuccess('تم تسليم المشروع بنجاح! في انتظار مراجعة الإدارة.');
       await loadCard();
@@ -219,18 +218,23 @@ export default function CardDetail() {
                   />
                 </div>
                 <div className="cd-form-group">
-                  <label className="cd-label">📂 أو ارفع ملف (zip, rar, pdf, cpp, txt — max 2MB):</label>
-                  <div className="cd-file-row">
-                    <button type="button" className="cd-btn cd-btn-secondary" onClick={() => document.getElementById('proj-file').click()}>اختر ملف</button>
-                    <span className="cd-file-name">{solutionFileName || 'لم يتم اختيار ملف'}</span>
-                    <input id="proj-file" type="file" style={{ display: 'none' }} onChange={e => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) { alert('الحد الأقصى 2MB'); return; }
-                      const reader = new FileReader();
-                      reader.onload = ev => { setSolutionFile(ev.target.result); setSolutionFileName(file.name); };
-                      reader.readAsDataURL(file);
-                    }} />
+                  <label className="cd-label">🔗 رابط المشروع على Google Drive أو GitHub:</label>
+                  <input
+                    type="url"
+                    className="cd-input"
+                    value={solutionLink}
+                    onChange={e => setSolutionLink(e.target.value)}
+                    placeholder="https://drive.google.com/..."
+                  />
+                  <div className="cd-drive-instructions">
+                    <p className="cd-drive-title">📋 تعليمات مشاركة Google Drive:</p>
+                    <ol className="cd-drive-steps">
+                      <li>افتح الملف أو المجلد على Google Drive</li>
+                      <li>انقر بالزر الأيمن ← <strong>"مشاركة"</strong> أو <strong>"Share"</strong></li>
+                      <li>في إعدادات الوصول اختر: <strong>"أي شخص لديه الرابط"</strong> (Anyone with the link)</li>
+                      <li>تأكد أن الإذن على <strong>"مشاهد"</strong> (Viewer) على الأقل</li>
+                      <li>انسخ الرابط وضعه في الحقل أعلاه ✅</li>
+                    </ol>
                   </div>
                 </div>
                 <button type="submit" disabled={submittingProject} className="cd-btn cd-btn-accent cd-btn-wide">

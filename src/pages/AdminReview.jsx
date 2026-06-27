@@ -174,6 +174,8 @@ export default function AdminReview() {
                     <div style={{ flex: 1, minWidth: '200px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
                         <span style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '2px 10px', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 700 }}>📁 {sub.card_title}</span>
+                        {sub.course_title && <span style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 600 }}>🎓 {sub.course_title}</span>}
+                        {sub.section_title && <span style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 600 }}>📂 {sub.section_title}</span>}
                         {statusBadge(sub.status)}
                         {sub.grade != null && <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 10px', borderRadius: '50px', fontSize: '0.8rem', fontWeight: 700 }}>🏆 {sub.grade}/100</span>}
                       </div>
@@ -183,6 +185,11 @@ export default function AdminReview() {
                         <p style={{ color: '#d1d5db', margin: '8px 0 0', fontSize: '0.87rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(255,255,255,0.04)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.07)' }}>
                           {sub.solution_text.length > 200 ? sub.solution_text.slice(0, 200) + '...' : sub.solution_text}
                         </p>
+                      )}
+                      {sub.solution_link && (
+                        <a href={sub.solution_link} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '8px', color: '#60a5fa', fontSize: '0.84rem', wordBreak: 'break-all', background: 'rgba(59,130,246,0.08)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', textDecoration: 'none' }}>
+                          🔗 فتح رابط المشروع
+                        </a>
                       )}
                       {sub.feedback_note && (
                         <div style={{ marginTop: '8px', background: 'rgba(16,185,129,0.07)', padding: '8px 12px', borderRadius: '8px', borderRight: '3px solid #10b981' }}>
@@ -317,7 +324,18 @@ export default function AdminReview() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto', padding: 'clamp(18px,3vw,28px)' }}>
             <h2 style={{ color: 'white', margin: '0 0 4px', fontSize: 'clamp(1rem,3vw,1.2rem)' }}>✍️ مراجعة المشروع</h2>
-            <p style={{ color: '#9ca3af', margin: '0 0 20px', fontSize: '0.85rem' }}>{selectedSub.student_name} — {selectedSub.card_title}</p>
+            <p style={{ color: '#9ca3af', margin: '0 0 4px', fontSize: '0.85rem' }}>{selectedSub.student_name} — {selectedSub.card_title}</p>
+            {(selectedSub.course_title || selectedSub.section_title) && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                {selectedSub.course_title && <span style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 600 }}>🎓 {selectedSub.course_title}</span>}
+                {selectedSub.section_title && <span style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 600 }}>📂 {selectedSub.section_title}</span>}
+              </div>
+            )}
+            {selectedSub.solution_link && (
+              <a href={selectedSub.solution_link} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '14px', color: '#60a5fa', fontSize: '0.87rem', background: 'rgba(59,130,246,0.1)', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.25)', textDecoration: 'none', wordBreak: 'break-all' }}>
+                🔗 فتح رابط المشروع
+              </a>
+            )}
             {selectedSub.solution_text && (
               <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', marginBottom: '18px', maxHeight: '150px', overflowY: 'auto', borderRight: '3px solid #3b82f6' }}>
                 <p style={{ color: '#9ca3af', margin: '0 0 4px', fontSize: '0.75rem' }}>📝 الحل المُرسل:</p>

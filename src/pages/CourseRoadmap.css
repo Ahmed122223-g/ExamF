@@ -452,3 +452,196 @@
   .roadmap-flow { gap: 0.7rem; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEADERBOARD SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.leaderboard-section {
+  margin-bottom: 2.5rem;
+  padding: 0;
+}
+
+.leaderboard-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}
+
+/* ── Podium: Top 3 Cards ── */
+.leaderboard-podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 1.2rem;
+}
+
+.leaderboard-card {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 18px 14px;
+  text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.leaderboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.3;
+}
+
+.leaderboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.leaderboard-medal {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+  animation: medalBounce 2s ease-in-out infinite;
+}
+
+@keyframes medalBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.leaderboard-rank {
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.leaderboard-name {
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+
+.leaderboard-completed {
+  color: #9ca3af;
+}
+
+.leaderboard-pct {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.leaderboard-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.leaderboard-bar-fill {
+  height: 100%;
+  border-radius: 50px;
+  transition: width 1s ease-out;
+}
+
+/* ── My Rank Banner ── */
+.leaderboard-my-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(6,182,212,0.06);
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 14px;
+  padding: 14px 20px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.leaderboard-my-icon {
+  font-size: 1.2rem;
+}
+
+.leaderboard-my-divider {
+  color: #4b5563;
+  font-size: 0.8rem;
+}
+
+.leaderboard-my-rank strong {
+  color: #fff;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .leaderboard-podium {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .leaderboard-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+    padding: 14px 16px;
+  }
+
+  .leaderboard-medal {
+    font-size: 1.8rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .leaderboard-rank {
+    font-size: 1rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    min-width: 30px;
+  }
+
+  .leaderboard-name {
+    flex: 1;
+    margin-bottom: 0;
+    text-align: right;
+  }
+
+  .leaderboard-stats {
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 0;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .leaderboard-bar-bg {
+    display: none;
+  }
+
+  .leaderboard-my-rank {
+    font-size: 0.82rem;
+    padding: 12px 14px;
+    gap: 6px;
+  }
+
+  .leaderboard-title {
+    font-size: 1.25rem;
+  }
+}

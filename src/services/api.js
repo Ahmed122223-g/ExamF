@@ -197,6 +197,13 @@ export const apiService = {
     return res.data;
   },
 
+  getCourseLeaderboard: async (courseId, token) => {
+    const res = await API.get(`/api/courses/${courseId}/leaderboard`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   toggleCardCompletion: async (cardDbId, token) => {
     const res = await API.post(`/api/courses/cards/${cardDbId}/complete`, {}, {
       headers: { Authorization: `Bearer ${token}` }

@@ -14,6 +14,7 @@ export default function CourseRoadmap() {
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [leaderboard, setLeaderboard] = useState(null);
 
   // Fetch roadmap data
   const fetchRoadmap = async () => {
@@ -33,6 +34,9 @@ export default function CourseRoadmap() {
   useEffect(() => {
     if (courseId && token) {
       fetchRoadmap();
+      apiService.getCourseLeaderboard(courseId, token)
+        .then(data => setLeaderboard(data))
+        .catch(() => {});
     } else {
       setError('يرجى تسجيل الدخول أولاً.');
       setLoading(false);
@@ -149,6 +153,49 @@ export default function CourseRoadmap() {
           <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => navigate('/dashboard')}>
             العودة للوحة التحكم
           </button>
+        </div>
+      )}
+
+      {/* ── Leaderboard Section ── */}
+      {leaderboard && leaderboard.total_cards > 0 && (
+        <div className="leaderboard-section">
+          <h2 className="leaderboard-title">🏆 لوحة المتصدرين</h2>
+
+          {/* Top 3 Podium */}
+          <div className="leaderboard-podium">
+            {leaderboard.top_three.map((s, i) => {
+              const medals = ['🥇', '🥈', '🥉'];
+              const colors = ['#fbbf24', '#94a3b8', '#d97706'];
+              const bgColors = ['rgba(251,191,36,0.10)', 'rgba(148,163,184,0.08)', 'rgba(217,119,6,0.08)'];
+              const borderColors = ['rgba(251,191,36,0.35)', 'rgba(148,163,184,0.25)', 'rgba(217,119,6,0.25)'];
+              return (
+                <div key={s.student_id} className="leaderboard-card" style={{ background: bgColors[i], borderColor: borderColors[i] }}>
+                  <div className="leaderboard-medal">{medals[i]}</div>
+                  <div className="leaderboard-rank" style={{ color: colors[i] }}>#{i + 1}</div>
+                  <div className="leaderboard-name">{s.student_name}</div>
+                  <div className="leaderboard-stats">
+                    <span className="leaderboard-completed">✅ {s.completed_count} / {leaderboard.total_cards}</span>
+                    <span className="leaderboard-pct" style={{ color: colors[i] }}>{s.progress_percentage}%</span>
+                  </div>
+                  <div className="leaderboard-bar-bg">
+                    <div className="leaderboard-bar-fill" style={{ width: `${s.progress_percentage}%`, background: colors[i] }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* My Rank */}
+          {leaderboard.my_rank && (
+            <div className="leaderboard-my-rank">
+              <span className="leaderboard-my-icon">📍</span>
+              <span>ترتيبك: <strong>#{leaderboard.my_rank}</strong></span>
+              <span className="leaderboard-my-divider">•</span>
+              <span>أكملت <strong>{leaderboard.my_completed_cards}</strong> من <strong>{leaderboard.total_cards}</strong> كارت</span>
+              <span className="leaderboard-my-divider">•</span>
+              <span style={{ color: '#06b6d4', fontWeight: 700 }}>{leaderboard.my_progress_percentage}%</span>
+            </div>
+          )}
         </div>
       )}
 

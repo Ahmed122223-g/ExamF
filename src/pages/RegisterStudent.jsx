@@ -23,8 +23,9 @@ const RegisterStudent = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [checkingDetails, setCheckingDetails] = useState(false);
   const [showCorrections, setShowCorrections] = useState(false);
+  const [secondsUntilEnd, setSecondsUntilEnd] = useState(0);
 
-  const studentToken = sessionStorage.getItem(`student_token_${examId}`);
+  const studentToken = sessionStorage.getItem(`student_token_${examId}`) || localStorage.getItem('student_token');
   const storedName = sessionStorage.getItem(`student_name_${examId}`);
 
   // 1. Fetch exam details and check if already submitted
@@ -37,12 +38,17 @@ const RegisterStudent = () => {
       // Calculate remaining seconds to start
       setTimeLeftToStart(examData.starts_in_seconds);
 
-      // If student has a token, check if they have a submitted result
+      // If student has any token (session or main token), check if they have a submitted result
       if (studentToken) {
         try {
           const resData = await apiService.getExamResult(examId, studentToken);
           setResult(resData);
           setIsSubmitted(true);
+          
+          // Calculate seconds remaining until exam officially ends
+          if (examData.ends_in_seconds) {
+            setSecondsUntilEnd(examData.ends_in_seconds);
+          }
         } catch (resErr) {
           // No result found yet, which means they registered but haven't submitted yet
           setIsSubmitted(false);
@@ -79,6 +85,27 @@ const RegisterStudent = () => {
   }, [timeLeftToStart]);
 
   // 3. Register Student for the Exam
+  // 2.2 Countdown Timer until Exam Ends (for unlocking review button)
+  useEffect(() => {
+    if (secondsUntilEnd <= 0) return;
+
+    const timer = setInterval(() => {
+      setSecondsUntilEnd(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Trigger refresh to update the result status and unlock the button
+          if (result) {
+            setResult(old => old ? { ...old, is_exam_ended: true } : null);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [secondsUntilEnd, result]);
+
   const handleRegister = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     
@@ -127,7 +154,7 @@ const RegisterStudent = () => {
   const handleExit = () => {
     sessionStorage.removeItem(`student_token_${examId}`);
     sessionStorage.removeItem(`student_name_${examId}`);
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const formatCountdown = (seconds) => {
@@ -222,17 +249,19 @@ const RegisterStudent = () => {
             {/* Header Result status */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               {result.is_submitted === false ? (
-                <div style={{ fontSize: '4rem', color: '#ef4444' }}>⚠️</div>
+                <div style={{ fontSize: '4.5rem', color: '#f87171', filter: 'drop-shadow(0 0 15px rgba(248,113,113,0.3))' }}>⚠️</div>
               ) : result.is_cheated ? (
-                <div style={{ fontSize: '4rem', color: '#ef4444' }}>⚠️</div>
+                <div style={{ fontSize: '4.5rem', color: '#f87171', filter: 'drop-shadow(0 0 15px rgba(248,113,113,0.3))' }}>⚠️</div>
               ) : (
-                <FaCheckCircle style={{ fontSize: '4rem', color: '#10b981' }} />
+                <div style={{ fontSize: '4.5rem', color: '#10b981', filter: 'drop-shadow(0 0 15px rgba(16,185,129,0.3))' }}>
+                  <FaCheckCircle />
+                </div>
               )}
-              <h3 style={{ fontSize: '1.4rem', color: 'white', fontWeight: 'bold' }}>
-                {result.is_submitted === false ? 'انتهى الوقت ولم تقم بتسليم الإجابات (تم احتساب درجة 0)' : (result.is_cheated ? 'تم إنهاء الاختبار ورصد محاولة مخالفة' : 'تم تسليم إجاباتك بنجاح!')}
+              <h3 style={{ fontSize: '1.45rem', color: 'white', fontWeight: '800', lineHeight: '1.5' }}>
+                {result.is_submitted === false ? 'انتهى الوقت ولم تقم بتسليم الإجابات (تم احتساب درجة 0)' : (result.is_cheated ? 'تم إنهاء الاختبار ورصد محاولة مخالفة' : 'لقد أتممت هذا الاختبار بنجاح!')}
               </h3>
-              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', margin: 0 }}>
-                اسم الطالب: <strong>{storedName || result.student_name}</strong>
+              <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: 0 }}>
+                اسم الطالب: <strong style={{ color: '#fff' }}>{storedName || result.student_name}</strong>
               </p>
             </div>
 
@@ -241,71 +270,114 @@ const RegisterStudent = () => {
               display: 'inline-flex',
               flexDirection: 'column',
               alignItems: 'center',
-              backgroundColor: 'rgba(30, 41, 59, 0.3)',
-              border: '1px solid var(--border-dark)',
-              borderRadius: '16px',
-              padding: '20px 40px',
+              background: 'linear-gradient(135deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.6) 100%)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px',
+              padding: '24px 48px',
               margin: '0 auto',
-              width: 'fit-content'
+              width: 'fit-content',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
             }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted-dark)' }}>الدرجة الحاصل عليها</span>
-              <span style={{ fontSize: '2.5rem', fontWeight: '900', color: result.status === 'ناجح' ? '#10b981' : '#ef4444' }}>
-                {result.score} <span style={{ fontSize: '1.2rem', color: 'var(--text-muted-dark)', fontWeight: 'normal' }}>/ {result.total_marks}</span>
+              <span style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '4px' }}>الدرجة الحاصل عليها</span>
+              <span style={{ fontSize: '3rem', fontWeight: '900', color: result.status === 'ناجح' ? '#34d399' : '#f87171', letterSpacing: '-1px' }}>
+                {result.score} <span style={{ fontSize: '1.3rem', color: '#64748b', fontWeight: '500' }}>/ {result.total_marks}</span>
               </span>
               <span style={{
                 display: 'inline-block',
-                padding: '4px 12px',
+                padding: '6px 16px',
                 borderRadius: '50px',
-                fontWeight: 'bold',
-                fontSize: '0.8rem',
-                backgroundColor: result.status === 'ناجح' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: result.status === 'ناجح' ? '#10b981' : '#ef4444',
-                marginTop: '8px'
+                fontWeight: '800',
+                fontSize: '0.82rem',
+                backgroundColor: result.status === 'ناجح' ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)',
+                color: result.status === 'ناجح' ? '#34d399' : '#f87171',
+                marginTop: '12px',
+                border: result.status === 'ناجح' ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(248,113,113,0.2)'
               }}>
                 التقدير: {result.grade}
               </span>
             </div>
 
             {/* Exit/Refresh Action Panel */}
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button onClick={handleExit} className="btn btn-secondary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                خروج من القاعة
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '10px' }}>
+              <button onClick={handleExit} className="btn btn-secondary" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 24px', borderRadius: '12px' }}>
+                العودة للوحة التحكم
               </button>
               
               {!result.is_exam_ended && (
-                <button onClick={handleRefreshResult} disabled={checkingDetails} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button onClick={handleRefreshResult} disabled={checkingDetails} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 24px', borderRadius: '12px' }}>
                   <FaSync className={checkingDetails ? 'spin-anim' : ''} />
                   {checkingDetails ? 'جاري التحديث...' : 'تحديث وتدقيق التصحيح'}
                 </button>
               )}
 
-              {result.is_exam_ended && (
+              {/* Locked / Active Review button */}
+              {result.is_exam_ended ? (
                 <button 
                   onClick={() => setShowCorrections(prev => !prev)} 
                   className="btn btn-accent" 
-                  style={{ fontWeight: 'bold' }}
+                  style={{ fontWeight: '800', padding: '12px 24px', borderRadius: '12px' }}
                 >
-                  {showCorrections ? 'إخفاء ورقة التصحيح' : 'عرض ورقة التصحيح التفصيلية'}
+                  {showCorrections ? 'إخفاء ورقة التصحيح' : '🔍 عرض ورقة التصحيح التفصيلية'}
+                </button>
+              ) : (
+                <button 
+                  disabled
+                  className="btn" 
+                  style={{ 
+                    fontWeight: '800', 
+                    padding: '12px 24px', 
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: '#64748b',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    cursor: 'not-allowed',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FaLock style={{ fontSize: '0.85rem' }} />
+                  مراجعة الامتحان مغلقة مؤقتاً
                 </button>
               )}
             </div>
 
-            {/* Lock Message if Exam NOT ended yet */}
+            {/* Lock Message if Exam NOT ended yet with active countdown */}
             {!result.is_exam_ended && (
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 padding: '20px',
-                borderRadius: '10px',
-                backgroundColor: 'rgba(245, 158, 11, 0.05)',
-                border: '1px solid rgba(245, 158, 11, 0.25)',
-                marginTop: '10px'
+                borderRadius: '16px',
+                backgroundColor: 'rgba(245, 158, 11, 0.04)',
+                border: '1px solid rgba(245, 158, 11, 0.15)',
+                marginTop: '15px',
+                maxWidth: '480px',
+                margin: '15px auto 0'
               }}>
-                <FaLock style={{ fontSize: '1.8rem', color: '#f59e0b', marginBottom: '10px' }} />
-                <h4 style={{ color: 'white', fontSize: '0.95rem', marginBottom: '5px' }}>التصحيح التفصيلي مقفل مؤقتاً</h4>
-                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.8rem', margin: 0 }}>
-                  الإجابات النموذجية وتصحيح الأسئلة سيتم تفعيلها للجميع فور انتهاء وقت الاختبار بالكامل لمنع تسريب الإجابات. يرجى الرجوع لاحقاً.
+                <FaClock style={{ fontSize: '1.6rem', color: '#f59e0b', marginBottom: '10px' }} />
+                <h4 style={{ color: '#fff', fontSize: '0.95rem', fontWeight: '800', marginBottom: '6px' }}>
+                  تفتح مراجعة الأسئلة والإجابات النموذجية بعد:
+                </h4>
+                
+                {secondsUntilEnd > 0 ? (
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '900',
+                    color: '#f59e0b',
+                    margin: '8px 0',
+                    fontFamily: 'monospace',
+                    letterSpacing: '1px'
+                  }}>
+                    {formatCountdown(secondsUntilEnd)}
+                  </div>
+                ) : (
+                  <span style={{ color: '#f59e0b', fontSize: '0.85rem', fontWeight: 'bold' }}>بانتظار انتهاء وقت الاختبار بالكامل للجميع...</span>
+                )}
+                
+                <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, lineHeight: '1.6', textAlign: 'center' }}>
+                  لمنع تسريب الأسئلة للزملاء الذين لم ينتهوا بعد، سيتم إتاحة مراجعة ورقتك والإجابات النموذجية فور انتهاء مؤقت الاختبار الإجمالي.
                 </p>
               </div>
             )}

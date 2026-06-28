@@ -46,7 +46,7 @@ export default function CardDetail() {
       if (found.is_project) {
         setProjectSubmission(found.project_submission || null);
         setSolutionText(found.project_submission?.solution_text || '');
-        setSolutionFileName(found.project_submission?.solution_file_name || '');
+        setSolutionLink(found.project_submission?.solution_link || '');
       } else {
         const qs = await apiService.getCardQuestionsStudent(found.db_id, token);
         setCardQuestions(qs);
@@ -253,10 +253,12 @@ export default function CardDetail() {
                     <pre className="cd-pre">{projectSubmission.solution_text}</pre>
                   </div>
                 )}
-                {projectSubmission.solution_file_name && (
-                  <div className="cd-file-info">
-                    <span className="cd-file-info-label">📄 الملف المرفوع:</span>
-                    <span className="cd-file-info-name">{projectSubmission.solution_file_name}</span>
+                {projectSubmission.solution_link && (
+                  <div className="cd-file-info" style={{ marginTop: '10px' }}>
+                    <span className="cd-file-info-label">🔗 رابط المشروع: </span>
+                    <a href={projectSubmission.solution_link} target="_blank" rel="noreferrer" className="cd-file-info-name" style={{ color: '#06b6d4', textDecoration: 'underline' }}>
+                      {projectSubmission.solution_link}
+                    </a>
                   </div>
                 )}
               </div>

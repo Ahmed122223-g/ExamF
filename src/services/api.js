@@ -5,9 +5,10 @@ const API = axios.create({
 });
 
 export const apiService = {
-  // Student Services
   verifyExam: async (code) => {
-    const res = await API.get(`/api/exams/verify/${code}`);
+    const token = sessionStorage.getItem(`student_token_${code}`) || localStorage.getItem('student_token') || '';
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await API.get(`/api/exams/verify/${code}`, { headers });
     return res.data;
   },
 

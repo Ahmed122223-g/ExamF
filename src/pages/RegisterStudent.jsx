@@ -38,6 +38,22 @@ const RegisterStudent = () => {
       // Calculate remaining seconds to start
       setTimeLeftToStart(examData.starts_in_seconds);
 
+      // Check if already submitted according to backend verification
+      if (examData.has_submitted && studentToken) {
+        try {
+          const resData = await apiService.getExamResult(examId, studentToken);
+          setResult(resData);
+          setIsSubmitted(true);
+          if (examData.ends_in_seconds) {
+            setSecondsUntilEnd(examData.ends_in_seconds);
+          }
+          setLoading(false);
+          return;
+        } catch (e) {
+          // Fallback if result fetch failed
+        }
+      }
+
       // If student has any token (session or main token), check if they have a submitted result
       if (studentToken) {
         try {

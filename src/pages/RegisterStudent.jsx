@@ -143,7 +143,19 @@ const RegisterStudent = () => {
       
       navigate(`/take-exam/${examId}`);
     } catch (err) {
-      Swal.fire('خطأ!', err.response?.data?.detail || 'فشل في الدخول للاختبار.', 'error');
+      const errMsg = err.response?.data?.detail || '';
+      if (errMsg.includes('مسبقاً') || errMsg.includes('بالفعل') || err.response?.status === 400) {
+        // The student already took this exam. Load results screen directly.
+        try {
+          const resData = await apiService.getExamResult(examId, mainToken);
+          setResult(resData);
+          setIsSubmitted(true);
+          return;
+        } catch (resErr) {
+          // Fallback if results fetch fails
+        }
+      }
+      Swal.fire('خطأ!', errMsg || 'فشل في الدخول للاختبار.', 'error');
       setRegistering(false);
     }
   };

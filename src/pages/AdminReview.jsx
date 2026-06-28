@@ -29,6 +29,11 @@ export default function AdminReview() {
   const [feedbackText, setFeedbackText] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
 
+  // ── Filters & Search state ────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('all');
+  const [selectedSection, setSelectedSection] = useState('all');
+
   useEffect(() => {
     if (!token) { navigate('/admin/login'); return; }
     loadProjects();
@@ -108,8 +113,45 @@ export default function AdminReview() {
     return <span style={{ background: st.bg, color: st.color, padding: '3px 12px', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700 }}>{st.label}</span>;
   };
 
-  const filteredSubmissions = filterStatus === 'all' ? submissions : submissions.filter(s => s.status === filterStatus);
-  const totalAnswers = cardsWithAnswers.reduce((a, c) => a + c.questions.reduce((b, q) => b + q.answers.length, 0), 0);
+  // Extract unique courses and sections from both projects and questions for the dropdowns
+  const allAvailableCourses = Array.from(new Set([
+    ...submissions.map(s => s.course_title).filter(Boolean),
+    ...cardsWithAnswers.map(c => c.course_title).filter(Boolean)
+  ]));
+
+  const allAvailableSections = Array.from(new Set([
+    ...submissions.filter(s => selectedCourse === 'all' || s.course_title === selectedCourse).map(s => s.section_title).filter(Boolean),
+    ...cardsWithAnswers.filter(c => selectedCourse === 'all' || c.course_title === selectedCourse).map(c => c.section_title).filter(Boolean)
+  ]));
+
+  // Reset section filter if it's no longer available when course changes
+  useEffect(() => {
+    if (selectedSection !== 'all' && !allAvailableSections.includes(selectedSection)) {
+      setSelectedSection('all');
+    }
+  }, [selectedCourse]);
+
+  // Filter Submissions (Projects)
+  const filteredSubmissions = submissions.filter(s => {
+    const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
+    const matchesCourse = selectedCourse === 'all' || s.course_title === selectedCourse;
+    const matchesSection = selectedSection === 'all' || s.section_title === selectedSection;
+    const matchesSearch = !searchQuery.trim() || 
+      (s.card_title && s.card_title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (s.student_name && s.student_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesStatus && matchesCourse && matchesSection && matchesSearch;
+  });
+
+  // Filter Cards (Questions)
+  const filteredCardsWithAnswers = cardsWithAnswers.filter(c => {
+    const matchesCourse = selectedCourse === 'all' || c.course_title === selectedCourse;
+    const matchesSection = selectedSection === 'all' || c.section_title === selectedSection;
+    const matchesSearch = !searchQuery.trim() || 
+      (c.card_title && c.card_title.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesCourse && matchesSection && matchesSearch;
+  });
+
+  const totalAnswers = filteredCardsWithAnswers.reduce((a, c) => a + c.questions.reduce((b, q) => b + q.answers.length, 0), 0);
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', padding: 'clamp(16px,3vw,32px)', direction: 'rtl', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
@@ -128,9 +170,9 @@ export default function AdminReview() {
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {[
           { key: 'projects', icon: '📁', label: 'المشاريع', count: submissions.length },
-          { key: 'questions', icon: '❓', label: 'الأسئلة', count: totalAnswers }
+          { key: 'questions', icon: '❓', label: 'الأسئلة', count: cardsWithAnswers.reduce((a, c) => a + c.questions.reduce((b, q) => b + q.answers.length, 0), 0) }
         ].map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+          <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSearchQuery(''); }} style={{
             padding: 'clamp(8px,1.5vw,12px) clamp(16px,3vw,24px)', borderRadius: '12px',
             border: activeTab === tab.key ? '2px solid #3b82f6' : '2px solid rgba(255,255,255,0.1)',
             background: activeTab === tab.key ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.04)',
@@ -143,6 +185,74 @@ export default function AdminReview() {
             </span>
           </button>
         ))}
+      </div>
+
+      {/* Global Filters & Search Section */}
+      <div className="glass-card" style={{ padding: '16px', marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ flex: 1, minWidth: '200px' }}>
+          <input
+            type="text"
+            placeholder={activeTab === 'projects' ? "🔍 ابحث باسم المشروع أو الطالب..." : "🔍 ابحث باسم الكارت / الواجب..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              background: 'rgba(0,0,0,0.2)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              color: '#fff',
+              fontSize: '0.9rem',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+        
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%', maxWidth: '500px' }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'rgba(15,23,42,0.8)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                color: '#fff',
+                fontSize: '0.88rem',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">🎓 جميع الكورسات</option>
+              {allAvailableCourses.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ flex: 1, minWidth: '140px' }}>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'rgba(15,23,42,0.8)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                color: '#fff',
+                fontSize: '0.88rem',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">📂 جميع الأقسام</option>
+              {allAvailableSections.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* ── PROJECTS TAB ── */}
@@ -216,14 +326,14 @@ export default function AdminReview() {
         <>
           {loadingQuestions ? (
             <div style={{ textAlign: 'center', paddingTop: '60px' }}><div className="spinner" /></div>
-          ) : cardsWithAnswers.length === 0 ? (
+          ) : filteredCardsWithAnswers.length === 0 ? (
             <div className="glass-card" style={{ textAlign: 'center', padding: '48px', color: '#9ca3af' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📭</div>
-              <p style={{ margin: 0 }}>لم يُجب الطلاب على أي أسئلة بعد.</p>
+              <p style={{ margin: 0 }}>لم يتم العثور على أي أسئلة مطابقة للبحث أو الفلاتر.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {cardsWithAnswers.map(card => (
+              {filteredCardsWithAnswers.map(card => (
                 <div key={card.card_id} className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
                   <button
                     onClick={() => setExpandedCard(expandedCard === card.card_id ? null : card.card_id)}
@@ -232,7 +342,11 @@ export default function AdminReview() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '1.4rem' }}>📚</span>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ color: 'white', fontWeight: 700, margin: 0, fontSize: 'clamp(0.95rem,2.5vw,1.1rem)' }}>{card.card_title}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                          <p style={{ color: 'white', fontWeight: 700, margin: 0, fontSize: 'clamp(0.95rem,2.5vw,1.1rem)' }}>{card.card_title}</p>
+                          {card.course_title && <span style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '2px 8px', borderRadius: '50px', fontSize: '0.72rem', fontWeight: 600 }}>🎓 {card.course_title}</span>}
+                          {card.section_title && <span style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', padding: '2px 8px', borderRadius: '50px', fontSize: '0.72rem', fontWeight: 600 }}>📂 {card.section_title}</span>}
+                        </div>
                         <p style={{ color: '#9ca3af', margin: 0, fontSize: '0.8rem' }}>
                           {card.questions.length} سؤال • {card.questions.reduce((a, q) => a + q.answers.length, 0)} إجابة
                         </p>

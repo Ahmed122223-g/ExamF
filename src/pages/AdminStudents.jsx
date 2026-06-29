@@ -88,6 +88,31 @@ export default function AdminStudents() {
     } finally { setSending(false); }
   };
 
+  const handleDeleteStudent = async (student) => {
+    const result = await Swal.fire({
+      title: `حذف الطالب؟`,
+      html: `<div style="direction:rtl;text-align:right">
+        <p>هل أنت متأكد من حذف <strong>${student.name}</strong>؟</p>
+        <p style="color:#f87171;font-size:0.85rem;margin-top:8px">⚠️ سيتم حذف جميع بياناته بشكل دائم: الكويزات، الإجابات، المشاريع، والكورسات المسجلة.</p>
+      </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'نعم، احذف',
+      cancelButtonText: 'إلغاء',
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await apiService.deleteStudent(student.id, token);
+      setStudents(prev => prev.filter(s => s.id !== student.id));
+      Swal.fire({ icon: 'success', title: 'تم الحذف', text: res.message, timer: 2500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في حذف الطالب', 'error');
+    }
+  };
+
   const filtered = students.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.email.toLowerCase().includes(search.toLowerCase())
@@ -188,13 +213,32 @@ export default function AdminStudents() {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => openNotifModal(student)}
-                        className="btn btn-primary"
-                        style={{ fontSize: '0.82rem', padding: '8px 14px', flexShrink: 0 }}
-                      >
-                        🔔 إرسال تنبيه
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => openNotifModal(student)}
+                          className="btn btn-primary"
+                          style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+                        >
+                          🔔 إرسال تنبيه
+                        </button>
+                        <button
+                          onClick={() => handleDeleteStudent(student)}
+                          className="btn"
+                          style={{
+                            fontSize: '0.82rem', padding: '8px 14px',
+                            background: 'rgba(239,68,68,0.15)',
+                            border: '1px solid rgba(239,68,68,0.4)',
+                            color: '#f87171',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.3)'; e.currentTarget.style.borderColor = '#ef4444'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; }}
+                        >
+                          🗑️ حذف الطالب
+                        </button>
+                      </div>
                     </div>
 
                     {/* Courses */}

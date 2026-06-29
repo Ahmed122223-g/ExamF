@@ -439,4 +439,13 @@ export const apiService = {
     });
     return res.data;
   },
+
+  // ── Delete Student - Admin ────────────────────────────────────────────────
+  deleteStudent: async (studentId, token) => {
+    const res = await API.delete(`/api/admin/students/${studentId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
 };
+

@@ -44,7 +44,7 @@ export default function AdminReview() {
     setLoadingProjects(true);
     try {
       const data = await apiService.getProjectSubmissionsAdmin(token);
-      setSubmissions(data || []);
+      setSubmissions(Array.isArray(data) ? data : []);
     } catch { setSubmissions([]); }
     finally { setLoadingProjects(false); }
   };
@@ -53,7 +53,7 @@ export default function AdminReview() {
     setLoadingQuestions(true);
     try {
       const data = await apiService.getCardsWithAnswersAdmin(token);
-      setCardsWithAnswers(data || []);
+      setCardsWithAnswers(Array.isArray(data) ? data : []);
     } catch { setCardsWithAnswers([]); }
     finally { setLoadingQuestions(false); }
   };
@@ -114,14 +114,17 @@ export default function AdminReview() {
   };
 
   // Extract unique courses and sections from both projects and questions for the dropdowns
+  const safeSubmissions = Array.isArray(submissions) ? submissions : [];
+  const safeCardsWithAnswers = Array.isArray(cardsWithAnswers) ? cardsWithAnswers : [];
+
   const allAvailableCourses = Array.from(new Set([
-    ...submissions.map(s => s.course_title).filter(Boolean),
-    ...cardsWithAnswers.map(c => c.course_title).filter(Boolean)
+    ...safeSubmissions.map(s => s.course_title).filter(Boolean),
+    ...safeCardsWithAnswers.map(c => c.course_title).filter(Boolean)
   ]));
 
   const allAvailableSections = Array.from(new Set([
-    ...submissions.filter(s => selectedCourse === 'all' || s.course_title === selectedCourse).map(s => s.section_title).filter(Boolean),
-    ...cardsWithAnswers.filter(c => selectedCourse === 'all' || c.course_title === selectedCourse).map(c => c.section_title).filter(Boolean)
+    ...safeSubmissions.filter(s => selectedCourse === 'all' || s.course_title === selectedCourse).map(s => s.section_title).filter(Boolean),
+    ...safeCardsWithAnswers.filter(c => selectedCourse === 'all' || c.course_title === selectedCourse).map(c => c.section_title).filter(Boolean)
   ]));
 
   // Reset section filter if it's no longer available when course changes
@@ -132,7 +135,7 @@ export default function AdminReview() {
   }, [selectedCourse]);
 
   // Filter Submissions (Projects)
-  const filteredSubmissions = submissions.filter(s => {
+  const filteredSubmissions = safeSubmissions.filter(s => {
     const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
     const matchesCourse = selectedCourse === 'all' || s.course_title === selectedCourse;
     const matchesSection = selectedSection === 'all' || s.section_title === selectedSection;
@@ -143,7 +146,7 @@ export default function AdminReview() {
   });
 
   // Filter Cards (Questions)
-  const filteredCardsWithAnswers = cardsWithAnswers.filter(c => {
+  const filteredCardsWithAnswers = safeCardsWithAnswers.filter(c => {
     const matchesCourse = selectedCourse === 'all' || c.course_title === selectedCourse;
     const matchesSection = selectedSection === 'all' || c.section_title === selectedSection;
     const matchesSearch = !searchQuery.trim() || 
@@ -151,7 +154,7 @@ export default function AdminReview() {
     return matchesCourse && matchesSection && matchesSearch;
   });
 
-  const totalAnswers = filteredCardsWithAnswers.reduce((a, c) => a + c.questions.reduce((b, q) => b + q.answers.length, 0), 0);
+  const totalAnswers = filteredCardsWithAnswers.reduce((a, c) => a + (c.questions || []).reduce((b, q) => b + (q.answers || []).length, 0), 0);
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', padding: 'clamp(16px,3vw,32px)', direction: 'rtl', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
@@ -169,8 +172,8 @@ export default function AdminReview() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {[
-          { key: 'projects', icon: '📁', label: 'المشاريع', count: submissions.length },
-          { key: 'questions', icon: '❓', label: 'الأسئلة', count: cardsWithAnswers.reduce((a, c) => a + c.questions.reduce((b, q) => b + q.answers.length, 0), 0) }
+          { key: 'projects', icon: '📁', label: 'المشاريع', count: safeSubmissions.length },
+          { key: 'questions', icon: '❓', label: 'الأسئلة', count: safeCardsWithAnswers.reduce((a, c) => a + (c.questions || []).reduce((b, q) => b + (q.answers || []).length, 0), 0) }
         ].map(tab => (
           <button key={tab.key} onClick={() => { setActiveTab(tab.key); setSearchQuery(''); }} style={{
             padding: 'clamp(8px,1.5vw,12px) clamp(16px,3vw,24px)', borderRadius: '12px',
@@ -265,7 +268,7 @@ export default function AdminReview() {
                 background: filterStatus === f.v ? '#3b82f6' : 'rgba(255,255,255,0.08)',
                 color: filterStatus === f.v ? 'white' : '#9ca3af', transition: 'all 0.2s'
               }}>
-                {f.l} ({f.v === 'all' ? submissions.length : submissions.filter(s => s.status === f.v).length})
+                {f.l} ({f.v === 'all' ? safeSubmissions.length : safeSubmissions.filter(s => s.status === f.v).length})
               </button>
             ))}
           </div>

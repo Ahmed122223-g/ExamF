@@ -198,17 +198,19 @@ const TakeExam = () => {
     if (!submittedRef.current && !submittingRef.current) {
       if (timeExpired) {
         ignoreBlur.current = true;
+        // Submit answers immediately in the background to ensure no extra seconds are wasted
+        submitAnswers(false);
+        
         Swal.fire({
           title: 'انتهى الوقت!',
-          text: 'انتهى وقت الاختبار المحدد. سيتم تسليم إجاباتك الحالية تلقائياً.',
+          text: 'انتهى وقت الاختبار المحدد. تم تسليم إجاباتك تلقائياً.',
           icon: 'warning',
-          timer: 3000,
+          timer: 2000,
           showConfirmButton: false
         }).then(() => {
           setTimeout(() => {
             ignoreBlur.current = false;
           }, 500);
-          submitAnswers(false); // standard submit on timer end
         });
       }
     }
@@ -285,8 +287,13 @@ const TakeExam = () => {
       });
     } catch (err) {
       const errorMsg = err.response?.data?.detail || '';
-      if (errorMsg.includes('تم تسليم') || errorMsg.includes('بالفعل') || errorMsg.includes('submitted')) {
-        // Already submitted, navigate to Landing page directly
+      if (
+        errorMsg.includes('تم تسليم') ||
+        errorMsg.includes('بالفعل') ||
+        errorMsg.includes('submitted') ||
+        errorMsg.includes('انتهى وقت')
+      ) {
+        // Already submitted or time expired — navigate away
         navigate('/');
       } else {
         Swal.fire('خطأ!', errorMsg || 'حدث خطأ أثناء تسليم الاختبار.', 'error');

@@ -261,6 +261,11 @@ export default function CourseRoadmap() {
                             }
                           </span>
                         )}
+                        {unlocked && !isItemLocked(item.id) && item.lock_date && (
+                          <span className="roadmap-lock-badge" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
+                            ⏳ يغلق بتاريخ: {item.lock_date}
+                          </span>
+                        )}
                         {unlocked && !isItemLocked(item.id) && item.is_completed && (
                           <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
                             ✓ مكتمل

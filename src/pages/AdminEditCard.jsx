@@ -29,6 +29,9 @@ const AdminEditCard = () => {
   const [unlockDate, setUnlockDate] = useState('');
   const [unlockDays, setUnlockDays] = useState('');
 
+  // Lock Date State
+  const [lockDate, setLockDate] = useState(''); // '' means null (never lock)
+
   // Dynamic Instructors State
   const [instructorsList, setInstructorsList] = useState([]);
 
@@ -96,6 +99,9 @@ const AdminEditCard = () => {
           } else {
             setUnlockType('immediate');
           }
+
+          // Lock date
+          setLockDate(currentCard.lock_date || '');
 
           // Parse instructors JSON
           let instructorsObj = {};
@@ -345,6 +351,7 @@ const AdminEditCard = () => {
         instructors_data: JSON.stringify(instructorsObj),
         unlock_date: finalUnlockDate,
         unlock_days: finalUnlockDays,
+        lock_date: lockDate || null,
         section_id: cardSectionId,
         is_project: isProject
       };
@@ -524,6 +531,50 @@ const AdminEditCard = () => {
               </div>
             )}
           </div>
+
+          {/* Lock Date Section */}
+          <div className="form-group" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '20px', borderRadius: '12px' }}>
+            <label className="form-label" style={{ color: '#ef4444', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+              🔒 تاريخ قفل الكارت (اختياري):
+            </label>
+            <p style={{ color: '#9ca3af', fontSize: '0.82rem', marginBottom: '12px', lineHeight: '1.5' }}>
+              إذا حددت تاريخاً، سيُغلق الكارت تلقائياً في ذلك التاريخ ولن يستطيع أي طالب الدخول عليه أو مشاهدة فيديوهاته أو الإجابة على أسئلته.
+              اتركه فارغاً إذا أردت أن يظل الكارت مفتوحاً إلى ما لا نهاية.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <input
+                type="date"
+                className="form-input"
+                value={lockDate}
+                onChange={(e) => setLockDate(e.target.value)}
+                style={{ borderColor: 'rgba(239, 68, 68, 0.4)', flex: '1', minWidth: '200px' }}
+              />
+              {lockDate && (
+                <button
+                  type="button"
+                  onClick={() => setLockDate('')}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    color: '#ef4444',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  ✕ إزالة تاريخ القفل
+                </button>
+              )}
+            </div>
+            {lockDate && (
+              <p style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: '8px' }}>
+                ⚠️ سيُقفل الكارت تلقائياً بتاريخ: <strong>{lockDate}</strong>
+              </p>
+            )}
+          </div>
+
 
           {/* Linking Exam */}
           <div className="form-group" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '20px', borderRadius: '12px' }}>

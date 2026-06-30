@@ -86,13 +86,16 @@ export default function CourseRoadmap() {
     const item = allItems.find(it => it.id === id);
     if (!item) return false;
     const index = getItemGlobalIndex(id);
-    if (index === 0) return true;
+    if (index === 0 && !isItemLocked(id)) return true;
 
     // Block if any previous project card is not completed
     for (let i = 0; i < index; i++) {
       const prev = allItems[i];
       if (prev.is_project && !prev.is_completed) return false;
     }
+
+    // If locked by lock_date — block regardless of unlock status
+    if (isItemLocked(id)) return false;
 
     if (item.unlock_date) {
       const todayStr = new Date().toISOString().split('T')[0];
@@ -109,6 +112,14 @@ export default function CourseRoadmap() {
 
     const prevItem = allItems[index - 1];
     return prevItem && prevItem.is_completed === true;
+  };
+
+  // Returns true if the card is past its lock_date
+  const isItemLocked = (id) => {
+    const item = allItems.find(it => it.id === id);
+    if (!item || !item.lock_date) return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    return todayStr >= item.lock_date;
   };
 
   const openCardDetail = (item) => {
@@ -226,16 +237,21 @@ export default function CourseRoadmap() {
                 return (
                   <div
                     key={item.id}
-                    className={`roadmap-card ${!unlocked ? 'locked' : ''} ${item.is_completed ? 'completed-glow' : ''}`}
+                    className={`roadmap-card ${(!unlocked || isItemLocked(item.id)) ? 'locked' : ''} ${item.is_completed && !isItemLocked(item.id) ? 'completed-glow' : ''}`}
                     onClick={() => unlocked && openCardDetail(item)}
-                    style={item.is_completed ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
+                    style={item.is_completed && !isItemLocked(item.id) ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
                         <span className="roadmap-card-step-badge">
                           {item.is_project ? '🏗️ مشروع' : `خطوة ${index + 1}`}
                         </span>
-                        {!unlocked && (
+                        {isItemLocked(item.id) && (
+                          <span className="roadmap-lock-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+                            🔒 مقفول منذ: {item.lock_date}
+                          </span>
+                        )}
+                        {!isItemLocked(item.id) && !unlocked && (
                           <span className="roadmap-lock-badge">
                             {item.unlock_date
                               ? `🔒 يفتح بتاريخ: ${item.unlock_date}`
@@ -245,7 +261,7 @@ export default function CourseRoadmap() {
                             }
                           </span>
                         )}
-                        {unlocked && item.is_completed && (
+                        {unlocked && !isItemLocked(item.id) && item.is_completed && (
                           <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold' }}>
                             ✓ مكتمل
                           </span>
@@ -271,9 +287,11 @@ export default function CourseRoadmap() {
                     </div>
                     <div className="roadmap-card-footer">
                       <span className="roadmap-card-btn" style={{ pointerEvents: 'none' }}>
-                        {unlocked
-                          ? item.is_project ? '🏗️ فتح صفحة المشروع ←' : '📂 استعرض المحاضرين والدروس ←'
-                          : '🔒 مغلق'}
+                        {isItemLocked(item.id)
+                          ? '🔒 مقفول'
+                          : unlocked
+                            ? item.is_project ? '🏗️ فتح صفحة المشروع ←' : '📂 استعرض المحاضرين والدروس ←'
+                            : '🔒 مغلق'}
                       </span>
                     </div>
                   </div>

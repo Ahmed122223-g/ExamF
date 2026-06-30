@@ -427,6 +427,7 @@ const AdminDashboard = () => {
                                   <span className="badge badge-success">خطوة {card.order}</span>
                                   {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
                                   {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
+                                  {card.lock_date && <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>يقفل: {card.lock_date}</span>}
                                 </div>
                                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                   {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}
@@ -487,6 +488,7 @@ const AdminDashboard = () => {
                                 <span className="badge badge-success">خطوة {card.order}</span>
                                 <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' }}>بدون قسم</span>
                                 {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
+                                {card.lock_date && <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>يقفل: {card.lock_date}</span>}
                               </div>
                               <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 {isLinked && <span className="badge badge-warning">مرتبط باختبار</span>}

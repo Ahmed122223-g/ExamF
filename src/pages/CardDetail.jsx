@@ -40,6 +40,16 @@ export default function CardDetail() {
         setError('لم يتم العثور على هذا الكارت.');
         return;
       }
+
+      // Check if locked
+      if (found.lock_date) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (todayStr >= found.lock_date) {
+          setError(`🔒 هذا الكارت مقفول منذ تاريخ: ${found.lock_date} ولا يمكن تصفحه.`);
+          return;
+        }
+      }
+
       setCard(found);
       setIsCompleted(found.is_completed);
 

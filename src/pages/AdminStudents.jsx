@@ -11,6 +11,7 @@ export default function AdminStudents() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Report modal state
   const [selectedReportStudent, setSelectedReportStudent] = useState(null);
@@ -486,11 +487,21 @@ export default function AdminStudents() {
 
             <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
-                onClick={() => generateStudentPDF(selectedReportStudent)}
+                onClick={async () => {
+                  setPdfLoading(true);
+                  try {
+                    await generateStudentPDF(selectedReportStudent);
+                  } catch (e) {
+                    console.error('PDF error:', e);
+                  } finally {
+                    setPdfLoading(false);
+                  }
+                }}
+                disabled={pdfLoading}
                 className="btn btn-primary"
-                style={{ padding: '10px 24px', borderRadius: '8px', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', fontWeight: 'bold' }}
+                style={{ padding: '10px 24px', borderRadius: '8px', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', fontWeight: 'bold', opacity: pdfLoading ? 0.7 : 1, cursor: pdfLoading ? 'wait' : 'pointer' }}
               >
-                ⬇️ تحميل تقرير PDF
+                {pdfLoading ? '⏳ جاري التحميل...' : '⬇️ تحميل تقرير PDF'}
               </button>
               <button
                 onClick={() => setSelectedReportStudent(null)}

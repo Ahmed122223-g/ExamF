@@ -62,7 +62,7 @@ export async function generateStudentPDF(student) {
           </div>
         </div>
 
-        <div>
+        <div style="margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
             <span style="color:#374151;">❓ أسئلة الكروت المجابة</span>
             <strong style="color:#d97706;">${c.answered_questions} / ${c.total_questions} (${qPct}%)</strong>
@@ -71,9 +71,47 @@ export async function generateStudentPDF(student) {
             <div style="background:linear-gradient(90deg,#d97706,#f59e0b); height:100%; width:${qPct}%; border-radius:10px;"></div>
           </div>
         </div>
+
+        ${c.completed_cards_details?.length > 0 ? `
+        <div style="margin-top:10px; padding:10px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+          <div style="font-size:0.8rem; color:#059669; font-weight:bold; margin-bottom:8px;">✅ الكروت المكتملة (${c.completed_cards_details.length}):</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${c.completed_cards_details.map((card, idx) => `
+              <span style="background:#dcfce7; color:#166534; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:bold;">
+                ${idx + 1}. ${card.card_title}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${c.answered_questions_details?.length > 0 ? `
+        <div style="margin-top:10px; padding:10px; background:#fffbeb; border-radius:8px; border:1px solid #fde68a;">
+          <div style="font-size:0.8rem; color:#d97706; font-weight:bold; margin-bottom:8px;">❓ الأسئلة المحلولة (${c.answered_questions_details.length}):</div>
+          <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+            <thead>
+              <tr style="background:#fef3c7;">
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid #fde68a; color:#92400e;">الكارت</th>
+                <th style="padding:5px 8px; text-align:center; border-bottom:1px solid #fde68a; color:#92400e; white-space:nowrap;"># السؤال</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid #fde68a; color:#92400e;">نص السؤال (مختصر)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${c.answered_questions_details.map((q, i) => `
+                <tr style="background:${i % 2 === 0 ? '#fffbeb' : '#fff'};">
+                  <td style="padding:5px 8px; border-bottom:1px solid #fde68a; font-weight:600; color:#78350f;">${q.card_title}</td>
+                  <td style="padding:5px 8px; border-bottom:1px solid #fde68a; text-align:center; font-weight:bold; color:#d97706;">${q.question_number}</td>
+                  <td style="padding:5px 8px; border-bottom:1px solid #fde68a; color:#374151;">${q.question_preview}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
       </div>
     `;
   }).join('');
+
 
   const evaluationColor = {
     'ممتاز 🏆': '#059669',

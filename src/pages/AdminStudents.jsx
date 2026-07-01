@@ -421,15 +421,57 @@ export default function AdminStudents() {
                       </div>
 
                       {/* Question resolution bar */}
-                      <div>
+                      <div style={{ marginBottom: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px', color: '#d1d5db' }}>
                           <span>❓ إجابات أسئلة الكروت المكتوبة</span>
-                          <span>{c.answered_questions} / {c.total_questions} سؤال محول ({qsPercent}%)</span>
+                          <span>{c.answered_questions} / {c.total_questions} سؤال ({qsPercent}%)</span>
                         </div>
                         <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{ width: `${qsPercent}%`, height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
                         </div>
                       </div>
+
+                      {/* Completed Cards list */}
+                      {c.completed_cards_details?.length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 'bold', marginBottom: '6px' }}>
+                            ✅ الكروت المكتملة ({c.completed_cards_details.length}):
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {c.completed_cards_details.map((card, idx) => (
+                              <span key={card.card_id} style={{
+                                background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
+                                color: '#6ee7b7', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600'
+                              }}>
+                                {idx + 1}. {card.card_title}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Answered Questions list */}
+                      {c.answered_questions_details?.length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '0.78rem', color: '#f59e0b', fontWeight: 'bold', marginBottom: '6px' }}>
+                            ❓ الأسئلة المحلولة ({c.answered_questions_details.length}):
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {c.answered_questions_details.map(q => (
+                              <div key={q.question_id} style={{
+                                background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)',
+                                borderRadius: '8px', padding: '5px 10px', fontSize: '0.75rem',
+                                display: 'flex', alignItems: 'flex-start', gap: '8px'
+                              }}>
+                                <span style={{ color: '#fbbf24', fontWeight: 'bold', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                  [{q.card_title} — سؤال {q.question_number}]
+                                </span>
+                                <span style={{ color: '#d1d5db' }}>{q.question_preview}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -11,6 +11,9 @@ export default function AdminStudents() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  // Report modal state
+  const [selectedReportStudent, setSelectedReportStudent] = useState(null);
+
   // Notification modal state
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [notifTarget, setNotifTarget] = useState(null); // null = broadcast
@@ -196,7 +199,7 @@ export default function AdminStudents() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {filtered.map(student => (
                   <div key={student.id} className="glass-card" style={{ padding: 'clamp(14px,2.5vw,22px)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: student.courses.length > 0 ? '14px' : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>
@@ -211,15 +214,35 @@ export default function AdminStudents() {
                               غير مفعّل
                             </span>
                           )}
+                          <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700 }}>
+                            التقييم: {student.evaluation || '—'}
+                          </span>
+                          <span style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4', padding: '2px 10px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700 }}>
+                            متوسط الامتحانات: {student.avg_exam_pct}%
+                          </span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => setSelectedReportStudent(student)}
+                          className="btn"
+                          style={{
+                            fontSize: '0.82rem', padding: '8px 14px',
+                            background: 'rgba(6,182,212,0.15)',
+                            border: '1px solid rgba(6,182,212,0.4)',
+                            color: '#06b6d4',
+                            borderRadius: '8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📄 التقرير التفصيلي
+                        </button>
                         <button
                           onClick={() => openNotifModal(student)}
                           className="btn btn-primary"
                           style={{ fontSize: '0.82rem', padding: '8px 14px' }}
                         >
-                          🔔 إرسال تنبيه
+                          🔔 تنبيه
                         </button>
                         <button
                           onClick={() => handleDeleteStudent(student)}
@@ -236,9 +259,18 @@ export default function AdminStudents() {
                           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.3)'; e.currentTarget.style.borderColor = '#ef4444'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; }}
                         >
-                          🗑️ حذف الطالب
+                          🗑️ حذف
                         </button>
                       </div>
+                    </div>
+
+                    {/* Quick Stats Summary row */}
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '14px', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)', fontSize: '0.82rem' }}>
+                      <span style={{ color: '#d1d5db' }}>⏱️ النشاط اليومي: <strong style={{ color: '#a855f7' }}>{student.daily_active_str || '0ث'}</strong></span>
+                      <span style={{ color: '#6b7280' }}>•</span>
+                      <span style={{ color: '#d1d5db' }}>🕒 آخر نشاط: <strong style={{ color: '#fff' }}>{student.last_active ? new Date(student.last_active).toLocaleString('ar-EG') : 'غير نشط مؤخراً'}</strong></span>
+                      <span style={{ color: '#6b7280' }}>•</span>
+                      <span style={{ color: '#d1d5db' }}>📝 الامتحانات المنجزة: <strong style={{ color: '#f59e0b' }}>{student.exam_attempts?.length || 0}</strong></span>
                     </div>
 
                     {/* Courses */}
@@ -246,12 +278,17 @@ export default function AdminStudents() {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {student.courses.map(c => (
                           <div key={c.course_id} style={{
-                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '8px', padding: '6px 12px', fontSize: '0.8rem'
+                            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '8px', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', gap: '10px', alignItems: 'center'
                           }}>
                             <span style={{ color: '#06b6d4', fontWeight: 700 }}>{c.course_code}</span>
-                            <span style={{ color: '#d1d5db', marginRight: '6px' }}>{c.course_title}</span>
-                            <span style={{ color: '#6b7280', marginRight: '6px' }}>• منذ {formatDate(c.registered_at)}</span>
+                            <span style={{ color: '#d1d5db' }}>{c.course_title}</span>
+                            <span style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                              ✅ أنجز {c.cards_completed} من {c.total_cards} كارت
+                            </span>
+                            <span style={{ color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                              ❓ حل {c.answered_questions} / {c.total_questions} سؤال
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -270,7 +307,7 @@ export default function AdminStudents() {
         {activeTab === 'sent' && (
           <>
             {loadingSent ? (
-              <div style={{ textAlign: 'center', paddingTop: '40px' }}><div className="spinner"></div></div>
+              <div style={{ textHeading: 'center', paddingTop: '40px' }}><div className="spinner"></div></div>
             ) : sentNotifs.length === 0 ? (
               <div className="glass-card" style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
                 لم يتم إرسال أي تنبيهات بعد.
@@ -301,6 +338,163 @@ export default function AdminStudents() {
           </>
         )}
       </div>
+
+      {/* ── Detailed Student Report Modal ── */}
+      {selectedReportStudent && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }} onClick={e => e.target === e.currentTarget && setSelectedReportStudent(null)}>
+          <div className="glass-card" style={{
+            width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto',
+            padding: 'clamp(20px,4vw,32px)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)', direction: 'rtl', textAlign: 'right'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+              <div>
+                <h2 style={{ color: 'white', fontWeight: 800, margin: 0 }}>📄 تقرير الأداء الشامل</h2>
+                <p style={{ color: '#06b6d4', margin: '4px 0 0', fontWeight: 600 }}>الطالب: {selectedReportStudent.name} ({selectedReportStudent.email})</p>
+              </div>
+              <button
+                onClick={() => setSelectedReportStudent(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)', border: 'none', color: 'white',
+                  width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer',
+                  fontSize: '1.2rem', fontWeight: 'bold'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Grid Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '24px' }}>
+              <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '14px', borderRadius: '12px' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', color: '#10b981', fontWeight: 'bold' }}>⭐ التقييم العام</span>
+                <strong style={{ display: 'block', fontSize: '1.5rem', color: 'white', marginTop: '6px' }}>{selectedReportStudent.evaluation}</strong>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>معدل تقدم عام: {selectedReportStudent.overall_score}%</span>
+              </div>
+              <div style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', padding: '14px', borderRadius: '12px' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', color: '#3b82f6', fontWeight: 'bold' }}>📈 متوسط الامتحانات</span>
+                <strong style={{ display: 'block', fontSize: '1.5rem', color: 'white', marginTop: '6px' }}>{selectedReportStudent.avg_exam_pct}%</strong>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>إجمالي الاختبارات: {selectedReportStudent.exam_attempts?.length || 0}</span>
+              </div>
+              <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', padding: '14px', borderRadius: '12px' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', color: '#a855f7', fontWeight: 'bold' }}>⏱️ نشاط اليوم اليومي</span>
+                <strong style={{ display: 'block', fontSize: '1.5rem', color: 'white', marginTop: '6px' }}>{selectedReportStudent.daily_active_str || '0ث'}</strong>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>تاريخ النشاط: {new Date().toLocaleDateString('ar-EG')}</span>
+              </div>
+              <div style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', padding: '14px', borderRadius: '12px' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', color: '#06b6d4', fontWeight: 'bold' }}>🕒 آخر ظهور ونشاط</span>
+                <strong style={{ display: 'block', fontSize: '0.95rem', color: 'white', marginTop: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {selectedReportStudent.last_active ? new Date(selectedReportStudent.last_active).toLocaleString('ar-EG') : 'غير نشط مؤخراً'}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>حالة الحساب: {selectedReportStudent.is_verified ? 'مفعّل ✓' : 'غير مفعّل ⏳'}</span>
+              </div>
+            </div>
+
+            {/* Course Roadmap Progress section */}
+            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #06b6d4', paddingRight: '8px' }}>📂 تقدم الكورسات والدروس</h3>
+            {selectedReportStudent.courses.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                {selectedReportStudent.courses.map(c => {
+                  const cardPercent = c.total_cards > 0 ? Math.round((c.cards_completed / c.total_cards) * 100) : 0;
+                  const qsPercent = c.total_questions > 0 ? Math.round((c.answered_questions / c.total_questions) * 100) : 0;
+                  return (
+                    <div key={c.course_id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ color: 'white', fontWeight: 'bold' }}>{c.course_title} ({c.course_code})</span>
+                        <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>تاريخ التسجيل: {formatDate(c.registered_at)}</span>
+                      </div>
+                      
+                      {/* Card completion bar */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px', color: '#d1d5db' }}>
+                          <span>✅ نسبة إنجاز الدروس والبطاقات</span>
+                          <span>{c.cards_completed} / {c.total_cards} كارت ({cardPercent}%)</span>
+                        </div>
+                        <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${cardPercent}%`, height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
+                        </div>
+                      </div>
+
+                      {/* Question resolution bar */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px', color: '#d1d5db' }}>
+                          <span>❓ إجابات أسئلة الكروت المكتوبة</span>
+                          <span>{c.answered_questions} / {c.total_questions} سؤال محول ({qsPercent}%)</span>
+                        </div>
+                        <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${qsPercent}%`, height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ color: '#6b7280', fontStyle: 'italic', marginBottom: '24px' }}>لم يسجل في أي كورس بعد.</p>
+            )}
+
+            {/* Exam Attempts section */}
+            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #f59e0b', paddingRight: '8px' }}>📝 تفاصيل محاولات ونتائج الاختبارات</h3>
+            {selectedReportStudent.exam_attempts?.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', color: '#d1d5db', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', color: 'white' }}>اسم الامتحان</th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'white' }}>الدرجة</th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'white' }}>النسبة</th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'white' }}>الوقت المستغرق</th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'white' }}>التاريخ</th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'white' }}>المخالفات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedReportStudent.exam_attempts.map((attempt, index) => (
+                      <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{attempt.exam_title} ({attempt.exam_code})</td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                          <span style={{ color: '#fff', fontWeight: 'bold' }}>{attempt.score}</span> / {attempt.total_marks}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: attempt.percentage >= 50 ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
+                          {attempt.percentage}%
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#06b6d4', fontWeight: 'bold' }}>{attempt.duration_str}</td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#9ca3af' }}>
+                          {attempt.submitted_at ? new Date(attempt.submitted_at).toLocaleDateString('ar-EG') : 'غير مسلّم'}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                          {attempt.is_cheated ? (
+                            <span style={{ color: '#ef4444', background: 'rgba(239,68,68,0.12)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.75rem' }}>
+                              ⚠️ تم رصد مخالفة (غش)
+                            </span>
+                          ) : (
+                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>سليمة ✓</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ color: '#6b7280', fontStyle: 'italic' }}>لم يقم بأداء أي اختبارات بعد.</p>
+            )}
+
+            <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setSelectedReportStudent(null)}
+                className="btn btn-secondary"
+                style={{ padding: '10px 24px', borderRadius: '8px' }}
+              >
+                إغلاق التقرير
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Notification Modal ── */}
       {showNotifModal && (

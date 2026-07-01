@@ -28,6 +28,9 @@ const AdminRoute = ({ children }) => {
   return token ? children : <Navigate to="/admin/login" replace />;
 };
 
+import { useEffect } from 'react';
+import { apiService } from './services/api';
+
 // Simple Route Guard to protect student routes
 const StudentRoute = ({ children }) => {
   const token = localStorage.getItem('student_token');
@@ -35,6 +38,27 @@ const StudentRoute = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+    // Ping backend to track active time every 20 seconds
+    const interval = setInterval(() => {
+      const studentToken = localStorage.getItem('student_token');
+      if (studentToken) {
+        apiService.trackActive(studentToken).catch(err => {
+          // If token expired/invalid, let dashboard handle redirection
+          console.warn("Active tracking error", err);
+        });
+      }
+    }, 20000);
+
+    // Initial ping
+    const studentToken = localStorage.getItem('student_token');
+    if (studentToken) {
+      apiService.trackActive(studentToken).catch(() => {});
+    }
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

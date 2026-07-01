@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Swal from 'sweetalert2';
+import { generateStudentPDF } from '../utils/generateStudentPDF';
 
 export default function AdminStudents() {
   const navigate = useNavigate();
@@ -483,7 +484,14 @@ export default function AdminStudents() {
               <p style={{ color: '#6b7280', fontStyle: 'italic' }}>لم يقم بأداء أي اختبارات بعد.</p>
             )}
 
-            <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => generateStudentPDF(selectedReportStudent)}
+                className="btn btn-primary"
+                style={{ padding: '10px 24px', borderRadius: '8px', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', fontWeight: 'bold' }}
+              >
+                ⬇️ تحميل تقرير PDF
+              </button>
               <button
                 onClick={() => setSelectedReportStudent(null)}
                 className="btn btn-secondary"

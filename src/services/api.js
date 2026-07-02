@@ -454,5 +454,28 @@ export const apiService = {
     });
     return res.data;
   },
+
+  // ── Card Exceptions - Admin ────────────────────────────────────────────────
+  getStudentCardExceptions: async (studentId, token) => {
+    const res = await API.get(`/api/admin/students/${studentId}/card-exceptions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  grantStudentCardException: async (studentId, courseCardId, token) => {
+    const res = await API.post(`/api/admin/students/${studentId}/card-exceptions`,
+      { course_card_id: courseCardId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data;
+  },
+
+  revokeStudentCardException: async (studentId, courseCardId, token) => {
+    const res = await API.delete(`/api/admin/students/${studentId}/card-exceptions/${courseCardId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
 };
 

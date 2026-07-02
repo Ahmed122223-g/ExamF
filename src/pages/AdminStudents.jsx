@@ -16,6 +16,13 @@ export default function AdminStudents() {
   // Report modal state
   const [selectedReportStudent, setSelectedReportStudent] = useState(null);
 
+  // Permissions / exceptions modal state
+  const [selectedPermissionsStudent, setSelectedPermissionsStudent] = useState(null);
+  const [selectedPermissionCourseId, setSelectedPermissionCourseId] = useState('');
+  const [permissionCards, setPermissionCards] = useState([]);
+  const [permissionExceptions, setPermissionExceptions] = useState([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+
   // Notification modal state
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [notifTarget, setNotifTarget] = useState(null); // null = broadcast
@@ -64,6 +71,72 @@ export default function AdminStudents() {
       setSentNotifs(data);
     } catch (err) { console.error(err); }
     finally { setLoadingSent(false); }
+  };
+
+  const openPermissionsModal = (student) => {
+    setSelectedPermissionsStudent(student);
+    setPermissionCards([]);
+    setPermissionExceptions([]);
+    if (student.courses && student.courses.length > 0) {
+      const initialCourseId = student.courses[0].course_id;
+      setSelectedPermissionCourseId(initialCourseId);
+      fetchPermissionsData(student.id, initialCourseId);
+    } else {
+      setSelectedPermissionCourseId('');
+    }
+  };
+
+  const fetchPermissionsData = async (studentId, courseId) => {
+    setLoadingPermissions(true);
+    try {
+      const [cards, exceptions] = await Promise.all([
+        apiService.getCourseCardsAdmin(courseId, token),
+        apiService.getStudentCardExceptions(studentId, token)
+      ]);
+      setPermissionCards(cards);
+      setPermissionExceptions(exceptions);
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', 'فشل في تحميل صلاحيات الطالب لهذا الكورس', 'error');
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
+
+  const handleGrantException = async (cardDbId, cardTitle) => {
+    try {
+      const studentId = selectedPermissionsStudent.id;
+      const res = await apiService.grantStudentCardException(studentId, cardDbId, token);
+      Swal.fire({
+        icon: 'success',
+        title: 'تم فتح الكارت',
+        text: res.message || `تم منح صلاحية تخطي تاريخ الإغلاق لـ ${cardTitle}`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchPermissionsData(studentId, selectedPermissionCourseId);
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في فتح الكارت للطالب', 'error');
+    }
+  };
+
+  const handleRevokeException = async (cardDbId, cardTitle) => {
+    try {
+      const studentId = selectedPermissionsStudent.id;
+      const res = await apiService.revokeStudentCardException(studentId, cardDbId, token);
+      Swal.fire({
+        icon: 'success',
+        title: 'تم إلغاء الصلاحية',
+        text: res.message || `تم سحب صلاحية تخطي تاريخ الإغلاق لـ ${cardTitle}`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchPermissionsData(studentId, selectedPermissionCourseId);
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إلغاء صلاحية الطالب', 'error');
+    }
   };
 
   const openNotifModal = (student = null) => {
@@ -238,6 +311,20 @@ export default function AdminStudents() {
                           }}
                         >
                           📄 التقرير التفصيلي
+                        </button>
+                        <button
+                          onClick={() => openPermissionsModal(student)}
+                          className="btn"
+                          style={{
+                            fontSize: '0.82rem', padding: '8px 14px',
+                            background: 'rgba(168,85,247,0.15)',
+                            border: '1px solid rgba(168,85,247,0.4)',
+                            color: '#c084fc',
+                            borderRadius: '8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🔓 صلاحيات الكروت
                         </button>
                         <button
                           onClick={() => openNotifModal(student)}
@@ -624,6 +711,171 @@ export default function AdminStudents() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Card Permissions Modal ── */}
+      {selectedPermissionsStudent && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 1100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }} onClick={e => e.target === e.currentTarget && setSelectedPermissionsStudent(null)}>
+          <div className="glass-card" style={{
+            width: '100%', maxWidth: '720px', maxHeight: '88vh', overflowY: 'auto',
+            padding: 'clamp(20px,4vw,30px)', borderRadius: '20px',
+            border: '1px solid rgba(168,85,247,0.3)',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.6)', direction: 'rtl', textAlign: 'right'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px' }}>
+              <div>
+                <h2 style={{ color: 'white', fontWeight: 800, margin: 0, fontSize: '1.15rem' }}>🔓 إدارة صلاحيات الكروت</h2>
+                <p style={{ color: '#c084fc', margin: '4px 0 0', fontWeight: 600, fontSize: '0.9rem' }}>
+                  الطالب: {selectedPermissionsStudent.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedPermissionsStudent(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)', border: 'none', color: 'white',
+                  width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer',
+                  fontSize: '1.1rem', fontWeight: 'bold', flexShrink: 0
+                }}
+              >✕</button>
+            </div>
+
+            {/* Info box */}
+            <div style={{
+              background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', fontSize: '0.83rem', color: '#d1d5db', lineHeight: 1.7
+            }}>
+              💡 الكروت التي تمنحها صلاحية <strong style={{ color: '#c084fc' }}>تخطي تاريخ الإغلاق</strong> ستُفتح للطالب بشكل دائم حتى يقوم الأدمن بإلغاء الصلاحية يدوياً.
+            </div>
+
+            {/* Course Selector */}
+            {selectedPermissionsStudent.courses?.length > 0 ? (
+              <>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label className="form-label">اختر الكورس</label>
+                  <select
+                    className="form-input"
+                    value={selectedPermissionCourseId}
+                    onChange={e => {
+                      const cid = parseInt(e.target.value);
+                      setSelectedPermissionCourseId(cid);
+                      fetchPermissionsData(selectedPermissionsStudent.id, cid);
+                    }}
+                  >
+                    {selectedPermissionsStudent.courses.map(c => (
+                      <option key={c.course_id} value={c.course_id}>{c.course_title} ({c.course_code})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Active Exceptions Summary */}
+                {permissionExceptions.length > 0 && (
+                  <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px' }}>
+                    <div style={{ color: '#10b981', fontWeight: 700, fontSize: '0.82rem', marginBottom: '8px' }}>
+                      ✅ الصلاحيات الممنوحة حالياً ({permissionExceptions.length})
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {permissionExceptions.map(exc => (
+                        <span key={exc.course_card_id} style={{
+                          background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
+                          color: '#6ee7b7', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600
+                        }}>
+                          🔓 {exc.card_title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cards List */}
+                {loadingPermissions ? (
+                  <div style={{ textAlign: 'center', padding: '30px' }}>
+                    <div className="spinner" style={{ margin: '0 auto' }}></div>
+                    <p style={{ color: '#9ca3af', marginTop: '12px' }}>جاري التحميل...</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {permissionCards.map(card => {
+                      const isExcepted = permissionExceptions.some(e => e.course_card_id === card.id);
+                      const isLocked = card.lock_date && new Date().toISOString().split('T')[0] >= card.lock_date;
+                      return (
+                        <div key={card.id} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '10px 14px', borderRadius: '10px', gap: '10px', flexWrap: 'wrap',
+                          background: isExcepted
+                            ? 'rgba(16,185,129,0.08)'
+                            : isLocked ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
+                          border: isExcepted
+                            ? '1px solid rgba(16,185,129,0.25)'
+                            : isLocked ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.06)'
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.85rem', color: 'white', fontWeight: 600 }}>{card.title}</span>
+                              {isExcepted && (
+                                <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '1px 8px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700 }}>
+                                  🔓 مفتوح
+                                </span>
+                              )}
+                              {isLocked && !isExcepted && (
+                                <span style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', padding: '1px 8px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700 }}>
+                                  🔒 مغلق حتى {card.lock_date}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ flexShrink: 0 }}>
+                            {isExcepted ? (
+                              <button
+                                onClick={() => handleRevokeException(card.id, card.title)}
+                                style={{
+                                  background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)',
+                                  color: '#f87171', padding: '5px 12px', borderRadius: '8px',
+                                  cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600
+                                }}
+                              >
+                                🚫 إلغاء الصلاحية
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleGrantException(card.id, card.title)}
+                                style={{
+                                  background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)',
+                                  color: '#c084fc', padding: '5px 12px', borderRadius: '8px',
+                                  cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600
+                                }}
+                              >
+                                🔓 منح صلاحية
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '30px', color: '#6b7280' }}>
+                هذا الطالب غير مسجل في أي كورس بعد.
+              </div>
+            )}
+
+            {/* Close Button */}
+            <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', textAlign: 'left' }}>
+              <button
+                onClick={() => setSelectedPermissionsStudent(null)}
+                className="btn btn-secondary"
+                style={{ padding: '9px 24px' }}
+              >
+                إغلاق
+              </button>
+            </div>
           </div>
         </div>
       )}

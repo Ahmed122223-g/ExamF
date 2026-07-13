@@ -31,6 +31,17 @@ export default function CourseRoadmap() {
     }
   };
 
+  const handleRegisterSpecialization = async (courseCode) => {
+    try {
+      const res = await apiService.registerCourse(courseCode, token);
+      alert(res.message || 'تم التسجيل في التخصص بنجاح!');
+      fetchRoadmap();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || 'فشل التسجيل في التخصص.');
+    }
+  };
+
   useEffect(() => {
     if (courseId && token) {
       fetchRoadmap();
@@ -306,6 +317,104 @@ export default function CourseRoadmap() {
           </div>
         </section>
       ))}
+
+      {/* ── Specialization Tracks (Unlocked after completing C++) ── */}
+      {roadmap.specializations && roadmap.specializations.length > 0 && (
+        <section className="specializations-section" style={{ marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '2rem', paddingBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', marginBottom: '1rem', textAlign: 'center' }}>
+            🎯 اختر تخصصك البرمجي التالي
+          </h2>
+          <p style={{ color: 'var(--text-muted-dark)', textAlign: 'center', marginBottom: '2rem', fontSize: '0.95rem' }}>
+            بمجرد إتمامك لكورس C++ الاحترافي بالكامل (حل جميع الأسئلة والمشاريع والامتحانات)، يمكنك فتح أحد المسارات التخصصية التالية والبدء فيها مباشرة:
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '900px', margin: '0 auto' }}>
+            {roadmap.specializations.map(spec => {
+              const isLocked = !roadmap.cpp_completed;
+              return (
+                <div 
+                  key={spec.code} 
+                  className={`specialization-card ${isLocked ? 'locked' : ''} ${spec.registered ? 'registered' : ''}`}
+                  style={{
+                    background: spec.registered ? 'rgba(16, 185, 129, 0.08)' : 'rgba(30, 41, 59, 0.4)',
+                    border: spec.registered ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '16px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    opacity: isLocked ? 0.6 : 1,
+                    transition: 'all 0.3s ease',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ fontSize: '2.5rem', marginBottom: '15px' }}>
+                    {spec.code === 'AI101' ? '🤖' : spec.code === 'CS101' ? '🛡️' : '💻'}
+                  </div>
+                  <h3 style={{ color: 'white', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '10px' }}>{spec.title}</h3>
+                  <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.5' }}>
+                    {spec.code === 'AI101' 
+                      ? 'مسار الذكاء الاصطناعي وتعلم الآلة والشبكات العصبية.'
+                      : spec.code === 'CS101' 
+                        ? 'مسار الأمن السيبراني واختبار الاختراق وحماية الأنظمة.'
+                        : 'مسار تطوير الويب وتصميم وإطلاق التطبيقات التفاعلية.'}
+                  </p>
+
+                  {isLocked ? (
+                    <button 
+                      className="btn" 
+                      disabled 
+                      style={{ 
+                        width: '100%', 
+                        background: 'rgba(255,255,255,0.05)', 
+                        color: '#64748b', 
+                        cursor: 'not-allowed',
+                        padding: '10px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      🔒 مغلق حتى إنهاء C++
+                    </button>
+                  ) : spec.registered ? (
+                    <button 
+                      className="btn btn-success" 
+                      onClick={() => navigate(`/course/${spec.course_id}/roadmap`)}
+                      style={{ 
+                        width: '100%',
+                        background: '#10b981',
+                        color: 'white',
+                        padding: '10px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🚀 دخول المسار الآن
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-accent" 
+                      onClick={() => handleRegisterSpecialization(spec.code)}
+                      style={{ 
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none'
+                      }}
+                    >
+                      🔓 تسجيل وبدء التعلم
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

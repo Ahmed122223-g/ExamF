@@ -227,6 +227,29 @@ export const apiService = {
     return res.data;
   },
 
+  getCourseDependencies: async (courseId, token) => {
+    const res = await API.get(`/api/courses/${courseId}/dependencies`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  addCourseDependency: async (courseId, dependantCourseId, token) => {
+    const res = await API.post(`/api/courses/${courseId}/dependencies`, {
+      dependant_course_id: dependantCourseId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteCourseDependency: async (courseId, dependantCourseId, token) => {
+    const res = await API.delete(`/api/courses/${courseId}/dependencies/${dependantCourseId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   createCourse: async (courseData, token) => {
     const res = await API.post('/api/admin/courses', courseData, {
       headers: { Authorization: `Bearer ${token}` }

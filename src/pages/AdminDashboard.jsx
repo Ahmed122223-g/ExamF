@@ -43,6 +43,13 @@ const AdminDashboard = () => {
   const [sectionOrder, setSectionOrder] = useState(1);
   const [savingSection, setSavingSection] = useState(false);
 
+  // Dependencies State
+  const [selectedCourseDependencies, setSelectedCourseDependencies] = useState([]);
+  const [availableCoursesForDependency, setAvailableCoursesForDependency] = useState([]);
+  const [showAddDependencyModal, setShowAddDependencyModal] = useState(false);
+  const [selectedDependencyCourseId, setSelectedDependencyCourseId] = useState('');
+  const [savingDependency, setSavingDependency] = useState(false);
+
   const token = localStorage.getItem('admin_token');
 
   const fetchData = async () => {
@@ -166,11 +173,66 @@ const AdminDashboard = () => {
       setCourseSections(sections);
       const cards = await apiService.getCourseCardsAdmin(course.id, token);
       setCourseCards(cards);
+      
+      const depData = await apiService.getCourseDependencies(course.id, token).catch(() => ({ dependencies: [], available_courses: [] }));
+      setSelectedCourseDependencies(depData.dependencies || []);
+      setAvailableCoursesForDependency(depData.available_courses || []);
     } catch (err) {
       Swal.fire('خطأ', 'فشل في جلب محتوى كروت الكورس.', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddDependency = async (e) => {
+    e.preventDefault();
+    if (!selectedDependencyCourseId) {
+      Swal.fire('تنبيه', 'يرجى اختيار الكورس المراد ربطه.', 'warning');
+      return;
+    }
+    setSavingDependency(true);
+    try {
+      await apiService.addCourseDependency(selectedCourse.id, selectedDependencyCourseId, token);
+      Swal.fire('تم الربط!', 'تم ربط الكورس بنجاح كمتطلب للتخصص.', 'success');
+      setShowAddDependencyModal(false);
+      setSelectedDependencyCourseId('');
+      
+      // Refresh dependencies
+      const depData = await apiService.getCourseDependencies(selectedCourse.id, token);
+      setSelectedCourseDependencies(depData.dependencies || []);
+      setAvailableCoursesForDependency(depData.available_courses || []);
+    } catch (err) {
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في ربط الكورس.', 'error');
+    } finally {
+      setSavingDependency(false);
+    }
+  };
+
+  const handleDeleteDependency = async (depCourseId) => {
+    Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: 'هل تود إلغاء ربط هذا الكورس؟ لن يعود هذا الكورس متطلباً لهذا الكورس للطلاب.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، إلغاء الربط',
+      cancelButtonText: 'إبقاء الربط',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#334155'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await apiService.deleteCourseDependency(selectedCourse.id, depCourseId, token);
+          Swal.fire('تم إلغاء الربط!', 'تم إلغاء الربط بنجاح.', 'success');
+          
+          // Refresh dependencies
+          const depData = await apiService.getCourseDependencies(selectedCourse.id, token);
+          setSelectedCourseDependencies(depData.dependencies || []);
+          setAvailableCoursesForDependency(depData.available_courses || []);
+        } catch (err) {
+          Swal.fire('خطأ', 'فشل في إلغاء ربط الكورس.', 'error');
+        }
+      }
+    });
   };
 
   const handleCreateCourseSubmit = async (e) => {
@@ -521,6 +583,101 @@ const AdminDashboard = () => {
                 );
               })()}
             </>
+          )}
+
+          {/* ── Linked Courses / Dependencies Section ── */}
+          <div className="glass-card" style={{ marginTop: '40px', padding: '25px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', borderRight: '4px solid #a855f7', paddingRight: '10px' }}>
+                  🔗 الكورسات المرتبطة (مسارات التخصص)
+                </h2>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginTop: '5px' }}>
+                  الكورسات التي ستظهر للطالب كمسار تخصصي مقفل في نهاية هذا الكورس، ولن تفتح له إلا بعد إتمام كافة متطلبات هذا الكورس بنجاح.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowAddDependencyModal(true)} 
+                className="btn" 
+                style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.4)', color: '#c084fc', display: 'flex', gap: '6px', alignItems: 'center', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                <FaPlus /> ربط كورس جديد
+              </button>
+            </div>
+
+            {selectedCourseDependencies.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-muted-dark)', fontSize: '0.9rem' }}>
+                لا توجد كورسات مرتبطة بهذا الكورس حالياً. اضغط على زر "ربط كورس جديد" لإضافة تخصصات تفتح بعد هذا الكورس.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {selectedCourseDependencies.map(dep => (
+                  <div key={dep.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <strong style={{ color: 'white', fontSize: '0.95rem' }}>{dep.title}</strong>
+                      <span style={{ fontSize: '0.78rem', color: '#a855f7', marginRight: '8px', background: 'rgba(168,85,247,0.12)', padding: '2px 8px', borderRadius: '20px', fontWeight: 'bold' }}>
+                        {dep.course_code}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteDependency(dep.id)} 
+                      className="btn btn-danger" 
+                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                    >
+                      إلغاء الربط
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add Dependency Modal */}
+          {showAddDependencyModal && (
+            <div className="roadmap-modal-overlay">
+              <div className="roadmap-modal-content" style={{ background: '#111827', maxWidth: '500px' }}>
+                <button className="roadmap-modal-close" onClick={() => setShowAddDependencyModal(false)}>×</button>
+                <h2 style={{ color: 'white', marginBottom: '20px', fontWeight: 'bold' }}>ربط كورس جديد كمسار تخصصي</h2>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.85rem', marginBottom: '20px' }}>
+                  اختر الكورس الذي ترغب في ربطه. سيصبح هذا الكورس مقفولاً للطلاب حتى يكملوا كورس <strong>{selectedCourse.title}</strong> بالكامل.
+                </p>
+                <form onSubmit={handleAddDependency} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div className="form-group">
+                    <label className="form-label">الكورس المراد ربطه</label>
+                    {availableCoursesForDependency.length === 0 ? (
+                      <div style={{ color: '#ef4444', fontSize: '0.9rem', padding: '10px 0' }}>
+                        لا توجد كورسات أخرى متاحة للربط حالياً (يرجى إنشاء الكورس أولاً).
+                      </div>
+                    ) : (
+                      <select 
+                        className="form-input" 
+                        value={selectedDependencyCourseId} 
+                        onChange={(e) => setSelectedDependencyCourseId(e.target.value)}
+                        required
+                      >
+                        <option value="">-- اختر كورس من القائمة --</option>
+                        {availableCoursesForDependency.map(c => (
+                          <option key={c.id} value={c.id}>{c.title} ({c.course_code})</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                    <button 
+                      type="submit" 
+                      className="btn" 
+                      style={{ flex: 1, backgroundColor: '#a855f7', color: 'white', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }} 
+                      disabled={savingDependency || availableCoursesForDependency.length === 0}
+                    >
+                      {savingDependency ? 'جاري الحفظ...' : 'تأكيد الربط'}
+                    </button>
+                    <button type="button" className="btn btn-secondary" style={{ width: '100px' }} onClick={() => setShowAddDependencyModal(false)}>
+                      إلغاء
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
 
           {/* Section Create/Edit Modal */}

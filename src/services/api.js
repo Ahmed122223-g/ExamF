@@ -462,6 +462,14 @@ export const apiService = {
     return res.data;
   },
 
+  reviewAnswerAdmin: async (answerId, token) => {
+    const res = await API.post(`/api/admin/question-answers/${answerId}/review`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data;
+  },
+
   // ── My Question Feedback - Student ────────────────────────────────────────
   getMyAnswerFeedback: async (cardDbId, token) => {
     const res = await API.get(`/api/courses/cards/${cardDbId}/my-feedback`, {

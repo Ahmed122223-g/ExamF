@@ -92,12 +92,19 @@ export default function QuestionFeedbackDetail() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {data.map((q, idx) => (
-              <div key={q.question_id} className="glass-card" style={{ padding: 'clamp(16px,3vw,24px)', borderRight: `4px solid ${q.admin_feedback ? '#10b981' : q.my_answer_text || q.my_answer_link ? '#3b82f6' : 'rgba(255,255,255,0.1)'}` }}>
+              <div key={q.question_id} className="glass-card" style={{ padding: 'clamp(16px,3vw,24px)', borderRight: `4px solid ${q.is_reviewed ? '#10b981' : q.my_answer_text || q.my_answer_link ? '#3b82f6' : 'rgba(255,255,255,0.1)'}` }}>
                 {/* Question number and text */}
                 <div style={{ marginBottom: '16px' }}>
-                  <span style={{ color: '#a78bfa', fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>
-                    سؤال {q.question_num}
-                  </span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ color: '#a78bfa', fontWeight: 700, fontSize: '0.82rem' }}>
+                      سؤال {q.question_num}
+                    </span>
+                    {q.is_reviewed ? (
+                      <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 10px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700 }}>✓ تم المراجعة</span>
+                    ) : (
+                      <span style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', padding: '2px 10px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700 }}>⏳ قيد المراجعة</span>
+                    )}
+                  </div>
                   {q.question_text ? (
                     <p style={{ color: '#e2e8f0', margin: 0, fontSize: 'clamp(0.88rem,2vw,1rem)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                       {q.question_text}
@@ -147,9 +154,13 @@ export default function QuestionFeedbackDetail() {
                       {q.admin_feedback}
                     </p>
                   </div>
+                ) : q.is_reviewed ? (
+                  <div style={{ background: 'rgba(16,185,129,0.06)', borderRadius: '10px', padding: '12px 16px', border: '1px solid rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 'bold' }}>✓ تمت مراجعة إجابتك بنجاح ولا توجد أي ملاحظات من المسؤول.</span>
+                  </div>
                 ) : (
                   <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '12px 16px', border: '1px dashed rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#4b5563', fontSize: '0.85rem' }}>⏳ لم يتم إرسال ملاحظة على هذا السؤال بعد.</span>
+                    <span style={{ color: '#4b5563', fontSize: '0.85rem' }}>⏳ الإجابة قيد المراجعة حالياً من المسؤول.</span>
                   </div>
                 )}
               </div>

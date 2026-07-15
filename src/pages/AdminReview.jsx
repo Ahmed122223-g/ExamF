@@ -388,10 +388,17 @@ export default function AdminReview() {
                           {expandedQuestion === q.question_id && (
                             <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: 'clamp(10px,2vw,16px)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                               {q.answers.map(ans => (
-                                <div key={ans.answer_id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: 'clamp(10px,2vw,16px)', border: ans.admin_feedback ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                                <div key={ans.answer_id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: 'clamp(10px,2vw,16px)', border: ans.is_reviewed ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div style={{ flex: 1, minWidth: '180px' }}>
-                                      <p style={{ color: 'white', fontWeight: 700, margin: '0 0 1px', fontSize: '0.92rem' }}>{ans.student_name}</p>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <p style={{ color: 'white', fontWeight: 700, margin: 0, fontSize: '0.92rem' }}>{ans.student_name}</p>
+                                        {ans.is_reviewed ? (
+                                          <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '1px 8px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700 }}>✓ تم المراجعة</span>
+                                        ) : (
+                                          <span style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', padding: '1px 8px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700 }}>⏳ لم يراجع</span>
+                                        )}
+                                      </div>
                                       <p style={{ color: '#9ca3af', margin: '0 0 8px', fontSize: '0.78rem' }}>{ans.student_email}</p>
                                       {ans.answer_text && (
                                         <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', borderRight: '3px solid #3b82f6' }}>
@@ -410,11 +417,30 @@ export default function AdminReview() {
                                         </div>
                                       )}
                                     </div>
-                                    <button
-                                      onClick={() => openFeedbackModal(ans, q.question_num, card.card_title)}
-                                      style={{ background: ans.admin_feedback ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)', color: ans.admin_feedback ? '#10b981' : '#60a5fa', border: `1px solid ${ans.admin_feedback ? 'rgba(16,185,129,0.3)' : 'rgba(59,130,246,0.3)'}`, borderRadius: '9px', padding: '8px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', flexShrink: 0, transition: 'all 0.2s' }}>
-                                      {ans.admin_feedback ? '✏️ تعديل' : '💬 ملاحظة'}
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                                      {!ans.is_reviewed && (
+                                        <button
+                                          onClick={async () => {
+                                            try {
+                                              await apiService.reviewAnswerAdmin(ans.answer_id, token);
+                                              await loadQuestions();
+                                              Swal.fire({ icon: 'success', title: 'تمت المراجعة', text: 'تم وضع علامة "تم المراجعة" وإخطار الطالب بنجاح.', background: '#1e293b', color: '#fff', timer: 1800, showConfirmButton: false });
+                                            } catch {
+                                              Swal.fire({ icon: 'error', title: 'خطأ', text: 'فشل في تحديث حالة المراجعة.', background: '#1e293b', color: '#fff' });
+                                            }
+                                          }}
+                                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '9px', padding: '8px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s' }}
+                                        >
+                                          ✓ تم المراجعة
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => openFeedbackModal(ans, q.question_num, card.card_title)}
+                                        style={{ background: ans.admin_feedback ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)', color: ans.admin_feedback ? '#10b981' : '#60a5fa', border: `1px solid ${ans.admin_feedback ? 'rgba(16,185,129,0.3)' : 'rgba(59,130,246,0.3)'}`, borderRadius: '9px', padding: '8px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s' }}
+                                      >
+                                        {ans.admin_feedback ? '✏️ تعديل الملاحظة' : '💬 ملاحظة'}
+                                      </button>
+                                    </div>
                                   </div>
                                   <p style={{ color: '#4b5563', fontSize: '0.72rem', margin: '8px 0 0' }}>
                                     🕐 {ans.submitted_at ? new Date(ans.submitted_at).toLocaleString('ar-EG') : '—'}

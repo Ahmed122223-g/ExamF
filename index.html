@@ -1,26 +1,69 @@
 <!doctype html>
-<html lang="ar" dir="rtl" translate="no">
+<html lang="ar" dir="rtl" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
+    <meta name="translation-tool" content="disabled" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>منصة الاختبارات الإلكترونية</title>
+    <style>
+      /* منع تحديد النصوص نهائياً على كامل الموقع */
+      * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+      /* السماح بتحديد النص داخل حقول الإدخال فقط */
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        user-select: text !important;
+      }
+    </style>
     <script>
-      // منع القائمة المنسدلة (كليك يمين) على مستوى الموقع بالكامل
-      document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-      });
-      // منع اختصارات لوحة المفاتيح الخاصة بأدوات المطورين وحفظ/عرض السورس كود
-      document.addEventListener('keydown', function(e) {
-        if (
-          e.key === 'F12' ||
-          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
-          (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'S' || e.key === 's' || e.key === 'P' || e.key === 'p'))
-        ) {
+      (function() {
+        // منع الكليك يمين (capture:true يمسكها قبل أي شيء آخر)
+        document.addEventListener('contextmenu', function(e) {
           e.preventDefault();
-        }
-      });
+          e.stopPropagation();
+          return false;
+        }, true);
+
+        // منع اختصارات لوحة المفاتيح لأدوات المطورين والمصدر والطباعة
+        document.addEventListener('keydown', function(e) {
+          var key = e.key ? e.key.toLowerCase() : '';
+          var code = e.code ? e.code.toLowerCase() : '';
+
+          // F12
+          if (e.keyCode === 123 || e.key === 'F12' || code === 'f12') {
+            e.preventDefault(); e.stopPropagation(); return false;
+          }
+          // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
+          if (e.ctrlKey && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')) {
+            e.preventDefault(); e.stopPropagation(); return false;
+          }
+          // Ctrl+U (view source), Ctrl+P (print), Ctrl+S (save)
+          if (e.ctrlKey && (key === 'u' || key === 'p' || key === 's')) {
+            e.preventDefault(); e.stopPropagation(); return false;
+          }
+          // Ctrl+C, Ctrl+X, Ctrl+A (copy/cut/selectAll) — خارج الامتحان فقط الـ TakeExam يضبطه
+        }, true);
+
+        // منع السحب والإفلات
+        document.addEventListener('dragstart', function(e) {
+          e.preventDefault();
+        }, true);
+
+        // منع قائمة مفتاح Menu في لوحة المفاتيح
+        document.addEventListener('keyup', function(e) {
+          if (e.key === 'ContextMenu') {
+            e.preventDefault(); e.stopPropagation(); return false;
+          }
+        }, true);
+      })();
     </script>
   </head>
   <body>
@@ -28,3 +71,4 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

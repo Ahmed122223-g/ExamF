@@ -173,6 +173,49 @@ const TakeExam = () => {
     // Disable Copy/Paste
     const handleCopyCutPaste = (e) => e.preventDefault();
 
+    // --- DevTools Open Detection ---
+    const devToolsImage = new Image();
+    Object.defineProperty(devToolsImage, 'id', {
+      get: function() {
+        if (exam && !submittedRef.current && !submittingRef.current) {
+          handleCheatingSubmit('تم اكتشاف رصد فتح أدوات المطورين (Developer Console).');
+        }
+      }
+    });
+
+    const devtoolsInterval = setInterval(() => {
+      // Trigger evaluation of getter
+      console.log('%c', devToolsImage);
+
+      // Width/Height difference detection for docked devtools
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      if ((widthThreshold || heightThreshold) && exam && !submittedRef.current && !submittingRef.current) {
+        handleCheatingSubmit('تم رصد فتح أدوات المطورين (Developer Console) بجانب الصفحة.');
+      }
+    }, 1000);
+
+    // --- Translation Tools Detection ---
+    const translationObserver = new MutationObserver(() => {
+      const htmlEl = document.documentElement;
+      const hasTranslatedClass = htmlEl.classList.contains('translated-ltr') || htmlEl.classList.contains('translated-rtl') || 
+                                 (document.body && (document.body.classList.contains('translated-ltr') || document.body.classList.contains('translated-rtl')));
+      const langAttr = htmlEl.getAttribute('lang');
+
+      const hasGoogleTranslateElements = document.querySelector('.goog-te-banner-frame') || 
+                                         document.querySelector('[class*="goog-te"]') || 
+                                         document.querySelector('#goog-gt-tt');
+
+      if (hasTranslatedClass || hasGoogleTranslateElements || (langAttr && langAttr !== 'ar' && langAttr !== 'en')) {
+        if (exam && !submittedRef.current && !submittingRef.current) {
+          handleCheatingSubmit('تم رصد محاولة ترجمة صفحة الاختبار.');
+        }
+      }
+    });
+
+    translationObserver.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['lang', 'class'] });
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('resize', handleResize);
@@ -183,6 +226,8 @@ const TakeExam = () => {
     document.addEventListener('paste', handleCopyCutPaste);
 
     return () => {
+      clearInterval(devtoolsInterval);
+      translationObserver.disconnect();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('resize', handleResize);

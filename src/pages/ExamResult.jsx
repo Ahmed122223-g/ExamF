@@ -54,7 +54,6 @@ const ExamResult = () => {
   };
 
   const handleExit = () => {
-    // Clear student tokens
     sessionStorage.removeItem(`student_token_${examId}`);
     sessionStorage.removeItem(`student_name_${examId}`);
     sessionStorage.removeItem(`exam_result_${examId}`);
@@ -89,7 +88,6 @@ const ExamResult = () => {
     <div style={{ minHeight: '100vh', background: '#090d16', padding: '40px 15px' }}>
       <div style={{ maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
         
-        {/* Main Result Card */}
         <div className="glass-card" style={{ textAlign: 'center', padding: '40px' }}>
           
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
@@ -107,7 +105,6 @@ const ExamResult = () => {
             مرحباً <strong>{studentName}</strong>، لقد تم حفظ إجاباتك للاختبار <strong>{result.exam_title}</strong>.
           </p>
 
-          {/* Scores Display */}
           <div style={{
             display: 'inline-flex',
             flexDirection: 'column',
@@ -151,7 +148,6 @@ const ExamResult = () => {
           </div>
         </div>
 
-        {/* Dynamic Grading Details Section */}
         {result.is_exam_ended ? (
           <div>
             <h2 style={{ fontSize: '1.4rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '12px' }}>
@@ -189,7 +185,6 @@ const ExamResult = () => {
                         <h4 style={{ margin: 0, color: 'white', fontSize: '1rem', lineHeight: '1.6' }}>{q.question_text}</h4>
                       </div>
 
-                      {/* Marks / Status badge */}
                       <span style={{
                         padding: '4px 10px',
                         borderRadius: '6px',
@@ -202,7 +197,6 @@ const ExamResult = () => {
                       </span>
                     </div>
 
-                    {/* Show option list with grading highlights */}
                     <div className="responsive-grid-choices" style={{ paddingRight: '15px' }}>
                       {['a', 'b', 'c', 'd'].map(optKey => {
                         const optText = q[`option_${optKey}`];
@@ -243,7 +237,6 @@ const ExamResult = () => {
                       })}
                     </div>
 
-                    {/* Explanation if available */}
                     {q.explanation && (
                       <div style={{
                         marginTop: '12px',
@@ -268,7 +261,6 @@ const ExamResult = () => {
             </div>
           </div>
         ) : (
-          /* Lock screen banner */
           <div className="glass-card" style={{
             display: 'flex',
             flexDirection: 'column',

@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import './CourseRoadmap.css';
 
-// Section icons by index (cycles through if more than array length)
 const SECTION_ICONS = ['🚀', '⚙️', '📊', '💡', '🎯', '🔥', '🏆', '📚'];
 
 export default function CourseRoadmap() {
@@ -16,7 +15,6 @@ export default function CourseRoadmap() {
   const [error, setError] = useState('');
   const [leaderboard, setLeaderboard] = useState(null);
 
-  // Fetch roadmap data
   const fetchRoadmap = async () => {
     try {
       setLoading(true);
@@ -99,13 +97,11 @@ export default function CourseRoadmap() {
     const index = getItemGlobalIndex(id);
     if (index === 0 && !isItemLocked(id)) return true;
 
-    // Block if any previous project card is not completed
     for (let i = 0; i < index; i++) {
       const prev = allItems[i];
       if (prev.is_project && !prev.is_completed) return false;
     }
 
-    // If locked by lock_date — block regardless of unlock status
     if (isItemLocked(id)) return false;
 
     if (item.unlock_date) {
@@ -125,7 +121,6 @@ export default function CourseRoadmap() {
     return prevItem && prevItem.is_completed === true;
   };
 
-  // Returns true if the card is past its lock_date
   const isItemLocked = (id) => {
     const item = allItems.find(it => it.id === id);
     if (!item || !item.lock_date) return false;
@@ -141,13 +136,11 @@ export default function CourseRoadmap() {
 
   return (
     <div className="app-container" style={{ position: 'relative' }}>
-      {/* Background Orbs */}
       <div className="roadmap-bg-glow">
         <div className="roadmap-orb roadmap-orb-1"></div>
         <div className="roadmap-orb roadmap-orb-2"></div>
       </div>
 
-      {/* Navbar top */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <Link to="/dashboard" className="back-nav-btn">
           ← العودة للوحة التحكم
@@ -155,7 +148,6 @@ export default function CourseRoadmap() {
         <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{roadmap.title}</span>
       </div>
 
-      {/* Header */}
       <header className="app-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <h1 className="app-title" style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>{roadmap.title}</h1>
         <p className="app-subtitle" style={{ color: 'var(--text-muted-dark)', maxWidth: '700px', margin: '0 auto' }}>
@@ -163,12 +155,10 @@ export default function CourseRoadmap() {
         </p>
       </header>
 
-      {/* Day counter info */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-muted-dark)', fontSize: '0.9rem' }}>
         <span>📅 اليوم {elapsedDays + 1} في الكورس &nbsp;•&nbsp; تم فتح {unlockedCount} من {allItems.length} درساً</span>
       </div>
 
-      {/* No sections message */}
       {sections.length === 0 && (
         <div className="glass-card" style={{ textAlign: 'center', padding: '50px' }}>
           <p style={{ color: '#9ca3af', fontSize: '1.1rem' }}>لا توجد أقسام أو دروس مضافة لهذا الكورس بعد.</p>
@@ -178,12 +168,10 @@ export default function CourseRoadmap() {
         </div>
       )}
 
-      {/* ── Leaderboard Section ── */}
       {leaderboard && leaderboard.total_cards > 0 && (
         <div className="leaderboard-section">
           <h2 className="leaderboard-title">🏆 لوحة المتصدرين</h2>
 
-          {/* Top 3 Podium */}
           <div className="leaderboard-podium">
             {leaderboard.top_three.map((s, i) => {
               const medals = ['🥇', '🥈', '🥉'];
@@ -207,7 +195,6 @@ export default function CourseRoadmap() {
             })}
           </div>
 
-          {/* My Rank */}
           {leaderboard.my_rank && (
             <div className="leaderboard-my-rank">
               <span className="leaderboard-my-icon">📍</span>
@@ -221,7 +208,6 @@ export default function CourseRoadmap() {
         </div>
       )}
 
-      {/* Dynamic Sections */}
       {sections.map((sec, secIdx) => (
         <section key={sec.id} className="roadmap-section">
           <div className="roadmap-section-header">
@@ -318,7 +304,6 @@ export default function CourseRoadmap() {
         </section>
       ))}
 
-      {/* ── Specialization Tracks (Unlocked after completing C++) ── */}
       {roadmap.specializations && roadmap.specializations.length > 0 && (
         <section className="specializations-section" style={{ marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '2rem', paddingBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', marginBottom: '1rem', textAlign: 'center' }}>

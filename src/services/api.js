@@ -106,7 +106,6 @@ export const apiService = {
     return res.data;
   },
 
-  // Admin Services
   adminLogin: async (username, password) => {
     const res = await API.post('/api/admin/login', { username, password });
     return res.data;
@@ -183,7 +182,6 @@ export const apiService = {
     return res.data;
   },
 
-  // Course Services
   registerCourse: async (courseCode, token) => {
     const res = await API.post('/api/courses/register', { course_code: courseCode }, {
       headers: { Authorization: `Bearer ${token}` }
@@ -219,7 +217,6 @@ export const apiService = {
     return res.data;
   },
 
-  // Admin Course Services
   getAdminCourses: async (token) => {
     const res = await API.get('/api/admin/courses', {
       headers: { Authorization: `Bearer ${token}` }
@@ -321,7 +318,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Card Questions - Admin ────────────────────────────────────────────────
   getCardQuestionsAdmin: async (courseId, cardDbId, token) => {
     const res = await API.get(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -350,7 +346,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Card Questions - Student ──────────────────────────────────────────────
   getCardQuestionsStudent: async (cardDbId, token) => {
     const res = await API.get(`/api/courses/cards/${cardDbId}/questions`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -365,7 +360,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Project Submissions ──
   getProjectSubmission: async (cardDbId, token) => {
     const res = await API.get(`/api/courses/cards/${cardDbId}/project-submission`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -394,7 +388,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Notifications - Student ────────────────────────────────────────────────
   getMyNotifications: async (token) => {
     const res = await API.get('/api/courses/notifications', {
       headers: { Authorization: `Bearer ${token}` }
@@ -416,7 +409,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Students Overview - Admin ──────────────────────────────────────────────
   getStudentsOverview: async (token) => {
     const res = await API.get('/api/admin/students-overview', {
       headers: { Authorization: `Bearer ${token}` }
@@ -431,7 +423,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Notifications - Admin ──────────────────────────────────────────────────
   sendNotification: async (data, token) => {
     const res = await API.post('/api/admin/notifications', data, {
       headers: { Authorization: `Bearer ${token}` }
@@ -446,7 +437,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Question Answers Review - Admin ───────────────────────────────────────
   getCardsWithAnswersAdmin: async (token) => {
     const res = await API.get('/api/admin/cards-with-answers', {
       headers: { Authorization: `Bearer ${token}` }
@@ -470,7 +460,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── My Question Feedback - Student ────────────────────────────────────────
   getMyAnswerFeedback: async (cardDbId, token) => {
     const res = await API.get(`/api/courses/cards/${cardDbId}/my-feedback`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -478,7 +467,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Delete Student - Admin ────────────────────────────────────────────────
   deleteStudent: async (studentId, token) => {
     const res = await API.delete(`/api/admin/students/${studentId}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -486,7 +474,6 @@ export const apiService = {
     return res.data;
   },
 
-  // ── Card Exceptions - Admin ────────────────────────────────────────────────
   getStudentCardExceptions: async (studentId, token) => {
     const res = await API.get(`/api/admin/students/${studentId}/card-exceptions`, {
       headers: { Authorization: `Bearer ${token}` }

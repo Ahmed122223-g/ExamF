@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaArrowRight, FaClock, FaTrophy, FaUsers, FaCheckCircle, FaExclamationTriangle, FaPercentage } from 'react-icons/fa';
@@ -62,8 +62,7 @@ const AdminStats = () => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 15px', direction: 'rtl', color: 'white' }}>
       
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <button 
             onClick={() => navigate('/admin/dashboard')} 
@@ -89,8 +88,7 @@ const AdminStats = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '35px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '35px' }}>
         
         <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '15px', borderRadius: '12px', fontSize: '1.5rem', display: 'flex' }}>
@@ -162,8 +160,7 @@ const AdminStats = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px', marginBottom: '40px' }}>
         
-        {/* Leaderboard Table Card */}
-        <div className="glass-card" style={{ padding: '25px' }}>
+                <div className="glass-card" style={{ padding: '25px' }}>
           <h2 style={{ fontSize: '1.3rem', borderBottom: '1px solid var(--border-dark)', paddingBottom: '15px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             🏆 لوحة الصدارة وترتيب الطلاب ({stats.leaderboard.length})
           </h2>
@@ -239,15 +236,13 @@ const AdminStats = () => {
           )}
         </div>
 
-        {/* Item Analysis / Question Stats Card */}
-        <div>
+                <div>
           <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             📊 تحليل إجابات الأسئلة ونسب الاختيار
           </h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
             {stats.questions.map((q, index) => {
-              // Find the most popular option chosen by students
               const dist = q.distribution;
               let mostSelectedKey = 'no_answer';
               let maxVal = -1;
@@ -281,8 +276,7 @@ const AdminStats = () => {
                     </div>
                   </div>
 
-                  {/* Options & Selection Bars */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
                     
                     {[
                       { key: 'a', text: q.option_a, label: 'أ' },
@@ -303,8 +297,7 @@ const AdminStats = () => {
                           position: 'relative',
                           overflow: 'hidden'
                         }}>
-                          {/* Progress bar background fill */}
-                          <div style={{ 
+                                                    <div style={{ 
                             position: 'absolute', 
                             top: 0, 
                             right: 0, 
@@ -315,8 +308,7 @@ const AdminStats = () => {
                             transition: 'width 0.5s ease-out'
                           }}></div>
 
-                          {/* Option details */}
-                          <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <span style={{ 
                                 display: 'inline-flex', 
@@ -352,8 +344,7 @@ const AdminStats = () => {
                       );
                     })}
 
-                    {/* No Answer Distribution */}
-                    {q.distribution.no_answer > 0 && (
+                                        {q.distribution.no_answer > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted-dark)', padding: '5px 10px' }}>
                         <span>⚠️ لم يجب أحد على هذا السؤال:</span>
                         <span style={{ fontWeight: 'bold' }}>{q.distribution.no_answer}%</span>
@@ -362,8 +353,7 @@ const AdminStats = () => {
 
                   </div>
 
-                  {/* Explanation Section */}
-                  {q.explanation && (
+                                    {q.explanation && (
                     <div style={{ 
                       marginTop: '15px', 
                       padding: '12px 15px', 

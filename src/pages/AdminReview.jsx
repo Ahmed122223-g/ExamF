@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Swal from 'sweetalert2';
@@ -9,7 +9,6 @@ export default function AdminReview() {
 
   const [activeTab, setActiveTab] = useState('projects');
 
-  // ── Projects state ────────────────────────────────────────
   const [submissions, setSubmissions] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [selectedSub, setSelectedSub] = useState(null);
@@ -20,7 +19,6 @@ export default function AdminReview() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // ── Questions state ───────────────────────────────────────
   const [cardsWithAnswers, setCardsWithAnswers] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
@@ -29,7 +27,6 @@ export default function AdminReview() {
   const [feedbackText, setFeedbackText] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
 
-  // ── Filters & Search state ────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [selectedSection, setSelectedSection] = useState('all');
@@ -113,7 +110,6 @@ export default function AdminReview() {
     return <span style={{ background: st.bg, color: st.color, padding: '3px 12px', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700 }}>{st.label}</span>;
   };
 
-  // Extract unique courses and sections from both projects and questions for the dropdowns
   const safeSubmissions = Array.isArray(submissions) ? submissions : [];
   const safeCardsWithAnswers = Array.isArray(cardsWithAnswers) ? cardsWithAnswers : [];
 
@@ -127,14 +123,12 @@ export default function AdminReview() {
     ...safeCardsWithAnswers.filter(c => selectedCourse === 'all' || c.course_title === selectedCourse).map(c => c.section_title).filter(Boolean)
   ]));
 
-  // Reset section filter if it's no longer available when course changes
   useEffect(() => {
     if (selectedSection !== 'all' && !allAvailableSections.includes(selectedSection)) {
       setSelectedSection('all');
     }
   }, [selectedCourse]);
 
-  // Filter Submissions (Projects)
   const filteredSubmissions = safeSubmissions.filter(s => {
     const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
     const matchesCourse = selectedCourse === 'all' || s.course_title === selectedCourse;
@@ -145,7 +139,6 @@ export default function AdminReview() {
     return matchesStatus && matchesCourse && matchesSection && matchesSearch;
   });
 
-  // Filter Cards (Questions)
   const filteredCardsWithAnswers = safeCardsWithAnswers.filter(c => {
     const matchesCourse = selectedCourse === 'all' || c.course_title === selectedCourse;
     const matchesSection = selectedSection === 'all' || c.section_title === selectedSection;
@@ -158,8 +151,7 @@ export default function AdminReview() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', padding: 'clamp(16px,3vw,32px)', direction: 'rtl', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '28px' }}>
         <div>
           <button onClick={() => navigate('/admin/dashboard')} style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '4px', padding: 0 }}>
             ← العودة للوحة التحكم
@@ -169,8 +161,7 @@ export default function AdminReview() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {[
           { key: 'projects', icon: '📁', label: 'المشاريع', count: safeSubmissions.length },
           { key: 'questions', icon: '❓', label: 'الأسئلة', count: safeCardsWithAnswers.reduce((a, c) => a + (c.questions || []).reduce((b, q) => b + (q.answers || []).length, 0), 0) }
@@ -190,8 +181,7 @@ export default function AdminReview() {
         ))}
       </div>
 
-      {/* Global Filters & Search Section */}
-      <div className="glass-card" style={{ padding: '16px', marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="glass-card" style={{ padding: '16px', marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ flex: 1, minWidth: '200px' }}>
           <input
             type="text"
@@ -258,8 +248,7 @@ export default function AdminReview() {
         </div>
       </div>
 
-      {/* ── PROJECTS TAB ── */}
-      {activeTab === 'projects' && (
+            {activeTab === 'projects' && (
         <>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {[{ v: 'all', l: 'الكل' }, { v: 'pending', l: '⏳ قيد المراجعة' }, { v: 'approved', l: '✓ مقبول' }, { v: 'rejected', l: '✗ مرفوض' }].map(f => (
@@ -324,8 +313,7 @@ export default function AdminReview() {
         </>
       )}
 
-      {/* ── QUESTIONS TAB ── */}
-      {activeTab === 'questions' && (
+            {activeTab === 'questions' && (
         <>
           {loadingQuestions ? (
             <div style={{ textAlign: 'center', paddingTop: '60px' }}><div className="spinner" /></div>
@@ -461,8 +449,7 @@ export default function AdminReview() {
         </>
       )}
 
-      {/* ── Project Review Modal ── */}
-      {reviewModalOpen && selectedSub && (
+            {reviewModalOpen && selectedSub && (
         <div onClick={e => { if (e.target === e.currentTarget) setReviewModalOpen(false); }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto', padding: 'clamp(18px,3vw,28px)' }}>
@@ -517,8 +504,7 @@ export default function AdminReview() {
         </div>
       )}
 
-      {/* ── Feedback Modal ── */}
-      {feedbackModal && (
+            {feedbackModal && (
         <div onClick={e => { if (e.target === e.currentTarget) setFeedbackModal(null); }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="glass-card" style={{ width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: 'clamp(18px,3vw,28px)' }}>

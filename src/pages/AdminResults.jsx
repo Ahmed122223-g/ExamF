@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaSignOutAlt, FaFileExcel, FaTrashAlt, FaEye, FaTimes, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
@@ -14,7 +14,6 @@ const AdminResults = () => {
   const [selectedExamId, setSelectedExamId] = useState(initialExamId);
   const [loading, setLoading] = useState(true);
 
-  // Result details Modal state
   const [selectedResult, setSelectedResult] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -102,8 +101,7 @@ const AdminResults = () => {
 
   return (
     <div className="app-container">
-      {/* Top Navbar */}
-      <nav className="navbar">
+            <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
@@ -118,19 +116,16 @@ const AdminResults = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="main-content">
+            <main className="main-content">
         
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
           <div>
             <h1 style={{ fontSize: '1.6rem', color: 'white', fontWeight: '800' }}>لوحة درجات ونتائج الطلاب</h1>
             <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>متابعة نتائج الامتحانات وتحميل ملفات الإكسيل للدرجات</p>
           </div>
         </div>
 
-        {/* Filter controls glass card */}
-        <div className="glass-card" style={{ padding: '20px 25px', marginBottom: '25px', display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div className="glass-card" style={{ padding: '20px 25px', marginBottom: '25px', display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flex: 1 }}>
             <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>تصفية حسب الاختبار:</label>
@@ -159,8 +154,7 @@ const AdminResults = () => {
           )}
         </div>
 
-        {/* Results List */}
-        {loading ? (
+                {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
             <div className="spinner"></div>
           </div>
@@ -253,8 +247,7 @@ const AdminResults = () => {
           </div>
         )}
 
-        {/* Modal for viewing detailed answers */}
-        {selectedResult && (
+                {selectedResult && (
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(9, 13, 22, 0.85)', zIndex: 2000,
@@ -265,8 +258,7 @@ const AdminResults = () => {
               overflowY: 'auto', position: 'relative', border: '1px solid var(--border-dark)'
             }}>
               
-              {/* Close button */}
-              <button
+                            <button
                 onClick={handleCloseModal}
                 style={{
                   position: 'absolute', top: '20px', left: '20px',
@@ -282,8 +274,7 @@ const AdminResults = () => {
                 <span style={{ fontSize: '0.9rem', color: '#94a3b8', marginRight: '10px', fontWeight: 'normal' }}>({selectedResult.student_email})</span>
               </h2>
 
-              {/* Student Metadata Summary */}
-              <div style={{
+                            <div style={{
                 display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '15px', backgroundColor: 'rgba(30, 41, 59, 0.4)',
                 padding: '15px 20px', borderRadius: '10px', border: '1px solid var(--border-dark)',
@@ -295,8 +286,7 @@ const AdminResults = () => {
                 <div>رصد غش: <strong style={{ color: selectedResult.is_cheated ? '#ef4444' : '#10b981' }}>{selectedResult.is_cheated ? 'نعم (خروج/تقسيم شاشة)' : 'لا'}</strong></div>
               </div>
 
-              {/* Question list with selections */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {selectedResult.questions.map((q, idx) => {
                   const isCorrect = q.is_correct;
                   const isSkipped = q.selected_answer === null;
@@ -328,8 +318,7 @@ const AdminResults = () => {
                         </span>
                       </div>
 
-                      {/* Choices */}
-                      <div className="responsive-grid-choices" style={{ paddingRight: '15px' }}>
+                                            <div className="responsive-grid-choices" style={{ paddingRight: '15px' }}>
                         {['a', 'b', 'c', 'd'].map(optKey => {
                           const isStudentSel = q.selected_answer === optKey;
                           const isCorrectAns = q.correct_answer === optKey;

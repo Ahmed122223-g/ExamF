@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt } from 'react-icons/fa';
@@ -14,7 +14,6 @@ const AdminEditCard = () => {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Card details state
   const [cardTitle, setCardTitle] = useState('');
   const [cardDesc, setCardDesc] = useState('');
   const [cardPhase, setCardPhase] = useState('basics');
@@ -24,18 +23,14 @@ const AdminEditCard = () => {
   const [saving, setSaving] = useState(false);
   const [isProject, setIsProject] = useState(false);
 
-  // New Unlock States
   const [unlockType, setUnlockType] = useState('immediate'); // 'immediate' | 'date' | 'days'
   const [unlockDate, setUnlockDate] = useState('');
   const [unlockDays, setUnlockDays] = useState('');
 
-  // Lock Date State
   const [lockDate, setLockDate] = useState(''); // '' means null (never lock)
 
-  // Dynamic Instructors State
   const [instructorsList, setInstructorsList] = useState([]);
 
-  // Card Questions State
   const [cardDbId, setCardDbId] = useState(null);  // actual DB id (integer)
   const [questionsList, setQuestionsList] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
@@ -53,7 +48,6 @@ const AdminEditCard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Get all courses to find the current one
         const coursesData = await apiService.getAdminCourses(token);
         const currentCourse = coursesData.find(c => c.id.toString() === courseId.toString());
         if (!currentCourse) {
@@ -63,16 +57,13 @@ const AdminEditCard = () => {
         }
         setCourse(currentCourse);
 
-        // Get exams list for linking dropdown
         const examsData = await apiService.getExams(token);
         setExams(examsData);
 
-        // Get sections for this course
         const sectionsData = await apiService.getCourseSectionsAdmin(courseId, token);
         setSections(sectionsData);
 
         if (!isNewCard) {
-          // Get cards for this course to find the specific card
           const cardsData = await apiService.getCourseCardsAdmin(courseId, token);
           const currentCard = cardsData.find(c => c.card_id === cardId || c.id.toString() === cardId.toString());
           if (!currentCard) {
@@ -81,7 +72,6 @@ const AdminEditCard = () => {
             return;
           }
 
-          // Fill state values
           setCardTitle(currentCard.title || '');
           setCardDesc(currentCard.description || '');
           setCardPhase(currentCard.phase || 'basics');
@@ -89,7 +79,6 @@ const AdminEditCard = () => {
           setCardSectionId(currentCard.section_id || null);
           setIsProject(currentCard.is_project || false);
 
-          // Unlock settings
           if (currentCard.unlock_date) {
             setUnlockType('date');
             setUnlockDate(currentCard.unlock_date);
@@ -100,10 +89,8 @@ const AdminEditCard = () => {
             setUnlockType('immediate');
           }
 
-          // Lock date
           setLockDate(currentCard.lock_date || '');
 
-          // Parse instructors JSON
           let instructorsObj = {};
           if (currentCard.instructors_data) {
             try {
@@ -113,14 +100,12 @@ const AdminEditCard = () => {
             }
           }
           
-          // Convert dict to list
           const list = Object.keys(instructorsObj).map(key => ({
             key: key,
             name: instructorsObj[key].name || '',
             videos: instructorsObj[key].videos || []
           }));
           
-          // If empty list, initialize with default instructors to make it easy for the admin
           if (list.length === 0) {
             setInstructorsList([
               { key: 'elzero', name: 'أسامة الزيرو', videos: [] },
@@ -131,19 +116,15 @@ const AdminEditCard = () => {
             setInstructorsList(list);
           }
 
-          // Find linked exam if any
           const linkedExam = examsData.find(e => e.course_card_id === currentCard.id);
           setLinkedExamId(linkedExam ? linkedExam.id.toString() : '');
 
-          // Store card DB id for questions
           setCardDbId(currentCard.id);
 
-          // Fetch questions for this card
           try {
             const qs = await apiService.getCardQuestionsAdmin(courseId, currentCard.id, token);
             setQuestionsList(qs.map(q => ({ ...q, _dirty: false })));
 
-            // Fetch students answers for these questions
             try {
               const ansData = await apiService.getCardQuestionAnswersAdmin(currentCard.id, token);
               setQuestionAnswersList(ansData);
@@ -152,7 +133,6 @@ const AdminEditCard = () => {
             setQuestionsList([]);
           }
         } else {
-          // Default initialization for new cards
           setCardTitle('');
           setCardDesc('');
           setCardPhase('basics');
@@ -177,7 +157,6 @@ const AdminEditCard = () => {
     fetchData();
   }, [courseId, cardId, token, navigate]);
 
-  // ── Question Handlers ────────────────────────────────────────────────────
   const handleAddQuestion = () => {
     setQuestionsList(prev => [
       ...prev,
@@ -188,7 +167,6 @@ const AdminEditCard = () => {
   const handleRemoveQuestion = async (idx) => {
     const q = questionsList[idx];
     if (q.id && !q._new) {
-      // Delete from server
       try {
         await apiService.deleteCardQuestion(courseId, cardDbId, q.id, token);
       } catch (e) {
@@ -207,7 +185,6 @@ const AdminEditCard = () => {
   };
 
   const handleSaveQuestions = async (cardId_) => {
-    // Save all dirty questions to server after card is saved
     for (let i = 0; i < questionsList.length; i++) {
       const q = questionsList[i];
       if (!q._dirty) continue;
@@ -237,7 +214,6 @@ const AdminEditCard = () => {
     navigate('/admin/login');
   };
 
-  // Add a new dynamic instructor
   const handleAddInstructor = () => {
     const key = `inst_${Date.now()}`;
     setInstructorsList(prev => [
@@ -246,7 +222,6 @@ const AdminEditCard = () => {
     ]);
   };
 
-  // Remove an instructor
   const handleRemoveInstructor = (key) => {
     setInstructorsList(prev => prev.filter(inst => inst.key !== key));
   };
@@ -313,7 +288,6 @@ const AdminEditCard = () => {
 
     setSaving(true);
     try {
-      // 1. Prepare unlock variables
       let finalUnlockDate = null;
       let finalUnlockDays = null;
 
@@ -333,7 +307,6 @@ const AdminEditCard = () => {
         finalUnlockDays = parseInt(unlockDays) || 0;
       }
 
-      // Convert instructors list back to dictionary
       const instructorsObj = {};
       instructorsList.forEach(inst => {
         instructorsObj[inst.key] = {
@@ -364,18 +337,15 @@ const AdminEditCard = () => {
         savedCard = await apiService.updateCourseCardAdmin(courseId, cardId, cardPayload, token);
       }
 
-      // 2. Update Exam Linkage
       if (linkedExamId) {
         await apiService.linkExamToCourse(parseInt(linkedExamId), parseInt(courseId), savedCard.id, token);
       } else {
-        // Unlink exams previously linked to this card
         const currentlyLinkedExams = exams.filter(e => e.course_card_id === savedCard.id);
         for (const ex of currentlyLinkedExams) {
           await apiService.linkExamToCourse(ex.id, 0, 0, token);
         }
       }
 
-      // 3. Save Questions
       await handleSaveQuestions(savedCard.id);
 
       Swal.fire('تم الحفظ!', 'تم حفظ بيانات الكارت والأسئلة بنجاح.', 'success').then(() => {
@@ -405,8 +375,7 @@ const AdminEditCard = () => {
 
   return (
     <div className="app-container">
-      {/* Top Navbar */}
-      <nav className="navbar">
+            <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
@@ -420,8 +389,7 @@ const AdminEditCard = () => {
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="main-content" style={{ maxWidth: '900px', margin: '40px auto' }}>
+            <main className="main-content" style={{ maxWidth: '900px', margin: '40px auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>
@@ -447,8 +415,7 @@ const AdminEditCard = () => {
             <textarea className="form-input" style={{ minHeight: '100px', resize: 'vertical' }} value={cardDesc} onChange={(e) => setCardDesc(e.target.value)} placeholder="شرح مبسط للمواضيع المغطاة في هذا الدرس" />
           </div>
 
-          {/* Checkbox for Project Card */}
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '12px 18px', borderRadius: '10px' }}>
+                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '12px 18px', borderRadius: '10px' }}>
             <input
               type="checkbox"
               id="is_project_checkbox"
@@ -479,8 +446,7 @@ const AdminEditCard = () => {
             </div>
           </div>
 
-          {/* Section Assignment */}
-          <div className="form-group" style={{ background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '20px', borderRadius: '12px' }}>
+                    <div className="form-group" style={{ background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '20px', borderRadius: '12px' }}>
             <label className="form-label" style={{ color: '#8b5cf6', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
               📂 القسم المنتمي إليه هذا الكارت:
             </label>
@@ -497,8 +463,7 @@ const AdminEditCard = () => {
             </select>
           </div>
 
-          {/* Unlock Settings Section */}
-          <div className="form-group" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '20px', borderRadius: '12px' }}>
+                    <div className="form-group" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '20px', borderRadius: '12px' }}>
             <label className="form-label" style={{ color: '#10b981', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
               ⚙️ إعدادات فتح الكارت للطلاب:
             </label>
@@ -532,8 +497,7 @@ const AdminEditCard = () => {
             )}
           </div>
 
-          {/* Lock Date Section */}
-          <div className="form-group" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '20px', borderRadius: '12px' }}>
+                    <div className="form-group" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '20px', borderRadius: '12px' }}>
             <label className="form-label" style={{ color: '#ef4444', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
               🔒 تاريخ قفل الكارت (اختياري):
             </label>
@@ -576,8 +540,7 @@ const AdminEditCard = () => {
           </div>
 
 
-          {/* Linking Exam */}
-          <div className="form-group" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '20px', borderRadius: '12px' }}>
+                    <div className="form-group" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '20px', borderRadius: '12px' }}>
             <label className="form-label" style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
               <FaLink /> ربط اختبار بهذا الكارت تلقائياً للطلاب:
             </label>
@@ -594,8 +557,7 @@ const AdminEditCard = () => {
             </select>
           </div>
 
-          {/* Instructors Section */}
-          <div style={{ marginTop: '10px' }}>
+                    <div style={{ marginTop: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <h3 style={{ color: 'white', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderRight: '4px solid #06b6d4', paddingRight: '10px' }}>
                 <FaVideo style={{ color: '#06b6d4' }} /> المحاضرون الفيديوهات في هذا الكارت:
@@ -651,11 +613,9 @@ const AdminEditCard = () => {
             ))}
           </div>
 
-          {/* ── Questions Section ─────────────────────────────────────────── */}
-          {!isNewCard && (
+                    {!isNewCard && (
             <div style={{ marginTop: '30px', borderTop: '2px solid rgba(239, 68, 68, 0.2)', paddingTop: '25px' }}>
-              {/* Sub-tabs for questions */}
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('edit_questions')}
@@ -716,8 +676,7 @@ const AdminEditCard = () => {
                             </button>
                           </div>
 
-                          {/* Question Text */}
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                                                    <div className="form-group" style={{ marginBottom: '12px' }}>
                             <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
                               نص السؤال (يمكن نسخ الكود أو النص هنا):
                             </label>
@@ -730,8 +689,7 @@ const AdminEditCard = () => {
                             />
                           </div>
 
-                          {/* Question Image URL */}
-                          <div className="form-group">
+                                                    <div className="form-group">
                             <label className="form-label" style={{ color: '#d1d5db', fontSize: '0.85rem' }}>
                               🖼️ رابط صورة السؤال (اختياري — إذا كان السؤال صورة):
                             </label>

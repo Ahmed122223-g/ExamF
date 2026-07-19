@@ -37,7 +37,6 @@ export default function QuestionFeedbackDetail() {
       direction: 'rtl',
       fontFamily: 'Segoe UI, Arial, sans-serif'
     }}>
-      {/* Header */}
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
         <button
           onClick={() => navigate(-1)}
@@ -52,7 +51,6 @@ export default function QuestionFeedbackDetail() {
           مراجعة ملاحظات المسؤول على إجاباتك في أسئلة هذا الكارت
         </p>
 
-        {/* Summary banner */}
         {!loading && !error && (
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
             <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -74,7 +72,6 @@ export default function QuestionFeedbackDetail() {
           </div>
         )}
 
-        {/* Content */}
         {loading ? (
           <div style={{ textAlign: 'center', paddingTop: '80px' }}>
             <div className="spinner" />
@@ -93,7 +90,6 @@ export default function QuestionFeedbackDetail() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {data.map((q, idx) => (
               <div key={q.question_id} className="glass-card" style={{ padding: 'clamp(16px,3vw,24px)', borderRight: `4px solid ${q.is_reviewed ? '#10b981' : q.my_answer_text || q.my_answer_link ? '#3b82f6' : 'rgba(255,255,255,0.1)'}` }}>
-                {/* Question number and text */}
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <span style={{ color: '#a78bfa', fontWeight: 700, fontSize: '0.82rem' }}>
@@ -117,7 +113,6 @@ export default function QuestionFeedbackDetail() {
                   ) : null}
                 </div>
 
-                {/* My Answer */}
                 <div style={{ marginBottom: '14px' }}>
                   <p style={{ color: '#6b7280', margin: '0 0 8px', fontSize: '0.78rem', fontWeight: 600 }}>✏️ إجابتك:</p>
                   {q.my_answer_text ? (
@@ -138,7 +133,6 @@ export default function QuestionFeedbackDetail() {
                   )}
                 </div>
 
-                {/* Admin Feedback */}
                 {q.admin_feedback ? (
                   <div style={{ background: 'rgba(16,185,129,0.08)', borderRadius: '10px', padding: '14px 16px', border: '1px solid rgba(16,185,129,0.2)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Swal from 'sweetalert2';
@@ -13,17 +13,14 @@ export default function AdminStudents() {
   const [search, setSearch] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  // Report modal state
   const [selectedReportStudent, setSelectedReportStudent] = useState(null);
 
-  // Permissions / exceptions modal state
   const [selectedPermissionsStudent, setSelectedPermissionsStudent] = useState(null);
   const [selectedPermissionCourseId, setSelectedPermissionCourseId] = useState('');
   const [permissionCards, setPermissionCards] = useState([]);
   const [permissionExceptions, setPermissionExceptions] = useState([]);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
 
-  // Notification modal state
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [notifTarget, setNotifTarget] = useState(null); // null = broadcast
   const [notifCourseId, setNotifCourseId] = useState('');
@@ -31,10 +28,8 @@ export default function AdminStudents() {
   const [broadcast, setBroadcast] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // Courses list for broadcast selector
   const [allCourses, setAllCourses] = useState([]);
 
-  // Sent notifications tab
   const [activeTab, setActiveTab] = useState('students'); // 'students' | 'sent'
   const [sentNotifs, setSentNotifs] = useState([]);
   const [loadingSent, setLoadingSent] = useState(false);
@@ -200,8 +195,7 @@ export default function AdminStudents() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', direction: 'rtl' }}>
-      {/* Navbar */}
-      <nav style={{
+            <nav style={{
         background: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)',
         padding: 'clamp(10px,2vw,16px) clamp(14px,3vw,28px)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -225,8 +219,7 @@ export default function AdminStudents() {
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(14px,3vw,30px) clamp(12px,3vw,20px)' }}>
 
-        {/* Tabs */}
-        <div className="admin-tabs" style={{ marginBottom: '24px' }}>
+                <div className="admin-tabs" style={{ marginBottom: '24px' }}>
           {[
             { key: 'students', label: `👥 الطلاب (${students.length})` },
             { key: 'sent', label: '📨 التنبيهات المرسلة' },
@@ -248,11 +241,9 @@ export default function AdminStudents() {
           ))}
         </div>
 
-        {/* ── Students Tab ── */}
-        {activeTab === 'students' && (
+                {activeTab === 'students' && (
           <>
-            {/* Search */}
-            <div style={{ marginBottom: '20px' }}>
+                        <div style={{ marginBottom: '20px' }}>
               <input
                 className="form-input"
                 placeholder="ابحث باسم الطالب أو البريد..."
@@ -353,8 +344,7 @@ export default function AdminStudents() {
                       </div>
                     </div>
 
-                    {/* Quick Stats Summary row */}
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '14px', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)', fontSize: '0.82rem' }}>
+                                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '14px', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)', fontSize: '0.82rem' }}>
                       <span style={{ color: '#d1d5db' }}>⏱️ النشاط اليومي: <strong style={{ color: '#a855f7' }}>{student.daily_active_str || '0ث'}</strong></span>
                       <span style={{ color: '#6b7280' }}>•</span>
                       <span style={{ color: '#d1d5db' }}>🕒 آخر نشاط: <strong style={{ color: '#fff' }}>{student.last_active ? new Date(student.last_active).toLocaleString('ar-EG') : 'غير نشط مؤخراً'}</strong></span>
@@ -362,8 +352,7 @@ export default function AdminStudents() {
                       <span style={{ color: '#d1d5db' }}>📝 الامتحانات المنجزة: <strong style={{ color: '#f59e0b' }}>{student.exam_attempts?.length || 0}</strong></span>
                     </div>
 
-                    {/* Courses */}
-                    {student.courses.length > 0 && (
+                                        {student.courses.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {student.courses.map(c => (
                           <div key={c.course_id} style={{
@@ -392,8 +381,7 @@ export default function AdminStudents() {
           </>
         )}
 
-        {/* ── Sent Notifications Tab ── */}
-        {activeTab === 'sent' && (
+                {activeTab === 'sent' && (
           <>
             {loadingSent ? (
               <div style={{ textHeading: 'center', paddingTop: '40px' }}><div className="spinner"></div></div>
@@ -428,8 +416,7 @@ export default function AdminStudents() {
         )}
       </div>
 
-      {/* ── Detailed Student Report Modal ── */}
-      {selectedReportStudent && (
+            {selectedReportStudent && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
@@ -456,8 +443,7 @@ export default function AdminStudents() {
               </button>
             </div>
 
-            {/* Grid Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '24px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '24px' }}>
               <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '14px', borderRadius: '12px' }}>
                 <span style={{ display: 'block', fontSize: '0.8rem', color: '#10b981', fontWeight: 'bold' }}>⭐ التقييم العام</span>
                 <strong style={{ display: 'block', fontSize: '1.5rem', color: 'white', marginTop: '6px' }}>{selectedReportStudent.evaluation}</strong>
@@ -482,8 +468,7 @@ export default function AdminStudents() {
               </div>
             </div>
 
-            {/* Course Roadmap Progress section */}
-            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #06b6d4', paddingRight: '8px' }}>📂 تقدم الكورسات والدروس</h3>
+                        <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #06b6d4', paddingRight: '8px' }}>📂 تقدم الكورسات والدروس</h3>
             {selectedReportStudent.courses.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                 {selectedReportStudent.courses.map(c => {
@@ -496,8 +481,7 @@ export default function AdminStudents() {
                         <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>تاريخ التسجيل: {formatDate(c.registered_at)}</span>
                       </div>
                       
-                      {/* Card completion bar */}
-                      <div style={{ marginBottom: '10px' }}>
+                                            <div style={{ marginBottom: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px', color: '#d1d5db' }}>
                           <span>✅ نسبة إنجاز الدروس والبطاقات</span>
                           <span>{c.cards_completed} / {c.total_cards} كارت ({cardPercent}%)</span>
@@ -507,8 +491,7 @@ export default function AdminStudents() {
                         </div>
                       </div>
 
-                      {/* Question resolution bar */}
-                      <div style={{ marginBottom: '12px' }}>
+                                            <div style={{ marginBottom: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px', color: '#d1d5db' }}>
                           <span>❓ إجابات أسئلة الكروت المكتوبة</span>
                           <span>{c.answered_questions} / {c.total_questions} سؤال ({qsPercent}%)</span>
@@ -518,8 +501,7 @@ export default function AdminStudents() {
                         </div>
                       </div>
 
-                      {/* Completed Cards list */}
-                      {c.completed_cards_details?.length > 0 && (
+                                            {c.completed_cards_details?.length > 0 && (
                         <div style={{ marginTop: '10px' }}>
                           <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 'bold', marginBottom: '6px' }}>
                             ✅ الكروت المكتملة ({c.completed_cards_details.length}):
@@ -537,8 +519,7 @@ export default function AdminStudents() {
                         </div>
                       )}
 
-                      {/* Answered Questions list */}
-                      {c.answered_questions_details?.length > 0 && (
+                                            {c.answered_questions_details?.length > 0 && (
                         <div style={{ marginTop: '10px' }}>
                           <div style={{ fontSize: '0.78rem', color: '#f59e0b', fontWeight: 'bold', marginBottom: '6px' }}>
                             ❓ الأسئلة المحلولة ({c.answered_questions_details.length}):
@@ -567,8 +548,7 @@ export default function AdminStudents() {
               <p style={{ color: '#6b7280', fontStyle: 'italic', marginBottom: '24px' }}>لم يسجل في أي كورس بعد.</p>
             )}
 
-            {/* Exam Attempts section */}
-            <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #f59e0b', paddingRight: '8px' }}>📝 تفاصيل محاولات ونتائج الاختبارات</h3>
+                        <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '12px', borderRight: '3px solid #f59e0b', paddingRight: '8px' }}>📝 تفاصيل محاولات ونتائج الاختبارات</h3>
             {selectedReportStudent.exam_attempts?.length > 0 ? (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', color: '#d1d5db', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
@@ -644,8 +624,7 @@ export default function AdminStudents() {
         </div>
       )}
 
-      {/* ── Notification Modal ── */}
-      {showNotifModal && (
+            {showNotifModal && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
@@ -660,8 +639,7 @@ export default function AdminStudents() {
 
             <form onSubmit={handleSendNotification} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Broadcast toggle (only when opened for specific student) */}
-              {notifTarget && (
+                            {notifTarget && (
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#d1d5db', fontSize: '0.9rem' }}>
                   <input
                     type="checkbox"
@@ -673,8 +651,7 @@ export default function AdminStudents() {
                 </label>
               )}
 
-              {/* Course selector */}
-              <div className="form-group">
+                            <div className="form-group">
                 <label className="form-label">الكورس (اختياري — اتركه فارغاً للإرسال كتنبيه عام)</label>
                 <select
                   className="form-input"
@@ -688,8 +665,7 @@ export default function AdminStudents() {
                 </select>
               </div>
 
-              {/* Message */}
-              <div className="form-group">
+                            <div className="form-group">
                 <label className="form-label">نص التنبيه *</label>
                 <textarea
                   className="form-input"
@@ -715,8 +691,7 @@ export default function AdminStudents() {
         </div>
       )}
 
-      {/* ── Card Permissions Modal ── */}
-      {selectedPermissionsStudent && (
+            {selectedPermissionsStudent && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 1100,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
@@ -727,8 +702,7 @@ export default function AdminStudents() {
             border: '1px solid rgba(168,85,247,0.3)',
             boxShadow: '0 24px 48px rgba(0,0,0,0.6)', direction: 'rtl', textAlign: 'right'
           }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px' }}>
               <div>
                 <h2 style={{ color: 'white', fontWeight: 800, margin: 0, fontSize: '1.15rem' }}>🔓 إدارة صلاحيات الكروت</h2>
                 <p style={{ color: '#c084fc', margin: '4px 0 0', fontWeight: 600, fontSize: '0.9rem' }}>
@@ -745,16 +719,14 @@ export default function AdminStudents() {
               >✕</button>
             </div>
 
-            {/* Info box */}
-            <div style={{
+                        <div style={{
               background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)',
               borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', fontSize: '0.83rem', color: '#d1d5db', lineHeight: 1.7
             }}>
               💡 الكروت التي تمنحها صلاحية <strong style={{ color: '#c084fc' }}>تخطي تاريخ الإغلاق</strong> ستُفتح للطالب بشكل دائم حتى يقوم الأدمن بإلغاء الصلاحية يدوياً.
             </div>
 
-            {/* Course Selector */}
-            {selectedPermissionsStudent.courses?.length > 0 ? (
+                        {selectedPermissionsStudent.courses?.length > 0 ? (
               <>
                 <div className="form-group" style={{ marginBottom: '20px' }}>
                   <label className="form-label">اختر الكورس</label>
@@ -773,8 +745,7 @@ export default function AdminStudents() {
                   </select>
                 </div>
 
-                {/* Active Exceptions Summary */}
-                {permissionExceptions.length > 0 && (
+                                {permissionExceptions.length > 0 && (
                   <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px' }}>
                     <div style={{ color: '#10b981', fontWeight: 700, fontSize: '0.82rem', marginBottom: '8px' }}>
                       ✅ الصلاحيات الممنوحة حالياً ({permissionExceptions.length})
@@ -792,8 +763,7 @@ export default function AdminStudents() {
                   </div>
                 )}
 
-                {/* Cards List */}
-                {loadingPermissions ? (
+                                {loadingPermissions ? (
                   <div style={{ textAlign: 'center', padding: '30px' }}>
                     <div className="spinner" style={{ margin: '0 auto' }}></div>
                     <p style={{ color: '#9ca3af', marginTop: '12px' }}>جاري التحميل...</p>
@@ -866,8 +836,7 @@ export default function AdminStudents() {
               </div>
             )}
 
-            {/* Close Button */}
-            <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', textAlign: 'left' }}>
+                        <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', textAlign: 'left' }}>
               <button
                 onClick={() => setSelectedPermissionsStudent(null)}
                 className="btn btn-secondary"

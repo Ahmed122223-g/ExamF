@@ -1,18 +1,7 @@
-/* ═══════════════════════════════════════════════════════════════
-   RESPONSIVE.CSS — Comprehensive responsive design for all pages
-   Breakpoints: 1280 | 1024 | 768 | 480 | 360
-═══════════════════════════════════════════════════════════════ */
-
-/* ── Fluid root ── */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 img, video, iframe { max-width: 100%; display: block; }
 
-/* ───────────────────────────────────────
-   SHARED LAYOUT UTILITIES
-─────────────────────────────────────── */
-
-/* Flex rows that wrap on small screens */
 .rsp-row {
   display: flex;
   flex-wrap: wrap;
@@ -27,7 +16,6 @@ img, video, iframe { max-width: 100%; display: block; }
   align-items: center;
 }
 
-/* Responsive grid: 3 cols → 2 → 1 */
 .rsp-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -39,18 +27,14 @@ img, video, iframe { max-width: 100%; display: block; }
   gap: 16px;
 }
 
-/* Fluid font sizes */
 .rsp-title-xl { font-size: clamp(1.4rem, 5vw, 2.5rem); font-weight: 800; }
 .rsp-title-lg { font-size: clamp(1.15rem, 3.5vw, 1.8rem); font-weight: 700; }
 .rsp-title-md { font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 600; }
 .rsp-text-sm  { font-size: clamp(0.78rem, 1.5vw, 0.9rem); }
 
-/* Fluid padding */
 .rsp-pad-lg { padding: clamp(16px, 3vw, 32px); }
 .rsp-pad-md { padding: clamp(12px, 2.5vw, 24px); }
 .rsp-pad-sm { padding: clamp(8px, 2vw, 16px); }
-
-/* Card container with max-width */
 .rsp-card-center {
   max-width: min(100%, 520px);
   width: 100%;
@@ -58,7 +42,6 @@ img, video, iframe { max-width: 100%; display: block; }
   padding: clamp(16px, 4vw, 36px);
 }
 
-/* Action buttons row */
 .rsp-actions {
   display: flex;
   flex-wrap: wrap;
@@ -66,14 +49,10 @@ img, video, iframe { max-width: 100%; display: block; }
   align-items: center;
 }
 
-/* ───────────────────────────────────────
-   TABLET (≤ 1024px)
-─────────────────────────────────────── */
 @media (max-width: 1024px) {
   .rsp-grid-3 { grid-template-columns: repeat(2, 1fr); }
   .stats-grid  { grid-template-columns: repeat(2, 1fr) !important; }
 
-  /* Admin dashboard section headers */
   .rsp-admin-header {
     flex-direction: column;
     align-items: flex-start;
@@ -81,18 +60,12 @@ img, video, iframe { max-width: 100%; display: block; }
   }
 }
 
-/* ───────────────────────────────────────
-   TABLET / LARGE MOBILE (≤ 768px)
-─────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Global text scale */
   body { font-size: 15px; }
 
-  /* Shared containers */
   .main-content { padding: 20px 16px !important; }
   .glass-card   { padding: 18px 16px !important; border-radius: 14px !important; }
 
-  /* Navbar */
   .navbar {
     flex-direction: column !important;
     gap: 12px !important;
@@ -107,10 +80,8 @@ img, video, iframe { max-width: 100%; display: block; }
   .nav-btn { padding: 7px 12px !important; font-size: 0.88rem !important; }
   .nav-brand { font-size: 1.1rem !important; }
 
-  /* Stats */
   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
 
-  /* Tables */
   .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .custom-table th, .custom-table td {
     padding: 10px 12px !important;
@@ -118,26 +89,19 @@ img, video, iframe { max-width: 100%; display: block; }
     white-space: nowrap;
   }
 
-  /* Buttons */
   .btn { padding: 10px 18px !important; font-size: 0.9rem !important; }
 
-  /* Grid → 2 cols */
   .rsp-grid-3 { grid-template-columns: repeat(2, 1fr); }
   .rsp-grid-2 { grid-template-columns: 1fr; }
-
-  /* Landing page search */
   .landing-search-grid {
     grid-template-columns: 1fr 1fr !important;
     font-size: 0.82rem !important;
   }
-
-  /* Login / Register forms */
   .auth-card {
     padding: clamp(16px, 4vw, 28px) !important;
     margin: 12px !important;
   }
 
-  /* Admin dashboard headers */
   .rsp-admin-header {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -146,7 +110,6 @@ img, video, iframe { max-width: 100%; display: block; }
   .rsp-admin-header h1 { font-size: clamp(1.1rem, 4vw, 1.6rem) !important; }
   .rsp-actions { flex-wrap: wrap !important; }
 
-  /* Exam header */
   .exam-header {
     flex-direction: column !important;
     align-items: stretch !important;
@@ -155,60 +118,39 @@ img, video, iframe { max-width: 100%; display: block; }
     border-radius: 0 !important;
   }
 
-  /* AdminEditCard form */
   .admin-form-grid { grid-template-columns: 1fr !important; }
 
-  /* Roadmap cards */
   .roadmap-flow {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem !important;
   }
 }
 
-/* ───────────────────────────────────────
-   MOBILE (≤ 480px)
-─────────────────────────────────────── */
 @media (max-width: 480px) {
   body { font-size: 14px; }
 
   .main-content { padding: 14px 12px !important; }
   .glass-card   { padding: 14px 12px !important; border-radius: 12px !important; }
 
-  /* One-column stats */
   .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
   .stat-card  { padding: 12px 10px !important; flex-direction: column !important; align-items: flex-start !important; }
   .stat-icon  { width: 38px !important; height: 38px !important; font-size: 1.1rem !important; }
   .stat-info p { font-size: 1.3rem !important; }
 
-  /* Roadmap cards → 1 column */
   .roadmap-flow { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
   .roadmap-card { padding: 1rem !important; min-height: auto !important; }
   .roadmap-card-title { font-size: 0.92rem !important; }
-
-  /* Tables */
   .custom-table th, .custom-table td {
     padding: 8px 10px !important;
     font-size: 0.78rem !important;
   }
-
-  /* Buttons */
   .btn { padding: 9px 14px !important; font-size: 0.85rem !important; }
-
-  /* Landing grid info */
   .landing-search-grid { grid-template-columns: 1fr !important; }
-
-  /* Form inputs */
   .form-input { padding: 10px 12px !important; font-size: 0.92rem !important; }
-
-  /* Auth pages */
   .auth-card { padding: 14px 12px !important; margin: 8px !important; }
   .auth-card h2 { font-size: 1.4rem !important; }
-
-  /* Exam question navigation */
   .exam-question-nav { flex-wrap: wrap !important; gap: 6px !important; }
   .exam-nav-btn { padding: 8px 12px !important; font-size: 0.8rem !important; }
-
-  /* Attempt card */
   .attempt-row {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -217,16 +159,10 @@ img, video, iframe { max-width: 100%; display: block; }
   .attempt-actions { width: 100% !important; }
   .attempt-actions .btn { width: 100% !important; }
 
-  /* Grids */
   .rsp-grid-3, .rsp-grid-2 { grid-template-columns: 1fr !important; }
-
-  /* Exam header */
   .exam-header { padding: 10px 12px !important; font-size: 0.85rem !important; }
 }
 
-/* ───────────────────────────────────────
-   EXTRA SMALL (≤ 360px)
-─────────────────────────────────────── */
 @media (max-width: 360px) {
   body { font-size: 13px; }
 
@@ -241,19 +177,11 @@ img, video, iframe { max-width: 100%; display: block; }
   .roadmap-card-title { font-size: 0.88rem !important; }
 }
 
-/* ───────────────────────────────────────
-   LARGE DESKTOP (≥ 1280px)
-─────────────────────────────────────── */
 @media (min-width: 1280px) {
   .rsp-grid-3 { grid-template-columns: repeat(3, 1fr); }
   .stats-grid { grid-template-columns: repeat(4, 1fr) !important; }
 }
 
-/* ───────────────────────────────────────
-   ADMIN DASHBOARD — SPECIFIC FIXES
-─────────────────────────────────────── */
-
-/* Tabs bar — scroll on mobile */
 .admin-tabs {
   display: flex;
   gap: 4px;
@@ -272,14 +200,12 @@ img, video, iframe { max-width: 100%; display: block; }
   font-size: clamp(0.8rem, 2vw, 0.95rem);
 }
 
-/* Admin cards grid */
 .admin-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 20px;
 }
 
-/* Admin section card */
 .admin-section-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
@@ -288,7 +214,6 @@ img, video, iframe { max-width: 100%; display: block; }
   margin-bottom: 20px;
 }
 
-/* Admin card header (title + actions) */
 .admin-card-header {
   display: flex;
   justify-content: space-between;
@@ -312,10 +237,6 @@ img, video, iframe { max-width: 100%; display: block; }
   .admin-card-actions { width: 100%; }
   .admin-card-actions .btn { flex: 1; justify-content: center; font-size: 0.8rem; padding: 7px 10px !important; }
 }
-
-/* ───────────────────────────────────────
-   EXAM (TAKE EXAM) — SPECIFIC FIXES
-─────────────────────────────────────── */
 
 .take-exam-container {
   max-width: min(100%, 820px);
@@ -369,10 +290,6 @@ img, video, iframe { max-width: 100%; display: block; }
   .exam-nav-row .btn { width: 100%; }
 }
 
-/* ───────────────────────────────────────
-   STUDENT DASHBOARD — SPECIFIC FIXES
-─────────────────────────────────────── */
-
 .student-header-card {
   display: flex;
   justify-content: space-between;
@@ -407,9 +324,6 @@ img, video, iframe { max-width: 100%; display: block; }
   .attempt-card > div:last-child .btn { width: 100%; }
 }
 
-/* ───────────────────────────────────────
-   PRINT PREVENTION (already in index.css but duplicate safety)
-─────────────────────────────────────── */
 @media print {
   body, html, #root { display: none !important; }
 }

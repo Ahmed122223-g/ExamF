@@ -1,4 +1,3 @@
-/* Background Glowing Orbs */
 .roadmap-bg-glow {
   position: fixed;
   top: 0;
@@ -33,7 +32,6 @@
   background: #06b6d4;
 }
 
-/* Simulation Controls */
 .roadmap-simulation-panel {
   background: rgba(239, 68, 68, 0.08);
   border: 1px dashed rgba(239, 68, 68, 0.3);
@@ -77,7 +75,6 @@
   border-color: #f87171;
 }
 
-/* Roadmap Grid & Section layouts */
 .roadmap-section {
   margin-bottom: 4rem;
   position: relative;
@@ -115,7 +112,6 @@
   font-weight: 400;
 }
 
-/* Roadmap Cards & Flow Grid */
 .roadmap-flow {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -123,7 +119,6 @@
   position: relative;
 }
 
-/* Interactive Roadmap Card */
 .roadmap-card {
   background: rgba(17, 24, 39, 0.7);
   backdrop-filter: blur(12px);
@@ -162,7 +157,6 @@
   background: linear-gradient(90deg, #06b6d4, #8b5cf6);
 }
 
-/* Card Lock State */
 .roadmap-card.locked {
   background: rgba(17, 24, 39, 0.5);
   border-color: rgba(255, 255, 255, 0.04);
@@ -242,7 +236,6 @@
   text-decoration: underline;
 }
 
-/* Disabled/Placeholder Project Cards */
 .roadmap-project-card {
   background: rgba(17, 24, 39, 0.4);
   border: 1px dashed rgba(255, 255, 255, 0.15);
@@ -284,7 +277,6 @@
   line-height: 1.4;
 }
 
-/* Modal Popup Styles */
 .roadmap-modal-overlay {
   position: fixed;
   top: 0;
@@ -358,7 +350,6 @@
   gap: 1rem;
 }
 
-/* Back button in navbar */
 .back-nav-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -377,11 +368,6 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* ═══════════════════════════════════════
-   ROADMAP RESPONSIVE STYLES
-═══════════════════════════════════════ */
-
-/* Tablet (≤ 1024px) */
 @media (max-width: 1024px) {
   .roadmap-flow {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -390,7 +376,6 @@
   .roadmap-card { min-height: 200px; }
 }
 
-/* Large Mobile / Small Tablet (≤ 768px) */
 @media (max-width: 768px) {
   .roadmap-flow {
     grid-template-columns: repeat(2, 1fr);
@@ -408,14 +393,12 @@
   .roadmap-section-title { font-size: 1.3rem; }
   .roadmap-section-header { gap: 0.7rem; margin-bottom: 1.2rem; }
 
-  /* Simulation panel */
   .roadmap-simulation-panel {
     flex-direction: column;
     align-items: flex-start;
   }
   .roadmap-sim-actions { flex-wrap: wrap; }
 
-  /* Modal */
   .roadmap-modal-overlay { padding: 0.75rem; }
   .roadmap-modal-content {
     max-width: 100%;
@@ -426,7 +409,6 @@
   }
 }
 
-/* Mobile (≤ 480px) */
 @media (max-width: 480px) {
   .roadmap-flow {
     grid-template-columns: 1fr;
@@ -445,17 +427,11 @@
   .roadmap-modal-topic-title { font-size: 1.2rem; }
 }
 
-/* Extra Small (< 360px) */
 @media (max-width: 360px) {
   .roadmap-card { padding: 0.85rem; }
   .roadmap-card-title { font-size: 0.9rem; }
   .roadmap-flow { gap: 0.7rem; }
 }
-
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   LEADERBOARD SECTION
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 .leaderboard-section {
   margin-bottom: 2.5rem;
@@ -471,7 +447,6 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Podium: Top 3 Cards ── */
 .leaderboard-podium {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -561,7 +536,6 @@
   transition: width 1s ease-out;
 }
 
-/* ── My Rank Banner ── */
 .leaderboard-my-rank {
   display: flex;
   align-items: center;
@@ -589,7 +563,6 @@
   color: #fff;
 }
 
-/* ── Responsive ── */
 @media (max-width: 640px) {
   .leaderboard-podium {
     grid-template-columns: 1fr;

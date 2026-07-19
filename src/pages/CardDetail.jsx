@@ -13,23 +13,19 @@ export default function CardDetail() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('videos');
 
-  // Questions state
   const [cardQuestions, setCardQuestions] = useState([]);
   const [questionAnswers, setQuestionAnswers] = useState({});
   const [submittingAnswer, setSubmittingAnswer] = useState(null);
 
-  // Project state
   const [projectSubmission, setProjectSubmission] = useState(null);
   const [solutionText, setSolutionText] = useState('');
   const [solutionLink, setSolutionLink] = useState('');
   const [submittingProject, setSubmittingProject] = useState(false);
   const [projectSuccess, setProjectSuccess] = useState('');
 
-  // Completion state
   const [isCompleted, setIsCompleted] = useState(false);
   const [togglingCompletion, setTogglingCompletion] = useState(false);
 
-  // ── Load card data ──────────────────────────────────────────
   const loadCard = async () => {
     try {
       setLoading(true);
@@ -41,7 +37,6 @@ export default function CardDetail() {
         return;
       }
 
-      // Check if locked
       if (found.lock_date) {
         const todayStr = new Date().toISOString().split('T')[0];
         if (todayStr >= found.lock_date) {
@@ -80,7 +75,6 @@ export default function CardDetail() {
     loadCard();
   }, [courseId, cardDbId]);
 
-  // ── Handlers ────────────────────────────────────────────────
   const handleSubmitAnswer = async (questionId) => {
     const ans = questionAnswers[questionId] || {};
     if (!ans.text && !ans.link) { alert('يرجى كتابة إجابة أو وضع رابط للحل.'); return; }
@@ -138,7 +132,6 @@ export default function CardDetail() {
     }
   };
 
-  // ── Render States ────────────────────────────────────────────
   if (loading) return (
     <div className="cd-page">
       <div className="cd-bg"><div className="cd-orb cd-orb1" /><div className="cd-orb cd-orb2" /></div>
@@ -165,7 +158,6 @@ export default function CardDetail() {
     <div className="cd-page">
       <div className="cd-bg"><div className="cd-orb cd-orb1" /><div className="cd-orb cd-orb2" /></div>
 
-      {/* Nav Bar */}
       <nav className="cd-navbar">
         <button className="cd-back-btn" onClick={() => navigate(`/course/${courseId}/roadmap`)}>
           ← العودة للكورس
@@ -176,7 +168,6 @@ export default function CardDetail() {
         </div>
       </nav>
 
-      {/* Hero Header */}
       <header className="cd-hero">
         <div className="cd-hero-inner">
           <span className="cd-step-badge">{card.is_project ? '🏗️ كارت مشروع' : '📚 درس'}</span>
@@ -189,7 +180,6 @@ export default function CardDetail() {
         </div>
       </header>
 
-      {/* ─── PROJECT CARD ─── */}
       {card.is_project ? (
         <div className="cd-container">
           {projectSubmission && (

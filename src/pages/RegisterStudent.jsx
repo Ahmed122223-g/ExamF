@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaUser, FaClock, FaClipboardList, FaArrowRight, FaExclamationCircle, FaLock, FaCheckCircle, FaTimes, FaCheck, FaSync } from 'react-icons/fa';
@@ -15,10 +15,8 @@ const RegisterStudent = () => {
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState('');
 
-  // Countdown to start states
   const [timeLeftToStart, setTimeLeftToStart] = useState(0);
 
-  // Post-exam submission states
   const [result, setResult] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [checkingDetails, setCheckingDetails] = useState(false);
@@ -28,17 +26,13 @@ const RegisterStudent = () => {
   const studentToken = sessionStorage.getItem(`student_token_${examId}`) || localStorage.getItem('student_token');
   const storedName = sessionStorage.getItem(`student_name_${examId}`);
 
-  // 1. Fetch exam details and check if already submitted
   const fetchExamAndResult = async () => {
     try {
-      // Verify exam code/id
       const examData = await apiService.verifyExam(examId);
       setExam(examData);
       
-      // Calculate remaining seconds to start
       setTimeLeftToStart(examData.starts_in_seconds);
 
-      // Check if already submitted according to backend verification
       if (examData.has_submitted && studentToken) {
         try {
           const resData = await apiService.getExamResult(examId, studentToken);
@@ -50,23 +44,19 @@ const RegisterStudent = () => {
           setLoading(false);
           return;
         } catch (e) {
-          // Fallback if result fetch failed
         }
       }
 
-      // If student has any token (session or main token), check if they have a submitted result
       if (studentToken) {
         try {
           const resData = await apiService.getExamResult(examId, studentToken);
           setResult(resData);
           setIsSubmitted(true);
           
-          // Calculate seconds remaining until exam officially ends
           if (examData.ends_in_seconds) {
             setSecondsUntilEnd(examData.ends_in_seconds);
           }
         } catch (resErr) {
-          // No result found yet, which means they registered but haven't submitted yet
           setIsSubmitted(false);
         }
       }
@@ -81,7 +71,6 @@ const RegisterStudent = () => {
     fetchExamAndResult();
   }, [examId, studentToken]);
 
-  // 2. Countdown Timer until Exam Starts
   useEffect(() => {
     if (timeLeftToStart <= 0) return;
 
@@ -89,7 +78,6 @@ const RegisterStudent = () => {
       setTimeLeftToStart(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Unlock exam
           setExam(old => old ? { ...old, is_active: true } : null);
           return 0;
         }
@@ -100,8 +88,6 @@ const RegisterStudent = () => {
     return () => clearInterval(timer);
   }, [timeLeftToStart]);
 
-  // 3. Register Student for the Exam
-  // 2.2 Countdown Timer until Exam Ends (for unlocking review button)
   useEffect(() => {
     if (secondsUntilEnd <= 0) return;
 
@@ -109,7 +95,6 @@ const RegisterStudent = () => {
       setSecondsUntilEnd(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Trigger refresh to update the result status and unlock the button
           if (result) {
             setResult(old => old ? { ...old, is_exam_ended: true } : null);
           }
@@ -134,10 +119,8 @@ const RegisterStudent = () => {
 
     setRegistering(true);
     try {
-      // API call registerStudent takes (examId, mainToken)
       const data = await apiService.registerStudent(examId, mainToken);
       
-      // Store session token generated specifically for this exam taking session
       sessionStorage.setItem(`student_token_${examId}`, data.access_token);
       sessionStorage.setItem(`student_name_${examId}`, data.student_name || 'طالب');
       
@@ -145,14 +128,12 @@ const RegisterStudent = () => {
     } catch (err) {
       const errMsg = err.response?.data?.detail || '';
       if (errMsg.includes('مسبقاً') || errMsg.includes('بالفعل') || err.response?.status === 400) {
-        // The student already took this exam. Load results screen directly.
         try {
           const resData = await apiService.getExamResult(examId, mainToken);
           setResult(resData);
           setIsSubmitted(true);
           return;
         } catch (resErr) {
-          // Fallback if results fetch fails
         }
       }
       Swal.fire('خطأ!', errMsg || 'فشل في الدخول للاختبار.', 'error');
@@ -160,7 +141,6 @@ const RegisterStudent = () => {
     }
   };
 
-  // 4. Refresh Detailed correction state
   const handleRefreshResult = async () => {
     if (!studentToken) return;
     setCheckingDetails(true);
@@ -225,7 +205,6 @@ const RegisterStudent = () => {
     }}>
       <div className="glass-card" style={{ maxWidth: showCorrections ? '850px' : '580px', width: '100%', position: 'relative', transition: 'max-width 0.3s ease' }}>
         
-        {/* Back Button */}
         {!isSubmitted && (
           <button onClick={() => navigate('/')} style={{
             position: 'absolute', top: '20px', left: '20px',
@@ -274,7 +253,6 @@ const RegisterStudent = () => {
         {isSubmitted && result ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', textAlign: 'center' }}>
             
-            {/* Header Result status */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
               {result.is_submitted === false ? (
                 <div style={{ fontSize: '4.5rem', color: '#f87171', filter: 'drop-shadow(0 0 15px rgba(248,113,113,0.3))' }}>⚠️</div>
@@ -293,7 +271,6 @@ const RegisterStudent = () => {
               </p>
             </div>
 
-            {/* Score block */}
             <div style={{
               display: 'inline-flex',
               flexDirection: 'column',
@@ -325,7 +302,6 @@ const RegisterStudent = () => {
               </span>
             </div>
 
-            {/* Exit/Refresh Action Panel */}
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '10px' }}>
               <button onClick={handleExit} className="btn btn-secondary" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 24px', borderRadius: '12px' }}>
                 العودة للوحة التحكم
@@ -338,7 +314,6 @@ const RegisterStudent = () => {
                 </button>
               )}
 
-              {/* Locked / Active Review button */}
               {result.is_exam_ended ? (
                 <button 
                   onClick={() => setShowCorrections(prev => !prev)} 
@@ -370,7 +345,6 @@ const RegisterStudent = () => {
               )}
             </div>
 
-            {/* Lock Message if Exam NOT ended yet with active countdown */}
             {!result.is_exam_ended && (
               <div style={{
                 display: 'flex',
@@ -410,7 +384,6 @@ const RegisterStudent = () => {
               </div>
             )}
 
-            {/* Detailed Corrections Block Inline */}
             {showCorrections && result.is_exam_ended && (
               <div style={{ marginTop: '30px', textAlign: 'right' }}>
                 <h3 style={{ fontSize: '1.2rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '12px' }}>
@@ -488,7 +461,6 @@ const RegisterStudent = () => {
                           })}
                         </div>
 
-                        {/* Explanation if available */}
                         {q.explanation && (
                           <div style={{
                             marginTop: '12px',
@@ -516,7 +488,6 @@ const RegisterStudent = () => {
 
           </div>
         ) : (
-          /* CASE 2: Exam not started yet (LOCKED COUNTDOWN) */
           timeLeftToStart > 0 ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{
@@ -535,7 +506,6 @@ const RegisterStudent = () => {
                 سيفتح هذا الاختبار تلقائياً بعد انتهاء العد التنازلي أدناه. يرجى عدم مغادرة الصفحة.
               </p>
 
-              {/* Countdown Timer Display */}
               <div style={{
                 backgroundColor: 'rgba(30, 41, 59, 0.5)',
                 border: '1px solid var(--border-dark)',
@@ -552,7 +522,6 @@ const RegisterStudent = () => {
               </div>
             </div>
           ) : (
-            /* CASE 3: Exam is Active and Ready to Start */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{
                 background: 'rgba(59, 130, 246, 0.05)',

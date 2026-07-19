@@ -28,20 +28,17 @@ const TakeExam = () => {
   const studentToken = sessionStorage.getItem(`student_token_${examId}`) || localStorage.getItem('student_token');
   const studentName = sessionStorage.getItem(`student_name_${examId}`) || localStorage.getItem('student_name');
 
-  // Check split screen width
   const isScreenSplit = () => {
     const widthRatio = window.outerWidth / window.screen.availWidth;
     return widthRatio < 0.6;
   };
 
-  // Sync state values to refs for callback access inside listeners
   useEffect(() => {
     answersRef.current = answers;
     submittedRef.current = submitted;
     submittingRef.current = submitting;
   }, [answers, submitted, submitting]);
 
-  // Initial setup: auth checks and fetch exam
   useEffect(() => {
     if (!studentToken || !studentName) {
       setError('غير مصرح لك بدخول هذا المسار. يرجى إدخال اسمك أولاً.');
@@ -57,18 +54,15 @@ const TakeExam = () => {
 
     const fetchExam = async () => {
       try {
-        // Sync server time to calculate exact time difference
         const timeRes = await axiosGetServerTime();
         const serverDate = new Date(timeRes.server_time).getTime();
         const localDate = Date.now();
         const offset = serverDate - localDate;
         setTimeOffset(offset);
 
-        // Fetch exam questions
         const examData = await apiService.getExamData(examId, studentToken);
         setExam(examData);
 
-        // Calculate exact remaining seconds until official exam end time
         const endTime = new Date(examData.end_time_utc).getTime();
         const now = Date.now() + offset;
         const diffSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
@@ -83,7 +77,6 @@ const TakeExam = () => {
     fetchExam();
   }, [examId, studentToken, studentName]);
 
-  // Helper to fetch server time
   const axiosGetServerTime = async () => {
     try {
       const res = await apiService.getServerTime();
@@ -93,7 +86,6 @@ const TakeExam = () => {
     }
   };
 
-  // Timer Countdown
   useEffect(() => {
     if (!exam || submitted || timeLeft <= 0) return;
 
@@ -106,14 +98,13 @@ const TakeExam = () => {
 
       if (diffSeconds <= 0) {
         clearInterval(timer);
-        handleAutoSubmit(true); // timer expired
+        handleAutoSubmit(true);
       }
     }, 1000);
 
     return () => clearInterval(timer);
   }, [exam, submitted, timeLeft, timeOffset]);
 
-  // Anti-Cheat Event Listeners (Tab change, window blur, resize split)
   useEffect(() => {
     if (!exam || submittedRef.current) return;
 
@@ -126,8 +117,7 @@ const TakeExam = () => {
     const handleBlur = () => {
       if (ignoreBlur.current) return;
       if (exam && !submittedRef.current && !submittingRef.current) {
-        // Delay slightly to prevent triggering on dropdown select or text input blur in some browsers
-        setTimeout(() => {
+      setTimeout(() => {
           if (ignoreBlur.current) return;
           if (document.activeElement && document.activeElement.tagName !== 'IFRAME') {
             if (!document.hasFocus() && !submittedRef.current && !submittingRef.current) {
@@ -144,9 +134,7 @@ const TakeExam = () => {
       }
     };
 
-    // Keyboard Shortcuts Blocker
     const handleKeyDown = (e) => {
-      // Block Ctrl+C, Ctrl+V, Ctrl+U, Ctrl+S, Ctrl+P, F12, Ctrl+Shift+I
       if (
         (e.ctrlKey && ['c', 'v', 'u', 's', 'p', 'a', 'x'].includes(e.key.toLowerCase())) ||
         e.key === 'F12' ||
@@ -167,13 +155,10 @@ const TakeExam = () => {
       }
     };
 
-    // Disable Right-Click
     const handleContextMenu = (e) => e.preventDefault();
 
-    // Disable Copy/Paste
     const handleCopyCutPaste = (e) => e.preventDefault();
 
-    // --- DevTools Open Detection ---
     const devToolsImage = new Image();
     Object.defineProperty(devToolsImage, 'id', {
       get: function() {
@@ -184,10 +169,8 @@ const TakeExam = () => {
     });
 
     const devtoolsInterval = setInterval(() => {
-      // Trigger evaluation of getter
       console.log('%c', devToolsImage);
 
-      // Width/Height difference detection for docked devtools
       const threshold = 160;
       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
       const heightThreshold = window.outerHeight - window.innerHeight > threshold;
@@ -196,7 +179,6 @@ const TakeExam = () => {
       }
     }, 1000);
 
-    // --- Translation Tools Detection ---
     const translationObserver = new MutationObserver(() => {
       const htmlEl = document.documentElement;
       const hasTranslatedClass = htmlEl.classList.contains('translated-ltr') || htmlEl.classList.contains('translated-rtl') || 
@@ -243,7 +225,6 @@ const TakeExam = () => {
     if (!submittedRef.current && !submittingRef.current) {
       if (timeExpired) {
         ignoreBlur.current = true;
-        // Submit answers immediately in the background to ensure no extra seconds are wasted
         submitAnswers(false);
         
         Swal.fire({
@@ -273,7 +254,6 @@ const TakeExam = () => {
       }));
 
       try {
-        // Submit immediately in the background before showing alerts
         const res = await apiService.submitExam(examId, answersPayload, true, studentToken);
         sessionStorage.setItem(`exam_result_${examId}`, JSON.stringify(res));
         
@@ -294,8 +274,6 @@ const TakeExam = () => {
           navigate('/');
         });
 
-      } catch (err) {
-        // Fallback redirection to landing even if submit fails
         submittedRef.current = true;
         setSubmitted(true);
         navigate('/');
@@ -338,7 +316,6 @@ const TakeExam = () => {
         errorMsg.includes('submitted') ||
         errorMsg.includes('انتهى وقت')
       ) {
-        // Already submitted or time expired — navigate away
         navigate('/');
       } else {
         Swal.fire('خطأ!', errorMsg || 'حدث خطأ أثناء تسليم الاختبار.', 'error');
@@ -463,7 +440,6 @@ const TakeExam = () => {
     <div style={{ minHeight: '100vh', background: '#090d16', padding: '30px 15px', userSelect: 'none' }}>
       <div style={{ maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* Anti-cheat overlay: hides page if blur occurs during submission loading */}
         {submitting && (
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -475,7 +451,6 @@ const TakeExam = () => {
           </div>
         )}
 
-        {/* Timer & Info Banner */}
         <div className="exam-header" style={{
           borderColor: timeLeft < 60 ? '#ef4444' : 'var(--border-dark)',
           borderWidth: timeLeft < 60 ? '2px' : '1px',
@@ -502,7 +477,6 @@ const TakeExam = () => {
           </div>
         </div>
 
-        {/* Warning banner */}
         <div style={{
           backgroundColor: 'rgba(239, 68, 68, 0.08)',
           border: '1px solid rgba(239, 68, 68, 0.25)',
@@ -519,7 +493,6 @@ const TakeExam = () => {
           <span>تحذير: لا تفتح برامج أخرى، ولا تقسم الشاشة، ولا تنقر خارج هذا التصفح لتفادي الإقصاء التلقائي.</span>
         </div>
 
-        {/* Active Question Box */}
         <div className="glass-card" style={{ padding: '30px' }}>
           <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start', marginBottom: '25px' }}>
             <span style={{
@@ -542,7 +515,6 @@ const TakeExam = () => {
             </h3>
           </div>
 
-          {/* Options List */}
           <div className="options-list">
             {['a', 'b', 'c', 'd'].map(optKey => {
               const optionText = currentQuestion[`option_${optKey}`];
@@ -585,7 +557,6 @@ const TakeExam = () => {
           </div>
         </div>
 
-        {/* Footer Navigation controls */}
         <div style={{
           backgroundColor: 'rgba(15, 23, 42, 0.8)',
           border: '1px solid var(--border-dark)',

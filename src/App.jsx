@@ -22,7 +22,6 @@ import Notifications from './pages/Notifications';
 import AdminReview from './pages/AdminReview';
 import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
 
-// Simple Route Guard to protect admin routes
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
   return token ? children : <Navigate to="/admin/login" replace />;
@@ -31,7 +30,6 @@ const AdminRoute = ({ children }) => {
 import { useEffect } from 'react';
 import { apiService } from './services/api';
 
-// Simple Route Guard to protect student routes
 const StudentRoute = ({ children }) => {
   const token = localStorage.getItem('student_token');
   return token ? children : <Navigate to="/login" replace />;
@@ -39,18 +37,13 @@ const StudentRoute = ({ children }) => {
 
 function App() {
   useEffect(() => {
-    // Ping backend to track active time every 20 seconds
     const interval = setInterval(() => {
       const studentToken = localStorage.getItem('student_token');
       if (studentToken) {
-        apiService.trackActive(studentToken).catch(err => {
-          // If token expired/invalid, let dashboard handle redirection
-          console.warn("Active tracking error", err);
-        });
+        apiService.trackActive(studentToken).catch(() => {});
       }
     }, 20000);
 
-    // Initial ping
     const studentToken = localStorage.getItem('student_token');
     if (studentToken) {
       apiService.trackActive(studentToken).catch(() => {});
@@ -62,7 +55,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Student Routes */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<StudentLogin />} />
         <Route path="/register" element={<StudentRegister />} />
@@ -132,7 +124,6 @@ function App() {
           } 
         />
 
-        {/* Admin Routes */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route 
@@ -192,7 +183,6 @@ function App() {
           } 
         />
 
-        {/* Fallback redirection */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

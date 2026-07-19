@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink } from 'react-icons/fa';
@@ -18,7 +18,6 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'courses' | 'projects'
   
-  // Project Submissions State
   const [projectSubmissions, setProjectSubmissions] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
@@ -28,14 +27,12 @@ const AdminDashboard = () => {
   const [reviewFeedback, setReviewFeedback] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   
-  // Create Course Form Modal State
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [newCourseTitle, setNewCourseTitle] = useState('');
   const [newCourseCode, setNewCourseCode] = useState('');
   const [newCourseDesc, setNewCourseDesc] = useState('');
   const [creatingCourse, setCreatingCourse] = useState(false);
 
-  // Section Modal State
   const [showSectionModal, setShowSectionModal] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [sectionTitle, setSectionTitle] = useState('');
@@ -43,7 +40,6 @@ const AdminDashboard = () => {
   const [sectionOrder, setSectionOrder] = useState(1);
   const [savingSection, setSavingSection] = useState(false);
 
-  // Dependencies State
   const [selectedCourseDependencies, setSelectedCourseDependencies] = useState([]);
   const [availableCoursesForDependency, setAvailableCoursesForDependency] = useState([]);
   const [showAddDependencyModal, setShowAddDependencyModal] = useState(false);
@@ -164,7 +160,6 @@ const AdminDashboard = () => {
     });
   };
 
-  // Manage Course Content
   const handleManageCourse = async (course) => {
     try {
       setLoading(true);
@@ -197,7 +192,6 @@ const AdminDashboard = () => {
       setShowAddDependencyModal(false);
       setSelectedDependencyCourseId('');
       
-      // Refresh dependencies
       const depData = await apiService.getCourseDependencies(selectedCourse.id, token);
       setSelectedCourseDependencies(depData.dependencies || []);
       setAvailableCoursesForDependency(depData.available_courses || []);
@@ -224,7 +218,6 @@ const AdminDashboard = () => {
           await apiService.deleteCourseDependency(selectedCourse.id, depCourseId, token);
           Swal.fire('تم إلغاء الربط!', 'تم إلغاء الربط بنجاح.', 'success');
           
-          // Refresh dependencies
           const depData = await apiService.getCourseDependencies(selectedCourse.id, token);
           setSelectedCourseDependencies(depData.dependencies || []);
           setAvailableCoursesForDependency(depData.available_courses || []);
@@ -301,7 +294,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Section CRUD Functions
   const openAddSectionModal = () => {
     setEditingSection(null);
     setSectionTitle('');
@@ -385,12 +377,10 @@ const AdminDashboard = () => {
     );
   }
 
-  // Manage Course Sections dynamic view
   if (selectedCourse) {
     return (
       <div className="app-container">
-        {/* Top Navbar */}
-        <nav className="navbar">
+                <nav className="navbar">
           <Link to="/admin/dashboard" className="nav-brand">
             منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
           </Link>
@@ -523,8 +513,7 @@ const AdminDashboard = () => {
                 );
               })}
 
-              {/* Unassigned cards (section_id = null or points to deleted section) */}
-              {(() => {
+                            {(() => {
                 const sectionIds = new Set(courseSections.map(s => s.id));
                 const unassignedCards = courseCards.filter(c => !c.section_id || !sectionIds.has(c.section_id));
                 if (unassignedCards.length === 0) return null;
@@ -585,8 +574,7 @@ const AdminDashboard = () => {
             </>
           )}
 
-          {/* ── Linked Courses / Dependencies Section ── */}
-          <div className="glass-card" style={{ marginTop: '40px', padding: '25px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+                    <div className="glass-card" style={{ marginTop: '40px', padding: '25px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', color: 'white', fontWeight: '800', borderRight: '4px solid #a855f7', paddingRight: '10px' }}>
@@ -632,8 +620,7 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          {/* Add Dependency Modal */}
-          {showAddDependencyModal && (
+                    {showAddDependencyModal && (
             <div className="roadmap-modal-overlay">
               <div className="roadmap-modal-content" style={{ background: '#111827', maxWidth: '500px' }}>
                 <button className="roadmap-modal-close" onClick={() => setShowAddDependencyModal(false)}>×</button>
@@ -680,8 +667,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Section Create/Edit Modal */}
-          {showSectionModal && (
+                    {showSectionModal && (
             <div className="roadmap-modal-overlay">
               <div className="roadmap-modal-content" style={{ background: '#111827' }}>
                 <button className="roadmap-modal-close" onClick={() => setShowSectionModal(false)}>×</button>
@@ -740,8 +726,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="app-container">
-      {/* Top Navbar */}
-      <nav className="navbar">
+            <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
@@ -757,8 +742,7 @@ const AdminDashboard = () => {
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="main-content">
+            <main className="main-content">
         
         {activeTab === 'exams' ? (
           <>
@@ -1067,8 +1051,7 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {/* Create Course Modal */}
-            {showCreateCourseModal && (
+                        {showCreateCourseModal && (
               <div className="roadmap-modal-overlay">
                 <div className="roadmap-modal-content" style={{ background: '#111827' }}>
                   <button className="roadmap-modal-close" onClick={() => setShowCreateCourseModal(false)}>×</button>
@@ -1122,8 +1105,7 @@ const AdminDashboard = () => {
           </>
         )}
 
-      {/* Review Project Modal */}
-      {reviewModalOpen && selectedSubmission && (
+            {reviewModalOpen && selectedSubmission && (
         <div className="modal-overlay" onClick={() => setReviewModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px', width: '95%', direction: 'rtl', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', overflowY: 'auto', maxHeight: '90vh' }}>
             <h3 className="modal-title" style={{ color: 'white', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>

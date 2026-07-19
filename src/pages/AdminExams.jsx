@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaPlus, FaTrash, FaSignOutAlt, FaChevronRight, FaClipboardList, FaClock, FaCheckCircle, FaTrashAlt } from 'react-icons/fa';
@@ -12,7 +12,6 @@ const AdminExams = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Create Exam Form State
   const [title, setTitle] = useState('');
   const [examCode, setExamCode] = useState('');
   const [duration, setDuration] = useState(30);
@@ -56,7 +55,6 @@ const AdminExams = () => {
     navigate('/admin/login');
   };
 
-  // Add a question to builder
   const addQuestionField = () => {
     setQuestions(prev => [
       ...prev,
@@ -64,13 +62,11 @@ const AdminExams = () => {
     ]);
   };
 
-  // Remove a question from builder
   const removeQuestionField = (index) => {
     if (questions.length === 1) return;
     setQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Update question builder inputs
   const updateQuestionField = (index, field, value) => {
     setQuestions(prev => {
       const copy = [...prev];
@@ -91,7 +87,6 @@ const AdminExams = () => {
       return;
     }
 
-    // Validate questions
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.question_text.trim() || !q.option_a.trim() || !q.option_b.trim() || !q.option_c.trim() || !q.option_d.trim()) {
@@ -165,8 +160,7 @@ const AdminExams = () => {
 
   return (
     <div className="app-container">
-      {/* Top Navbar */}
-      <nav className="navbar">
+            <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
@@ -181,8 +175,7 @@ const AdminExams = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="main-content">
+            <main className="main-content">
         {action === 'create' ? (
           /* CREATE EXAM VIEW */
           <div>
@@ -196,8 +189,7 @@ const AdminExams = () => {
 
             <form onSubmit={handleCreateExam} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               
-              {/* Basic Details Box */}
-              <div className="glass-card">
+                            <div className="glass-card">
                 <h2 style={{ fontSize: '1.2rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #f59e0b', paddingRight: '10px' }}>
                   بيانات الاختبار الأساسية
                 </h2>
@@ -263,8 +255,7 @@ const AdminExams = () => {
                 </div>
               </div>
 
-              {/* Questions Builder Box */}
-              <div>
+                            <div>
                 <h2 style={{ fontSize: '1.3rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '12px' }}>
                   بناء أسئلة الاختبار
                 </h2>
@@ -273,8 +264,7 @@ const AdminExams = () => {
                   {questions.map((q, idx) => (
                     <div key={idx} className="glass-card" style={{ position: 'relative', padding: '25px 30px' }}>
                       
-                      {/* Remove question button */}
-                      {questions.length > 1 && (
+                                            {questions.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeQuestionField(idx)}
@@ -314,8 +304,7 @@ const AdminExams = () => {
                         />
                       </div>
 
-                      {/* Options inputs */}
-                      <div className="responsive-grid-choices" style={{ marginBottom: '20px' }}>
+                                            <div className="responsive-grid-choices" style={{ marginBottom: '20px' }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label" style={{ fontSize: '0.85rem' }}>الاختيار أ *</label>
                           <input
@@ -362,8 +351,7 @@ const AdminExams = () => {
                         </div>
                       </div>
 
-                      {/* Correct answer & Marks */}
-                      <div className="responsive-grid-2">
+                                            <div className="responsive-grid-2">
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">الإجابة الصحيحة *</label>
                           <select
@@ -392,8 +380,7 @@ const AdminExams = () => {
                         </div>
                       </div>
 
-                      {/* Explanation (optional) */}
-                      <div className="form-group" style={{ margin: 0, marginTop: '15px' }}>
+                                            <div className="form-group" style={{ margin: 0, marginTop: '15px' }}>
                         <label className="form-label" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
                           💡 شرح الإجابة (اختياري - يظهر للطالب بعد انتهاء الاختبار)
                         </label>
@@ -411,8 +398,7 @@ const AdminExams = () => {
                   ))}
                 </div>
 
-                {/* Add new question button */}
-                <button
+                                <button
                   type="button"
                   onClick={addQuestionField}
                   className="btn btn-secondary"
@@ -423,8 +409,7 @@ const AdminExams = () => {
                 </button>
               </div>
 
-              {/* Submit Buttons */}
-              <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
                 <button
                   type="button"
                   onClick={() => navigate('/admin/exams')}

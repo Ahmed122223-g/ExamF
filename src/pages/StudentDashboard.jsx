@@ -29,7 +29,6 @@ const StudentDashboard = () => {
       const myCourses = await apiService.getMyCourses(token);
       setCourses(myCourses || []);
 
-      // Fetch notification unread count
       try {
         const notifData = await apiService.getMyNotifications(token);
         setUnreadCount(notifData.unread_count || 0);
@@ -134,7 +133,6 @@ const StudentDashboard = () => {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(12px, 4vw, 30px) clamp(10px, 3vw, 20px)', direction: 'rtl', color: 'white' }}>
       
-      {/* Top Navbar */}
       <div className="glass-card" style={{ padding: '15px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 'normal', color: 'var(--text-muted-dark)' }}>
@@ -145,7 +143,6 @@ const StudentDashboard = () => {
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* Notification Bell */}
             <Link
               to="/notifications"
               style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -178,7 +175,6 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Add / Search Course */}
       <div className="glass-card" style={{ padding: '25px', marginBottom: '35px' }}>
         <h2 style={{ fontSize: '1.3rem', color: 'white', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <FaPlus style={{ color: 'var(--accent-color)' }} /> تسجيل في كورس جديد
@@ -212,7 +208,6 @@ const StudentDashboard = () => {
         </form>
       </div>
 
-      {/* Registered Courses List */}
       <div style={{ marginBottom: '40px' }}>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <FaBookOpen /> كورساتي المسجلة ({courses.length})
@@ -258,7 +253,6 @@ const StudentDashboard = () => {
         )}
       </div>
 
-      {/* Attempts / Registered Exams List */}
       <div>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <FaClipboardList /> سجل اختباراتي ({attempts.length})
@@ -299,7 +293,6 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Status & Scores */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
                     <div>
                       {attempt.is_submitted ? (
@@ -322,7 +315,6 @@ const StudentDashboard = () => {
                       )}
                     </div>
 
-                    {/* Actions */}
                     <div>
                       {attempt.is_submitted ? (
                         attempt.review_allowed ? (

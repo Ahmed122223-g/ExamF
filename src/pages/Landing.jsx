@@ -9,7 +9,6 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Load searched exams from localStorage
   const [searchedExams, setSearchedExams] = useState(() => {
     try {
       const saved = localStorage.getItem('searched_exams');
@@ -22,14 +21,12 @@ const Landing = () => {
   const [examStatuses, setExamStatuses] = useState({});
   const [timeLefts, setTimeLefts] = useState({});
 
-  // Sync / check statuses when list of searched exams changes
   useEffect(() => {
     const checkAllStatuses = async () => {
       const statuses = {};
       const initialTimeLefts = {};
 
       for (const exam of searchedExams) {
-        // Calculate initial starts_in_seconds
         const start = new Date(exam.start_time).getTime();
         const diff = Math.max(0, Math.floor((start - Date.now()) / 1000));
         initialTimeLefts[exam.id] = diff;
@@ -56,7 +53,6 @@ const Landing = () => {
     }
   }, [searchedExams]);
 
-  // Countdown timer ticking
   useEffect(() => {
     if (Object.keys(timeLefts).length === 0) return;
 
@@ -168,7 +164,6 @@ const Landing = () => {
       background: 'radial-gradient(circle at center, #1e293b 0%, #090d16 100%)'
     }}>
 
-      {/* Search Exam Card */}
       <div className="glass-card" style={{ maxWidth: '600px', width: '100%', textAlign: 'center', position: 'relative', marginBottom: '30px' }}>
         <div style={{
           width: '80px',
@@ -219,7 +214,6 @@ const Landing = () => {
         </form>
       </div>
 
-      {/* Searched Exams List Section */}
       {searchedExams.length > 0 && (
         <div className="glass-card" style={{ maxWidth: '600px', width: '100%', padding: '25px', textAlign: 'right' }}>
           <h2 style={{ fontSize: '1.4rem', color: 'white', marginBottom: '20px', borderBottom: '1px solid var(--border-dark)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -233,7 +227,6 @@ const Landing = () => {
               const timeLeft = timeLefts[exam.id] ?? 0;
               const isStarted = timeLeft <= 0;
               
-              // Calculate if official exam time has passed (start_time + duration or end_time)
               const startMs = new Date(exam.start_time).getTime();
               const endMs = exam.end_time ? new Date(exam.end_time).getTime() : startMs + (exam.duration_minutes * 60 * 1000);
               const hasEnded = endMs < Date.now();
@@ -249,7 +242,6 @@ const Landing = () => {
                   flexDirection: 'column',
                   gap: '15px'
                 }}>
-                  {/* Delete Button */}
                   <button 
                     onClick={(e) => handleDeleteExam(exam.id, e)} 
                     style={{
@@ -298,7 +290,6 @@ const Landing = () => {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                    {/* Status badge */}
                     <div>
                       {statusInfo.isSubmitted ? (
                         statusInfo.result?.is_submitted === false ? (
@@ -329,7 +320,6 @@ const Landing = () => {
                       )}
                     </div>
 
-                    {/* Action button */}
                     <div>
                       {statusInfo.isSubmitted ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 
 const StudentForgotPassword = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP Code, 3: New Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -14,7 +14,6 @@ const StudentForgotPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Send OTP to Email
   const handleSendEmail = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -42,7 +41,6 @@ const StudentForgotPassword = () => {
     }
   };
 
-  // Step 2: Verify OTP Code
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     if (code.trim().length !== 6) {
@@ -69,7 +67,6 @@ const StudentForgotPassword = () => {
     }
   };
 
-  // Step 3: Reset Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
@@ -104,12 +101,10 @@ const StudentForgotPassword = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '15px', direction: 'rtl' }}>
       <div className="glass-card" style={{ maxWidth: '480px', width: '100%', padding: '35px', textAlign: 'right' }}>
         
-        {/* Top Header */}
         <h2 style={{ fontSize: '1.7rem', color: 'white', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
           🔒 استعادة <span style={{ color: 'var(--accent-color)' }}>كلمة المرور</span>
         </h2>
 
-        {/* Step Indicator */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', position: 'relative', padding: '0 10px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2 }}>
             <span style={{
@@ -132,7 +127,6 @@ const StudentForgotPassword = () => {
             }}>3</span>
             <span style={{ fontSize: '0.75rem', color: step >= 3 ? '#fff' : 'var(--text-muted-dark)', marginTop: '5px' }}>كلمة المرور الجديدة</span>
           </div>
-          {/* Connector Line */}
           <div style={{
             position: 'absolute', top: '15px', left: '30px', right: '30px', height: '2px',
             background: `linear-gradient(to left, var(--accent-color) ${step === 1 ? '10%' : step === 2 ? '50%' : '100%'}, #1f2937 0%)`,
@@ -140,7 +134,6 @@ const StudentForgotPassword = () => {
           }}></div>
         </div>
 
-        {/* STEP 1: Enter Email */}
         {step === 1 && (
           <form onSubmit={handleSendEmail} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '5px' }}>
@@ -168,7 +161,6 @@ const StudentForgotPassword = () => {
           </form>
         )}
 
-        {/* STEP 2: Enter Verification Code */}
         {step === 2 && (
           <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '5px' }}>
@@ -202,7 +194,6 @@ const StudentForgotPassword = () => {
           </form>
         )}
 
-        {/* STEP 3: Enter New Password */}
         {step === 3 && (
           <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '5px' }}>
@@ -259,7 +250,6 @@ const StudentForgotPassword = () => {
           </form>
         )}
 
-        {/* Back Link */}
         <div style={{ marginTop: '25px', textAlign: 'center', fontSize: '0.9rem' }}>
           <Link to="/login" style={{ color: 'var(--text-muted-dark)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
             <FaArrowLeft style={{ fontSize: '0.8rem' }} /> العودة لتسجيل الدخول

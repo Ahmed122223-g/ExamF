@@ -65,7 +65,6 @@ export default function Notifications() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', direction: 'rtl' }}>
-      {/* Navbar */}
       <nav style={{
         background: 'rgba(15,23,42,0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)',
         padding: 'clamp(10px,2vw,16px) clamp(14px,3vw,28px)',
@@ -111,7 +110,6 @@ export default function Notifications() {
         ) : (
           data.groups.map((group, gi) => (
             <div key={gi} style={{ marginBottom: '28px' }}>
-              {/* Course header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 marginBottom: '12px', paddingBottom: '8px',

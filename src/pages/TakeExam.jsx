@@ -273,7 +273,8 @@ const TakeExam = () => {
           }, 500);
           navigate('/');
         });
-
+        
+        } catch (err) {
         submittedRef.current = true;
         setSubmitted(true);
         navigate('/');

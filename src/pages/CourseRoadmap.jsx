@@ -95,12 +95,17 @@ export default function CourseRoadmap() {
     const item = allItems.find(it => it.id === id);
     if (!item) return false;
     const index = getItemGlobalIndex(id);
-    if (index === 0 && !isItemLocked(id)) return true;
 
     for (let i = 0; i < index; i++) {
       const prev = allItems[i];
-      if (prev.is_project && !prev.is_completed) return false;
+      if (prev.is_project) {
+        if (!prev.is_completed) return false;
+      } else {
+        if (!prev.all_questions_answered) return false;
+      }
     }
+
+    if (index === 0 && !isItemLocked(id)) return true;
 
     if (isItemLocked(id)) return false;
 

@@ -355,11 +355,17 @@ export default function CardDetail() {
                   {cardQuestions.map((q, qIdx) => {
                     const ans = questionAnswers[q.id] || { text: '', link: '' };
                     const answered = q.my_answer != null;
+                    const isReviewed = q.my_answer?.is_reviewed || false;
+                    const allowRetry = q.my_answer?.allow_retry || false;
+                    const isLocked = isReviewed && !allowRetry;
                     return (
-                      <div key={q.id} className={`cd-question-card ${answered ? 'cd-question-answered' : ''}`}>
+                      <div key={q.id} className={`cd-question-card ${answered ? 'cd-question-answered' : ''}`}
+                        style={isLocked ? { borderColor: 'rgba(16,185,129,0.4)', boxShadow: '0 0 10px rgba(16,185,129,0.08)' } : {}}>
                         <div className="cd-question-header">
                           <span className="cd-question-num">سؤال {qIdx + 1}</span>
-                          {answered && <span className="cd-answered-badge">✓ تمت الإجابة</span>}
+                          {answered && !isReviewed && <span className="cd-answered-badge">✓ تمت الإجابة — في انتظار المراجعة</span>}
+                          {isReviewed && !allowRetry && <span className="cd-answered-badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>✅ تمت المراجعة — مقفول</span>}
+                          {isReviewed && allowRetry && <span className="cd-answered-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>🔄 تمت المراجعة — يمكنك إعادة الإجابة</span>}
                         </div>
                         {q.question_text && <p className="cd-question-text">{q.question_text}</p>}
                         {q.question_image_url && (
@@ -367,18 +373,28 @@ export default function CardDetail() {
                             <img src={q.question_image_url} alt={`سؤال ${qIdx + 1}`} className="cd-question-img" onError={e => e.target.style.display = 'none'} />
                           </div>
                         )}
+
+                        {q.my_answer?.admin_feedback && (
+                          <div style={{ background: 'rgba(16,185,129,0.08)', borderRadius: '10px', padding: '12px 16px', marginBottom: '12px', borderRight: '3px solid #10b981' }}>
+                            <p style={{ color: '#34d399', fontWeight: 700, margin: '0 0 6px', fontSize: '0.8rem' }}>💬 ملاحظة الأدمن:</p>
+                            <p style={{ color: '#a7f3d0', margin: 0, fontSize: '0.88rem', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{q.my_answer.admin_feedback}</p>
+                          </div>
+                        )}
+
                         <div className="cd-answer-area">
                           <div className="cd-form-group">
                             <label className="cd-label">✏️ إجابتك النصية:</label>
                             <textarea
                               className="cd-textarea"
                               value={ans.text}
-                              onChange={e => setQuestionAnswers(prev => ({
+                              onChange={e => !isLocked && setQuestionAnswers(prev => ({
                                 ...prev,
                                 [q.id]: { ...prev[q.id], text: e.target.value }
                               }))}
-                              placeholder="اكتب إجابتك هنا..."
+                              placeholder={isLocked ? 'تمت مراجعة هذه الإجابة ولا يمكن تعديلها.' : 'اكتب إجابتك هنا...'}
                               rows={4}
+                              disabled={isLocked}
+                              style={isLocked ? { opacity: 0.6, cursor: 'not-allowed', background: 'rgba(0,0,0,0.3)' } : {}}
                             />
                           </div>
 
@@ -388,16 +404,19 @@ export default function CardDetail() {
                               type="text"
                               className="form-input"
                               value={ans.link}
-                              onChange={e => setQuestionAnswers(prev => ({
+                              onChange={e => !isLocked && setQuestionAnswers(prev => ({
                                 ...prev,
                                 [q.id]: { ...prev[q.id], link: e.target.value }
                               }))}
-                              placeholder="https://drive.google.com/..."
-                              style={{ width: '100%', background: '#1e293b', border: '1px solid var(--border-dark)', borderRadius: '8px', padding: '10px 14px', color: 'white' }}
+                              placeholder={isLocked ? 'تمت المراجعة — مقفول' : 'https://drive.google.com/...'}
+                              disabled={isLocked}
+                              style={{ width: '100%', background: isLocked ? 'rgba(0,0,0,0.3)' : '#1e293b', border: '1px solid var(--border-dark)', borderRadius: '8px', padding: '10px 14px', color: 'white', opacity: isLocked ? 0.6 : 1, cursor: isLocked ? 'not-allowed' : 'text' }}
                             />
-                            <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.8rem', marginTop: '6px' }}>
-                              ⚠️ <strong>تنبيه هام للرفع على جوجل درايف:</strong> تأكد من تعديل إعدادات المشاركة لتجعل الرابط <strong>"متاح لأي شخص لديه الرابط" (Anyone with the link can view)</strong> ليتمكن المسؤول من قراءته.
-                            </p>
+                            {!isLocked && (
+                              <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.8rem', marginTop: '6px' }}>
+                                ⚠️ <strong>تنبيه هام للرفع على جوجل درايف:</strong> تأكد من تعديل إعدادات المشاركة لتجعل الرابط <strong>"متاح لأي شخص لديه الرابط" (Anyone with the link can view)</strong> ليتمكن المسؤول من قراءته.
+                              </p>
+                            )}
                           </div>
 
                           <div className="cd-answer-actions" style={{ marginTop: '15px' }}>
@@ -406,14 +425,16 @@ export default function CardDetail() {
                                 🔗 عرض الرابط المرسل سابقاً
                               </a>
                             )}
-                            <button
-                              className="cd-btn cd-btn-purple cd-btn-sm"
-                              onClick={() => handleSubmitAnswer(q.id)}
-                              disabled={submittingAnswer === q.id}
-                              style={{ marginRight: 'auto' }}
-                            >
-                              {submittingAnswer === q.id ? 'جاري الإرسال...' : '📤 إرسال الإجابة'}
-                            </button>
+                            {!isLocked && (
+                              <button
+                                className="cd-btn cd-btn-purple cd-btn-sm"
+                                onClick={() => handleSubmitAnswer(q.id)}
+                                disabled={submittingAnswer === q.id}
+                                style={{ marginRight: 'auto' }}
+                              >
+                                {submittingAnswer === q.id ? 'جاري الإرسال...' : '📤 إرسال الإجابة'}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

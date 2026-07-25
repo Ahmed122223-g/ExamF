@@ -444,9 +444,9 @@ export const apiService = {
     return res.data;
   },
 
-  sendAnswerFeedbackAdmin: async (answerId, feedbackText, token) => {
+  sendAnswerFeedbackAdmin: async (answerId, feedbackText, token, allowRetry = false) => {
     const res = await API.post(`/api/admin/question-answers/${answerId}/feedback`,
-      { feedback_text: feedbackText },
+      { feedback_text: feedbackText, allow_retry: allowRetry },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return res.data;

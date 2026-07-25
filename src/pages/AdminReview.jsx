@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Swal from 'sweetalert2';
@@ -25,7 +25,10 @@ export default function AdminReview() {
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [feedbackModal, setFeedbackModal] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
+  const [allowRetry, setAllowRetry] = useState(false);
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [answerFilter, setAnswerFilter] = useState('all');
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('all');
@@ -83,16 +86,18 @@ export default function AdminReview() {
   const openFeedbackModal = (answer, questionNum, cardTitle) => {
     setFeedbackModal({ answer, questionNum, cardTitle });
     setFeedbackText(answer.admin_feedback || '');
+    setAllowRetry(answer.allow_retry || false);
   };
 
   const submitFeedback = async () => {
     if (!feedbackModal || !feedbackText.trim()) return;
     setSendingFeedback(true);
     try {
-      await apiService.sendAnswerFeedbackAdmin(feedbackModal.answer.answer_id, feedbackText.trim(), token);
+      await apiService.sendAnswerFeedbackAdmin(feedbackModal.answer.answer_id, feedbackText.trim(), token, allowRetry);
       const savedName = feedbackModal.answer.student_name;
       setFeedbackModal(null);
       setFeedbackText('');
+      setAllowRetry(false);
       await loadQuestions();
       Swal.fire({ icon: 'success', title: 'تم الإرسال', text: `تم إرسال الملاحظة وتنبيه الطالب ${savedName}`, background: '#1e293b', color: '#fff', timer: 2200, showConfirmButton: false });
     } catch {
@@ -139,13 +144,31 @@ export default function AdminReview() {
     return matchesStatus && matchesCourse && matchesSection && matchesSearch;
   });
 
-  const filteredCardsWithAnswers = safeCardsWithAnswers.filter(c => {
-    const matchesCourse = selectedCourse === 'all' || c.course_title === selectedCourse;
-    const matchesSection = selectedSection === 'all' || c.section_title === selectedSection;
-    const matchesSearch = !searchQuery.trim() || 
-      (c.card_title && c.card_title.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCourse && matchesSection && matchesSearch;
-  });
+  const filteredCardsWithAnswers = safeCardsWithAnswers
+    .filter(c => {
+      const matchesCourse = selectedCourse === 'all' || c.course_title === selectedCourse;
+      const matchesSection = selectedSection === 'all' || c.section_title === selectedSection;
+      const matchesSearch = !searchQuery.trim() ||
+        (c.card_title && c.card_title.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesCourse && matchesSection && matchesSearch;
+    })
+    .map(c => ({
+      ...c,
+      questions: c.questions.map(q => ({
+        ...q,
+        answers: q.answers.filter(ans => {
+          const matchesStatus =
+            answerFilter === 'all' ||
+            (answerFilter === 'reviewed' && ans.is_reviewed) ||
+            (answerFilter === 'unreviewed' && !ans.is_reviewed);
+          const matchesStudent = !studentSearchQuery.trim() ||
+            (ans.student_name && ans.student_name.toLowerCase().includes(studentSearchQuery.toLowerCase())) ||
+            (ans.student_email && ans.student_email.toLowerCase().includes(studentSearchQuery.toLowerCase()));
+          return matchesStatus && matchesStudent;
+        })
+      })).filter(q => q.answers.length > 0)
+    }))
+    .filter(c => c.questions.length > 0);
 
   const totalAnswers = filteredCardsWithAnswers.reduce((a, c) => a + (c.questions || []).reduce((b, q) => b + (q.answers || []).length, 0), 0);
 
@@ -315,6 +338,24 @@ export default function AdminReview() {
 
             {activeTab === 'questions' && (
         <>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {[{ v: 'all', l: 'الكل' }, { v: 'unreviewed', l: '⏳ لم يراجع' }, { v: 'reviewed', l: '✓ تمت المراجعة' }].map(f => (
+              <button key={f.v} onClick={() => setAnswerFilter(f.v)} style={{
+                padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
+                background: answerFilter === f.v ? '#3b82f6' : 'rgba(255,255,255,0.08)',
+                color: answerFilter === f.v ? 'white' : '#9ca3af', transition: 'all 0.2s'
+              }}>
+                {f.l}
+              </button>
+            ))}
+            <input
+              type="text"
+              placeholder="🔍 ابحث باسم الطالب أو الإيميل..."
+              value={studentSearchQuery}
+              onChange={e => setStudentSearchQuery(e.target.value)}
+              style={{ flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '8px 14px', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+            />
+          </div>
           {loadingQuestions ? (
             <div style={{ textAlign: 'center', paddingTop: '60px' }}><div className="spinner" /></div>
           ) : filteredCardsWithAnswers.length === 0 ? (
@@ -523,7 +564,25 @@ export default function AdminReview() {
             <label style={{ color: '#d1d5db', fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>✍️ ملاحظتك</label>
             <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="اكتب ملاحظتك هنا... (ستصل للطالب كتنبيه)" rows={5}
               style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: '0.9rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.7 }} />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+            <div style={{ marginTop: '14px', marginBottom: '4px' }}>
+              <button
+                onClick={() => setAllowRetry(!allowRetry)}
+                style={{
+                  width: '100%', padding: '11px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
+                  border: allowRetry ? '2px solid #f59e0b' : '2px solid rgba(255,255,255,0.12)',
+                  background: allowRetry ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: allowRetry ? '#fbbf24' : '#9ca3af', transition: 'all 0.2s', textAlign: 'right'
+                }}
+              >
+                {allowRetry ? '🔄 مسموح بإعادة الإجابة (مفعّل)' : '🔒 غير مسموح بإعادة الإجابة (الوضع الافتراضي)'}
+              </button>
+              <p style={{ color: '#6b7280', fontSize: '0.75rem', margin: '6px 0 0', textAlign: 'right' }}>
+                {allowRetry
+                  ? 'الطالب سيستطيع تعديل إجابته وإعادة الإرسال مع الاحتفاظ بمشاهدة ملاحظتك.'
+                  : 'الإجابة نهائية ولن يستطيع الطالب تعديلها بعد المراجعة.'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
               <button onClick={submitFeedback} disabled={sendingFeedback || !feedbackText.trim()} className="btn btn-primary" style={{ flex: 1, opacity: !feedbackText.trim() ? 0.5 : 1 }}>
                 {sendingFeedback ? '⏳ جاري الإرسال...' : '📨 إرسال وتنبيه الطالب'}
               </button>

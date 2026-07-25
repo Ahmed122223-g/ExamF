@@ -45,6 +45,22 @@ export default function CardDetail() {
         }
       }
 
+      const foundIndex = allItems.findIndex(it => String(it.db_id) === String(cardDbId));
+      for (let i = 0; i < foundIndex; i++) {
+        const prev = allItems[i];
+        if (prev.is_project) {
+          if (!prev.is_completed) {
+            setError('🔒 لا يمكنك تصفح هذا الكارت. يجب إكمال المشاريع السابقة أولاً.');
+            return;
+          }
+        } else {
+          if (!prev.all_questions_answered) {
+            setError('🔒 لا يمكنك تصفح هذا الكارت. يجب حل جميع أسئلة الكروت السابقة أولاً.');
+            return;
+          }
+        }
+      }
+
       setCard(found);
       setIsCompleted(found.is_completed);
 

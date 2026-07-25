@@ -96,6 +96,8 @@ export default function CourseRoadmap() {
     if (!item) return false;
     const index = getItemGlobalIndex(id);
 
+    if (isItemLocked(id)) return false;
+
     for (let i = 0; i < index; i++) {
       const prev = allItems[i];
       if (prev.is_project) {
@@ -105,9 +107,7 @@ export default function CourseRoadmap() {
       }
     }
 
-    if (index === 0 && !isItemLocked(id)) return true;
-
-    if (isItemLocked(id)) return false;
+    if (index === 0) return true;
 
     if (item.unlock_date) {
       const todayStr = new Date().toISOString().split('T')[0];

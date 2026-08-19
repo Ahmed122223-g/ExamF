@@ -325,6 +325,27 @@ export const apiService = {
     return res.data;
   },
 
+  getCardFilesAdmin: async (courseId, cardDbId, token) => {
+    const res = await API.get(`/api/admin/courses/${courseId}/cards/${cardDbId}/files`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createCardFileAdmin: async (courseId, cardDbId, data, token) => {
+    const res = await API.post(`/api/admin/courses/${courseId}/cards/${cardDbId}/files`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteCardFileAdmin: async (courseId, cardDbId, fileId, token) => {
+    const res = await API.delete(`/api/admin/courses/${courseId}/cards/${cardDbId}/files/${fileId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   createCardQuestion: async (courseId, cardDbId, data, token) => {
     const res = await API.post(`/api/admin/courses/${courseId}/cards/${cardDbId}/questions`, data, {
       headers: { Authorization: `Bearer ${token}` }
@@ -352,6 +373,14 @@ export const apiService = {
     });
     return res.data;
   },
+
+  getCardFilesStudent: async (cardDbId, token) => {
+    const res = await API.get(`/api/courses/cards/${cardDbId}/files`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
 
   submitQuestionAnswer: async (questionId, data, token) => {
     const res = await API.post(`/api/courses/questions/${questionId}/answer`, data, {

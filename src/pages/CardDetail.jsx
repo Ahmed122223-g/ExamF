@@ -17,6 +17,8 @@ export default function CardDetail() {
   const [questionAnswers, setQuestionAnswers] = useState({});
   const [submittingAnswer, setSubmittingAnswer] = useState(null);
 
+  const [cardFiles, setCardFiles] = useState([]);
+
   const [projectSubmission, setProjectSubmission] = useState(null);
   const [solutionText, setSolutionText] = useState('');
   const [solutionLink, setSolutionLink] = useState('');
@@ -78,6 +80,13 @@ export default function CardDetail() {
             : { text: '', link: '' };
         });
         setQuestionAnswers(answersMap);
+
+        try {
+          const fls = await apiService.getCardFilesStudent(found.db_id, token);
+          setCardFiles(fls);
+        } catch (_) {
+          setCardFiles([]);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'فشل في تحميل بيانات الكارت.');
@@ -289,6 +298,9 @@ export default function CardDetail() {
             <button className={`cd-tab ${activeTab === 'questions' ? 'cd-tab-active-purple' : ''}`} onClick={() => setActiveTab('questions')}>
               📝 الأسئلة {cardQuestions.length > 0 && `(${cardQuestions.length})`}
             </button>
+            <button className={`cd-tab ${activeTab === 'files' ? 'cd-tab-active-emerald' : ''}`} onClick={() => setActiveTab('files')}>
+              📁 ملفات الشرح {cardFiles.length > 0 && `(${cardFiles.length})`}
+            </button>
           </div>
 
           {activeTab === 'videos' && (
@@ -440,6 +452,39 @@ export default function CardDetail() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'files' && (
+            <div className="cd-tab-content">
+              {cardFiles.length === 0 ? (
+                <div className="cd-empty"><p>📁 لا توجد ملفات شرح مضافة لهذا الدرس بعد.</p></div>
+              ) : (
+                <div className="cd-files-container">
+                  <h3 className="cd-section-title">📁 ملفات الشرح والمستندات المرفقة بالدرس:</h3>
+                  <div className="cd-files-grid">
+                    {cardFiles.map((file) => (
+                      <div key={file.id} className="cd-file-card">
+                        <div className="cd-file-icon-box">
+                          <span className="cd-file-icon">📄</span>
+                        </div>
+                        <div className="cd-file-details">
+                          <h4 className="cd-file-title">{file.title}</h4>
+                          <p className="cd-file-sub">رابط مستند شرح (Google Drive / PDF)</p>
+                        </div>
+                        <a
+                          href={file.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cd-file-action-btn"
+                        >
+                          فتح الملف ↗
+                        </a>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

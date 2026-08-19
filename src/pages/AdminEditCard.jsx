@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt } from 'react-icons/fa';
@@ -36,6 +36,11 @@ const AdminEditCard = () => {
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [questionAnswersList, setQuestionAnswersList] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('edit_questions'); // 'edit_questions' | 'view_answers'
+
+  const [filesList, setFilesList] = useState([]);
+  const [newFileTitle, setNewFileTitle] = useState('');
+  const [newFileUrl, setNewFileUrl] = useState('');
+  const [addingFile, setAddingFile] = useState(false);
 
   const isNewCard = cardId === 'new';
 
@@ -131,6 +136,13 @@ const AdminEditCard = () => {
             } catch (_) {}
           } catch (e) {
             setQuestionsList([]);
+          }
+
+          try {
+            const fls = await apiService.getCardFilesAdmin(courseId, currentCard.id, token);
+            setFilesList(fls);
+          } catch (e) {
+            setFilesList([]);
           }
         } else {
           setCardTitle('');
@@ -758,6 +770,120 @@ const AdminEditCard = () => {
               </p>
             </div>
           )}
+
+          {!isNewCard && cardDbId && (
+            <div className="glass-card" style={{ padding: '24px', marginTop: '25px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                📁 ملفات الشرح والمستندات (Google Drive / PDF)
+              </h3>
+              <p style={{ color: '#9ca3af', fontSize: '0.85rem', marginBottom: '20px' }}>
+                أضف روابط ملفات الشرح والمستندات التابعة لهذا الدرس ليتمكن الطلاب من فتحها واستعراضها في التبويب الخاص بها.
+              </p>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px' }}>
+                <h4 style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '12px' }}>➕ إضافة ملف شرح جديد:</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="اسم الملف (مثال: ملخص الدرس الأول PDF)"
+                    value={newFileTitle}
+                    onChange={(e) => setNewFileTitle(e.target.value)}
+                  />
+                  <input
+                    type="url"
+                    className="input-field"
+                    placeholder="رابط الملف (مثال: https://drive.google.com/...)"
+                    value={newFileUrl}
+                    onChange={(e) => setNewFileUrl(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    style={{ background: '#10b981', borderColor: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                    disabled={addingFile}
+                    onClick={async () => {
+                      if (!newFileTitle.trim() || !newFileUrl.trim()) {
+                        Swal.fire('تنبيه', 'يرجى إدخال اسم الملف ورابطه الصحيح.', 'warning');
+                        return;
+                      }
+                      setAddingFile(true);
+                      try {
+                        const created = await apiService.createCardFileAdmin(courseId, cardDbId, {
+                          title: newFileTitle.trim(),
+                          file_url: newFileUrl.trim(),
+                          order: filesList.length + 1
+                        }, token);
+                        setFilesList(prev => [...prev, created]);
+                        setNewFileTitle('');
+                        setNewFileUrl('');
+                        Swal.fire('نجاح', 'تمت إضافة ملف الشرح بنجاح! 🎉', 'success');
+                      } catch (err) {
+                        Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إضافة الملف.', 'error');
+                      } finally {
+                        setAddingFile(false);
+                      }
+                    }}
+                  >
+                    <FaPlus /> {addingFile ? 'جاري الإضافة...' : 'إضافة الملف'}
+                  </button>
+                </div>
+              </div>
+
+              <h4 style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '12px' }}>
+                📋 قائمة الملفات المضافة ({filesList.length}):
+              </h4>
+
+              {filesList.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', color: '#6b7280', fontStyle: 'italic' }}>
+                  لا توجد ملفات شرح مضافة لهذا الدرس بعد.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {filesList.map((file, idx) => (
+                    <div key={file.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ background: '#10b98122', color: '#10b981', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                          #{idx + 1}
+                        </span>
+                        <div>
+                          <h5 style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold', margin: '0 0 4px 0' }}>📄 {file.title}</h5>
+                          <a href={file.file_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '0.8rem', textDecoration: 'underline' }}>
+                            {file.file_url}
+                          </a>
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '6px 12px', fontSize: '0.8rem' }}
+                        onClick={async () => {
+                          const res = await Swal.fire({
+                            title: 'حذف الملف',
+                            text: `هل أنت تأكد من حذف الملف "${file.title}"؟`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'نعم، احذف',
+                            cancelButtonText: 'إلغاء'
+                          });
+                          if (res.isConfirmed) {
+                            try {
+                              await apiService.deleteCardFileAdmin(courseId, cardDbId, file.id, token);
+                              setFilesList(prev => prev.filter(f => f.id !== file.id));
+                              Swal.fire('تم', 'تم حذف الملف بنجاح.', 'success');
+                            } catch (err) {
+                              Swal.fire('خطأ', err.response?.data?.detail || 'فشل في حذف الملف.', 'error');
+                            }
+                          }
+                        }}
+                      >
+                        <FaTrash /> حذف
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
 
           {isNewCard && (
             <div style={{ padding: '15px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '10px', marginTop: '15px' }}>

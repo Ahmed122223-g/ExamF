@@ -19,6 +19,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import CourseRoadmap from './pages/CourseRoadmap';
 import CardDetail from './pages/CardDetail';
 import Notifications from './pages/Notifications';
+import Settings from './pages/Settings';
 import AdminReview from './pages/AdminReview';
 import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
 
@@ -112,6 +113,14 @@ function App() {
           element={
             <StudentRoute>
               <Notifications />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <StudentRoute>
+              <Settings />
             </StudentRoute>
           } 
         />

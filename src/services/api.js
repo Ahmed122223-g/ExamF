@@ -61,6 +61,13 @@ export const apiService = {
     return res.data;
   },
 
+  updateStudentProfile: async (name, token) => {
+    const res = await API.put('/api/students/profile', { name }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   trackActive: async (token) => {
     const res = await API.post('/api/students/track-active', {}, {
       headers: { Authorization: `Bearer ${token}` }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt, FaBookOpen, FaBell } from 'react-icons/fa';
+import { FaSignOutAlt, FaPlus, FaSearch, FaClipboardList, FaCheckCircle, FaExclamationTriangle, FaLock, FaCalendarAlt, FaBookOpen, FaBell, FaCog } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const StudentDashboard = () => {
@@ -165,6 +165,21 @@ const StudentDashboard = () => {
                 </span>
               )}
             </Link>
+
+            <Link
+              to="/settings"
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '42px', height: '42px', borderRadius: '10px',
+                background: 'rgba(6,182,212,0.12)',
+                border: '1px solid rgba(6,182,212,0.3)',
+                color: '#06b6d4', textDecoration: 'none', transition: 'all 0.2s'
+              }}
+              title="إعدادات الحساب والتطبيق"
+            >
+              <FaCog style={{ fontSize: '1.1rem' }} />
+            </Link>
+
           <button 
             onClick={handleLogout} 
             className="btn btn-danger" 

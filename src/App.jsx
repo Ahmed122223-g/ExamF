@@ -22,6 +22,8 @@ import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import AdminReview from './pages/AdminReview';
 import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
+import StudentRoadmapView from './pages/StudentRoadmapView';
+import AdminRoadmaps from './pages/AdminRoadmaps';
 
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
@@ -132,6 +134,14 @@ function App() {
             </StudentRoute>
           } 
         />
+        <Route 
+          path="/roadmap/:roadmapId" 
+          element={
+            <StudentRoute>
+              <StudentRoadmapView />
+            </StudentRoute>
+          } 
+        />
 
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -140,6 +150,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminDashboard />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/roadmaps" 
+          element={
+            <AdminRoute>
+              <AdminRoadmaps />
             </AdminRoute>
           } 
         />

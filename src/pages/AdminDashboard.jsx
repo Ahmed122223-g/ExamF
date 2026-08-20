@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink } from 'react-icons/fa';
@@ -732,7 +732,8 @@ const AdminDashboard = () => {
         </Link>
         <div className="nav-links">
           <button onClick={() => setActiveTab('exams')} className={`nav-btn ${activeTab === 'exams' ? 'active' : ''}`}>إدارة الاختبارات</button>
-          <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات والخرائط</button>
+          <button onClick={() => { setActiveTab('courses'); setSelectedCourse(null); }} className={`nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>إدارة الكورسات</button>
+          <Link to="/admin/roadmaps" className="nav-btn" style={{ color: '#c084fc', fontWeight: 'bold' }}>المسارات (Roadmaps) 🗺️</Link>
           <Link to="/admin/review" className="nav-btn">مراجعة المشاريع والأسئلة 📋</Link>
           <Link to="/admin/results" className="nav-btn">النتائج والتقارير</Link>
           <Link to="/admin/students" className="nav-btn">👥 الطلاب والتنبيهات</Link>

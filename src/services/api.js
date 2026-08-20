@@ -531,5 +531,150 @@ export const apiService = {
     });
     return res.data;
   },
+
+  // ==========================================
+  // Roadmap Endpoints (Student)
+  // ==========================================
+  getAvailableRoadmaps: async (token) => {
+    const res = await API.get('/api/roadmaps/available', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  joinRoadmap: async (roadmapId, code, token) => {
+    const res = await API.post('/api/roadmaps/join', {
+      roadmap_id: roadmapId,
+      code: code
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getMyRoadmaps: async (token) => {
+    const res = await API.get('/api/roadmaps/my-roadmaps', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  viewStudentRoadmap: async (roadmapId, token) => {
+    const res = await API.get(`/api/roadmaps/${roadmapId}/view`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getRoadmapItemDetails: async (itemId, token) => {
+    const res = await API.get(`/api/roadmaps/items/${itemId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  completeRoadmapItem: async (itemId, token) => {
+    const res = await API.post(`/api/roadmaps/items/${itemId}/complete`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  // ==========================================
+  // Roadmap Endpoints (Admin)
+  // ==========================================
+  getAdminRoadmaps: async (token) => {
+    const res = await API.get('/api/roadmaps/admin/all', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createAdminRoadmap: async (data, token) => {
+    const res = await API.post('/api/roadmaps/admin/create', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateAdminRoadmap: async (roadmapId, data, token) => {
+    const res = await API.put(`/api/roadmaps/admin/${roadmapId}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteAdminRoadmap: async (roadmapId, token) => {
+    const res = await API.delete(`/api/roadmaps/admin/${roadmapId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  generateRoadmapCodes: async (roadmapId, count, token) => {
+    const res = await API.post(`/api/roadmaps/admin/${roadmapId}/generate-codes`, { count }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getRoadmapCodes: async (roadmapId, filterStatus, token) => {
+    const params = filterStatus ? { filter_status: filterStatus } : {};
+    const res = await API.get(`/api/roadmaps/admin/${roadmapId}/codes`, {
+      params,
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  getRoadmapStructureAdmin: async (roadmapId, token) => {
+    const res = await API.get(`/api/roadmaps/admin/${roadmapId}/structure`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createRoadmapStageAdmin: async (roadmapId, data, token) => {
+    const res = await API.post(`/api/roadmaps/admin/${roadmapId}/stages`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateRoadmapStageAdmin: async (stageId, data, token) => {
+    const res = await API.put(`/api/roadmaps/admin/stages/${stageId}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteRoadmapStageAdmin: async (stageId, token) => {
+    const res = await API.delete(`/api/roadmaps/admin/stages/${stageId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  createRoadmapItemAdmin: async (stageId, data, token) => {
+    const res = await API.post(`/api/roadmaps/admin/stages/${stageId}/items`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  updateRoadmapItemAdmin: async (itemId, data, token) => {
+    const res = await API.put(`/api/roadmaps/admin/items/${itemId}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  deleteRoadmapItemAdmin: async (itemId, token) => {
+    const res = await API.delete(`/api/roadmaps/admin/items/${itemId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
 };
+
 

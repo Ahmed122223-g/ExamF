@@ -24,6 +24,7 @@ import AdminReview from './pages/AdminReview';
 import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
 import StudentRoadmapView from './pages/StudentRoadmapView';
 import AdminRoadmaps from './pages/AdminRoadmaps';
+import JoinRoadmap from './pages/JoinRoadmap';
 
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
@@ -139,6 +140,14 @@ function App() {
           element={
             <StudentRoute>
               <StudentRoadmapView />
+            </StudentRoute>
+          } 
+        />
+        <Route 
+          path="/join-roadmap" 
+          element={
+            <StudentRoute>
+              <JoinRoadmap />
             </StudentRoute>
           } 
         />

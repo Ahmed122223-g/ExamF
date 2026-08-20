@@ -103,6 +103,32 @@
   50% { transform: translateY(4px); opacity: 1; color: #06b6d4; }
 }
 
+.roadmap-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.roadmap-modal-content {
+  position: relative;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  padding: 25px;
+}
+
 .article-reader-modal {
   max-width: 750px;
   max-height: 85vh;
@@ -111,6 +137,8 @@
   border: 1px solid rgba(139, 92, 246, 0.3);
   border-radius: 20px;
   padding: 30px;
+  position: relative;
+  width: 100%;
 }
 
 .article-content-body {

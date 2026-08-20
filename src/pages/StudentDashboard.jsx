@@ -139,8 +139,6 @@ const StudentDashboard = () => {
     );
   }
 
-  const selectedRoadmapObj = availableRoadmaps.find(r => r.id.toString() === selectedRoadmapId?.toString());
-
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(12px, 4vw, 30px) clamp(10px, 3vw, 20px)', direction: 'rtl', color: 'white' }}>
       

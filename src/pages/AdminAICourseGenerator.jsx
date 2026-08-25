@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import {
   FaArrowRight, FaMagic, FaBook, FaLayerGroup,
   FaProjectDiagram, FaYoutube, FaGraduationCap,
-  FaLightbulb
+  FaLightbulb, FaPlus, FaTrash, FaCheckCircle
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
@@ -15,11 +15,17 @@ const AdminAICourseGenerator = () => {
   const [topicDescription, setTopicDescription] = useState('');
   const [title, setTitle] = useState('');
   const [courseCode, setCourseCode] = useState('');
+  
+  // Dynamic Sections State
   const [sectionsCount, setSectionsCount] = useState(3);
-  const [cardsPerSection, setCardsPerSection] = useState(4);
+  const [sectionsList, setSectionsList] = useState([
+    { title: 'المفاهيم والأساسيات', cardsCount: 4 },
+    { title: 'التطبيقات العملية والأدوات', cardsCount: 4 },
+    { title: 'المستوى المتقدم والمشاريع', cardsCount: 4 }
+  ]);
+
   const [hasProject, setHasProject] = useState(true);
-  const [projectScope, setProjectScope] = useState('final');
-  const [questionsPerCard, setQuestionsPerCard] = useState(3);
+  const [projectScope, setProjectScope] = useState('final'); // 'none' | 'section' | 'final'
   const [preferredChannels, setPreferredChannels] = useState('');
   const [targetLevel, setTargetLevel] = useState('beginner_to_advanced');
 
@@ -28,9 +34,9 @@ const AdminAICourseGenerator = () => {
 
   const loadingSteps = [
     '🧠 جاري تحليل الأهداف التعليمية وموضوع الدورة...',
-    '📐 جاري هيكلة المنهج وتقسيم الأقسام والدروس بالتساوي...',
-    '🎥 جاري البحث عن أفضل المحاضرات والفيديوهات وقنوات اليوتيوب...',
-    '📝 جاري صياغة الأسئلة التفاعلية متدرجة الصعوبة وكتابة المصطلحات...',
+    '📐 جاري هيكلة المنهج وتوزيع عدد الدروس المحددة لكل قسم...',
+    '🎥 جاري انتقاء أفضل الشروحات وقنوات اليوتيوب بروابط مباشرة تعمل 100%...',
+    '📝 جاري صياغة الأسئلة التفاعلية (10-15 سؤال للمحتوى العملي و0-5 للمفاهيم النظرية)...',
     '💾 جاري حفظ وبناء الكورس بالكامل في قاعدة البيانات...'
   ];
 
@@ -44,29 +50,90 @@ const AdminAICourseGenerator = () => {
     return () => clearInterval(interval);
   }, [generating]);
 
+  // Handle changing sections count dynamically
+  const handleSectionsCountChange = (newCount) => {
+    const count = Math.max(1, Math.min(10, parseInt(newCount) || 1));
+    setSectionsCount(count);
+
+    setSectionsList((prev) => {
+      const updated = [...prev];
+      if (count > updated.length) {
+        for (let i = updated.length + 1; i <= count; i++) {
+          updated.push({ title: `القسم ${i}`, cardsCount: 3 });
+        }
+      } else if (count < updated.length) {
+        return updated.slice(0, count);
+      }
+      return updated;
+    });
+  };
+
+  const handleSectionCardsChange = (index, cardsCount) => {
+    const count = Math.max(1, Math.min(20, parseInt(cardsCount) || 1));
+    setSectionsList((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], cardsCount: count };
+      return updated;
+    });
+  };
+
+  const handleSectionTitleChange = (index, titleVal) => {
+    setSectionsList((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], title: titleVal };
+      return updated;
+    });
+  };
+
   const presetTopics = [
     {
       label: '🐍 بايثون من الصفر للاحتراف (Python)',
-      desc: 'كورس شامل في لغة بايثون يبدأ من الأساسيات والمتغيرات والشروط وحلقات التكرار ثم الدوال والبرمجة كائنية التوجه (OOP) والتعامل مع الملفات والمكتبات وصولاً لبناء مشاريع تطبيقية.'
+      desc: 'كورس شامل في لغة بايثون يبدأ من الأساسيات والمتغيرات والشروط وحلقات التكرار ثم الدوال والبرمجة كائنية التوجه (OOP) والتعامل مع الملفات والمكتبات وصولاً لبناء مشاريع تطبيقية.',
+      sections: [
+        { title: 'الأساسيات والمدخلات (Basics)', cardsCount: 4 },
+        { title: 'البرمجة الكائنية والوظائف المتقدمة (OOP)', cardsCount: 5 },
+        { title: 'المشاريع التطبيقية والمكتبات (Projects)', cardsCount: 4 }
+      ]
     },
     {
       label: '⚛️ تطوير واجهات الويب بـ React',
-      desc: 'دورة تفاعلية لتطوير واجهات المستخدم بمكتبة React الحديثة تغطي الـ Components, JSX, Hooks (useState, useEffect), State Management, Routing, واستهلاك الـ APIs وبناء مشاريع عملية متكاملة.'
+      desc: 'دورة تفاعلية لتطوير واجهات المستخدم بمكتبة React الحديثة تغطي الـ Components, JSX, Hooks (useState, useEffect), State Management, Routing, واستهلاك الـ APIs وبناء مشاريع عملية متكاملة.',
+      sections: [
+        { title: 'أساسيات React والـ Components', cardsCount: 4 },
+        { title: 'الـ Hooks وإدارة الحالة (State & Hooks)', cardsCount: 4 },
+        { title: 'المشاريع وبناء التطبيقات المتكاملة', cardsCount: 3 }
+      ]
     },
     {
       label: '💻 أساسيات علوم الحاسب وهياكل البيانات (C++)',
-      desc: 'مسار أكاديمي وتطبيقي يغطي أساسيات البرمجة بلغة C++، إدارة الذاكرة، المؤشرات (Pointers)، وهياكل البيانات الأساسية (Arrays, Linked Lists, Stacks, Queues, Trees) مع حل مسائل برمجية متدرجة.'
+      desc: 'مسار أكاديمي وتطبيقي يغطي أساسيات البرمجة بلغة C++، إدارة الذاكرة، المؤشرات (Pointers)، وهياكل البيانات الأساسية (Arrays, Linked Lists, Stacks, Queues, Trees) مع حل مسائل برمجية متدرجة.',
+      sections: [
+        { title: 'أساسيات C++ والمؤشرات (Pointers)', cardsCount: 5 },
+        { title: 'هياكل البيانات الخطية (Linear Data Structures)', cardsCount: 5 },
+        { title: 'الأشجار والمسائل البرمجية المتقدمة (Trees & Problem Solving)', cardsCount: 4 }
+      ]
     },
     {
       label: '🌐 مسار تطوير الويب الكامل (Full-Stack JS)',
-      desc: 'خارطة طريق كاملة لتطوير تطبيقات الويب تشمل HTML5, CSS3, JavaScript الحديث (ES6+), Node.js, Express, وقواعد بيانات MongoDB مع بناء مشاريع Full-Stack واقعية.'
+      desc: 'خارطة طريق كاملة لتطوير تطبيقات الويب تشمل HTML5, CSS3, JavaScript الحديث (ES6+), Node.js, Express, وقواعد بيانات MongoDB مع بناء مشاريع Full-Stack واقعية.',
+      sections: [
+        { title: 'الفرونت إند الحديث (Frontend Modern JS)', cardsCount: 5 },
+        { title: 'الباك إند وقواعد البيانات (Node.js & Express & MongoDB)', cardsCount: 5 },
+        { title: 'بناء ونشر المشاريع الكاملة (Full-Stack Deployment)', cardsCount: 3 }
+      ]
     }
   ];
 
   const handleApplyPreset = (preset) => {
     setTopicDescription(preset.desc);
     setTitle(preset.label.replace(/^[^\s]+\s/, ''));
+    if (preset.sections) {
+      setSectionsCount(preset.sections.length);
+      setSectionsList(preset.sections);
+    }
   };
+
+  const totalCards = sectionsList.reduce((acc, s) => acc + (parseInt(s.cardsCount) || 0), 0);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -84,11 +151,13 @@ const AdminAICourseGenerator = () => {
         topic_description: topicDescription.trim(),
         title: title.trim() || undefined,
         course_code: courseCode.trim() || undefined,
-        sections_count: parseInt(sectionsCount) || 3,
-        cards_per_section: parseInt(cardsPerSection) || 4,
+        sections_count: sectionsList.length,
+        sections_breakdown: sectionsList.map((s) => ({
+          title: s.title.trim() || undefined,
+          cards_count: parseInt(s.cardsCount) || 3
+        })),
         has_project: hasProject,
         project_scope: hasProject ? projectScope : 'none',
-        questions_per_card: parseInt(questionsPerCard) || 3,
         preferred_channels: preferredChannels.trim() || undefined,
         target_level: targetLevel
       };
@@ -179,7 +248,7 @@ const AdminAICourseGenerator = () => {
                 توليد دورة تدريبية ذكية بالذكاء الاصطناعي (AI Course Generator)
               </h1>
               <p style={{ color: '#94a3b8', fontSize: '0.92rem', marginTop: '6px', lineHeight: '1.6' }}>
-                اكتب ما ترغب في تعليمه وحدد عدد الأقسام والدروس والأسئلة والمشاريع، وسيقوم الذكاء الاصطناعي ببناء وهيكلة الكورس كاملاً مع فيديوهات يوتيوب وأسئلة متدرجة.
+                حدد عدد الأقسام وعدد الدروس في كل قسم بالتفصيل، وسيقوم الذكاء الاصطناعي بهيكلة الكورس ووضع فيديوهات يوتيوب مباشرة وأسئلة تفاعلية ذكية.
               </p>
             </div>
           </div>
@@ -275,71 +344,124 @@ const AdminAICourseGenerator = () => {
             </div>
           </div>
 
-          {/* SECTION 2: STRUCTURE & COUNTS */}
+          {/* SECTION 2: DYNAMIC SECTIONS & LESSONS BREAKDOWN */}
           <div className="glass-card" style={{ background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '26px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '1.2rem', color: '#fff', fontWeight: '800', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <FaLayerGroup style={{ color: '#a855f7' }} /> هيكل وأقسام الكورس
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+              <h2 style={{ fontSize: '1.2rem', color: '#fff', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FaLayerGroup style={{ color: '#a855f7' }} /> تخصيص عدد الأقسام والدروس لكل قسم
+              </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: '700', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>عدد الأقسام الرئيسية (Sections):</span>
-                  <span style={{ color: '#a855f7', fontWeight: 'bold' }}>{sectionsCount} أقسام</span>
-                </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ color: '#cbd5e1', fontSize: '0.9rem', fontWeight: 'bold' }}>عدد الأقسام:</label>
                 <input
-                  type="range"
-                  min="1"
-                  max="8"
-                  value={sectionsCount}
-                  onChange={(e) => setSectionsCount(e.target.value)}
-                  style={{ width: '100%', accentColor: '#a855f7', cursor: 'pointer', marginTop: '8px' }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-                  <span>1 قسم</span>
-                  <span>4 أقسام</span>
-                  <span>8 أقسام</span>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: '700', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>عدد الكروت/الدروس في كل قسم:</span>
-                  <span style={{ color: '#06b6d4', fontWeight: 'bold' }}>{cardsPerSection} كروت/قسم</span>
-                </label>
-                <input
-                  type="range"
+                  type="number"
                   min="1"
                   max="10"
-                  value={cardsPerSection}
-                  onChange={(e) => setCardsPerSection(e.target.value)}
-                  style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer', marginTop: '8px' }}
+                  value={sectionsCount}
+                  onChange={(e) => handleSectionsCountChange(e.target.value)}
+                  style={{
+                    width: '75px',
+                    background: '#1e293b',
+                    color: '#fff',
+                    border: '1.5px solid #a855f7',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '1rem'
+                  }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-                  <span>1 كارت</span>
-                  <span>5 كروت</span>
-                  <span>10 كروت</span>
-                </div>
               </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: '700', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>عدد الأسئلة التفاعلية لكل كارت:</span>
-                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>{questionsPerCard} أسئلة/كارت</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="6"
-                  value={questionsPerCard}
-                  onChange={(e) => setQuestionsPerCard(e.target.value)}
-                  style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer', marginTop: '8px' }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b' }}>
-                  <span>بدون أسئلة</span>
-                  <span>3 أسئلة</span>
-                  <span>6 أسئلة</span>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '18px', lineHeight: '1.6' }}>
+              حدد عدد الكروت (الدروس) المطلوب إنشاؤها في كل قسم على حدة، ويمكنك أيضاً كتابة فكرة أو عنوان كل قسم إذا رغبت:
+            </p>
+
+            {/* DYNAMIC SECTIONS GRID */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+              {sectionsList.map((sec, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: 'rgba(30, 41, 59, 0.45)',
+                    border: '1px solid rgba(139, 92, 246, 0.25)',
+                    borderRadius: '14px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#c084fc', fontWeight: 'bold', fontSize: '0.92rem' }}>
+                      📌 القسم {idx + 1}
+                    </span>
+                    <span style={{ color: '#06b6d4', fontSize: '0.82rem', fontWeight: '600' }}>
+                      {sec.cardsCount} دروس/كروت
+                    </span>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                      عنوان/فكرة القسم:
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder={`مثال: القسم ${idx + 1}`}
+                      value={sec.title}
+                      onChange={(e) => handleSectionTitleChange(idx, e.target.value)}
+                      style={{ padding: '8px 12px', fontSize: '0.88rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                      عدد الكروت (الدروس) في هذا القسم:
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={sec.cardsCount}
+                        onChange={(e) => handleSectionCardsChange(idx, e.target.value)}
+                        style={{
+                          width: '80px',
+                          background: '#0f172a',
+                          color: '#fff',
+                          border: '1px solid rgba(6, 182, 212, 0.4)',
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          textAlign: 'center',
+                          fontWeight: 'bold'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.82rem', color: '#64748b' }}>كارت/درس</span>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* SMART QUESTIONS BANNER */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: '12px',
+              padding: '14px 18px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '0.88rem',
+              color: '#34d399',
+              lineHeight: '1.6'
+            }}>
+              <FaCheckCircle style={{ fontSize: '1.2rem', flexShrink: 0 }} />
+              <div>
+                <strong>نظام الأسئلة الذكي والتفاعلي:</strong> سيقوم الـ AI تلقائياً بتوليد <strong>10 إلى 15 سؤالاً متدرج الصعوبة</strong> للدروس التطبيقية والبرمجية الغنية بالمفاهيم، ومن <strong>0 إلى 5 أسئلة</strong> للدروس النظرية والمقدمات السريعة.
               </div>
             </div>
 
@@ -356,9 +478,9 @@ const AdminAICourseGenerator = () => {
               fontSize: '0.88rem',
               color: '#cbd5e1'
             }}>
-              <span>📊 <strong>إجمالي الأقسام:</strong> {sectionsCount}</span>
-              <span>📚 <strong>إجمالي الدروس:</strong> {sectionsCount * cardsPerSection} درس</span>
-              <span>❓ <strong>إجمالي الأسئلة التفاعلية:</strong> {sectionsCount * cardsPerSection * questionsPerCard} سؤال</span>
+              <span>📊 <strong>إجمالي الأقسام:</strong> {sectionsList.length} أقسام</span>
+              <span>📚 <strong>إجمالي الدروس والكروت:</strong> {totalCards} كارت/درس</span>
+              <span>🎯 <strong>نظام الأسئلة:</strong> متدرج ذكي (10-15 للعملي / 0-5 للنظري)</span>
             </div>
           </div>
 

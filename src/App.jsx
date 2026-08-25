@@ -25,6 +25,8 @@ import QuestionFeedbackDetail from './pages/QuestionFeedbackDetail';
 import StudentRoadmapView from './pages/StudentRoadmapView';
 import AdminRoadmaps from './pages/AdminRoadmaps';
 import JoinRoadmap from './pages/JoinRoadmap';
+import AdminAICourseGenerator from './pages/AdminAICourseGenerator';
+
 
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
@@ -191,6 +193,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminStats />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/courses/ai-generate" 
+          element={
+            <AdminRoute>
+              <AdminAICourseGenerator />
             </AdminRoute>
           } 
         />

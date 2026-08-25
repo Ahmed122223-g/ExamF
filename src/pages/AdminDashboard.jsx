@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink, FaMagic } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
@@ -988,9 +988,30 @@ const AdminDashboard = () => {
                 <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>إدارة الكورسات وخرائط الطريق 🗺️</h1>
                 <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إضافة كورس جديد بمحددات مخصصة والتحكم في دروس ومهام الفترات التدريبية</p>
               </div>
-              <button onClick={() => setShowCreateCourseModal(true)} className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <FaPlus /> إضافة كورس جديد
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={() => navigate('/admin/courses/ai-generate')} 
+                  className="btn" 
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                    color: 'white',
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(124, 58, 237, 0.35)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '10px 18px',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <FaMagic /> ✨ التوليد باستخدام الـ AI
+                </button>
+                <button onClick={() => setShowCreateCourseModal(true)} className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <FaPlus /> إضافة كورس يدوي
+                </button>
+              </div>
             </div>
 
             <div className="glass-card" style={{ padding: '25px' }}>
@@ -1000,8 +1021,29 @@ const AdminDashboard = () => {
 
               {courses.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted-dark)' }}>
-                  <p style={{ fontSize: '1.1rem', marginBottom: '15px' }}>لا توجد أي كورسات منشأة حالياً.</p>
-                  <button className="btn btn-primary" onClick={() => setShowCreateCourseModal(true)}>أنشئ أول كورس الآن</button>
+                  <p style={{ fontSize: '1.1rem', marginBottom: '20px' }}>لا توجد أي كورسات منشأة حالياً.</p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button 
+                      onClick={() => navigate('/admin/courses/ai-generate')} 
+                      className="btn" 
+                      style={{
+                        background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                        color: 'white',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                        fontWeight: 'bold',
+                        boxShadow: '0 4px 15px rgba(124, 58, 237, 0.35)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '10px 20px',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <FaMagic /> توليد كورس كامل بالذكاء الاصطناعي ✨
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setShowCreateCourseModal(true)}>إضافة كورس يدوي</button>
+                  </div>
                 </div>
               ) : (
                 <div className="table-container">

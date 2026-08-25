@@ -89,6 +89,40 @@ const StudentRoadmapView = () => {
     }
   };
 
+  // Convert plain-text URLs inside article content into clickable <a> elements
+  const renderArticleContent = (text) => {
+    if (!text) return 'لا يوجد نص مضاف لهذا المقال بعد.';
+    const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        urlRegex.lastIndex = 0; // reset after test()
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#38bdf8',
+              fontWeight: 600,
+              textDecoration: 'underline',
+              textDecorationColor: 'rgba(56,189,248,0.4)',
+              textUnderlineOffset: '3px',
+              wordBreak: 'break-all',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={e => e.target.style.color = '#7dd3fc'}
+            onMouseLeave={e => e.target.style.color = '#38bdf8'}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   if (loading) {
     return (
       <div className="srm-loading">
@@ -219,7 +253,7 @@ const StudentRoadmapView = () => {
             {activeItemModal.item_type === 'article' && (
               <>
                 <div className="srm-article-body">
-                  {activeItemModal.article_content || 'لا يوجد نص مضاف لهذا المقال بعد.'}
+                  {renderArticleContent(activeItemModal.article_content)}
                 </div>
                 <div className="srm-modal-actions">
                   <button

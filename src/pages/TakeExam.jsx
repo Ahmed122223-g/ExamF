@@ -28,7 +28,20 @@ const TakeExam = () => {
   const studentToken = sessionStorage.getItem(`student_token_${examId}`) || localStorage.getItem('student_token');
   const studentName = sessionStorage.getItem(`student_name_${examId}`) || localStorage.getItem('student_name');
 
+  const isGracePeriod = useRef(true);
+
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false;
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 1) ||
+      window.innerWidth <= 768
+    );
+  };
+
   const isScreenSplit = () => {
+    if (isMobileDevice()) return false;
+    if (!window.outerWidth || !window.screen || !window.screen.availWidth) return false;
     const widthRatio = window.outerWidth / window.screen.availWidth;
     return widthRatio < 0.6;
   };
@@ -38,6 +51,13 @@ const TakeExam = () => {
     submittedRef.current = submitted;
     submittingRef.current = submitting;
   }, [answers, submitted, submitting]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      isGracePeriod.current = false;
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!studentToken || !studentName) {
@@ -109,26 +129,40 @@ const TakeExam = () => {
     if (!exam || submittedRef.current) return;
 
     const handleVisibilityChange = () => {
+      if (isGracePeriod.current) return;
       if (document.visibilityState === 'hidden' && exam && !submittedRef.current && !submittingRef.current) {
-        handleCheatingSubmit('تم اكتشاف خروجك من صفحة الاختبار (تغيير التبويب).');
+        handleCheatingSubmit('تم اكتشاف خروجك من صفحة الاختبار (تغيير التبويب أو تصغير المتصفح).');
       }
     };
 
     const handleBlur = () => {
-      if (ignoreBlur.current) return;
+      if (isGracePeriod.current || ignoreBlur.current) return;
       if (exam && !submittedRef.current && !submittingRef.current) {
-      setTimeout(() => {
-          if (ignoreBlur.current) return;
+        setTimeout(() => {
+          if (isGracePeriod.current || ignoreBlur.current) return;
+
+          // If the page is hidden, visibility change will catch it
+          if (document.visibilityState === 'hidden') {
+            if (!submittedRef.current && !submittingRef.current) {
+              handleCheatingSubmit('تم اكتشاف خروجك من صفحة الاختبار.');
+            }
+            return;
+          }
+
+          // On mobile devices, touching navigation bar, notification shade peek, or address bar hide/show causes blur events without leaving the page
+          if (isMobileDevice()) return;
+
           if (document.activeElement && document.activeElement.tagName !== 'IFRAME') {
             if (!document.hasFocus() && !submittedRef.current && !submittingRef.current) {
               handleCheatingSubmit('تم اكتشاف خروجك من نافذة الاختبار أو إلغاء التركيز.');
             }
           }
-        }, 300);
+        }, 1000);
       }
     };
 
     const handleResize = () => {
+      if (isGracePeriod.current) return;
       if (exam && !submittedRef.current && !submittingRef.current && isScreenSplit()) {
         handleCheatingSubmit('تم اكتشاف تقسيم الشاشة أو تصغير النافذة.');
       }
@@ -159,25 +193,28 @@ const TakeExam = () => {
 
     const handleCopyCutPaste = (e) => e.preventDefault();
 
-    const devToolsImage = new Image();
-    Object.defineProperty(devToolsImage, 'id', {
-      get: function() {
-        if (exam && !submittedRef.current && !submittingRef.current) {
-          handleCheatingSubmit('تم اكتشاف رصد فتح أدوات المطورين (Developer Console).');
+    let devtoolsInterval = null;
+    if (!isMobileDevice()) {
+      const devToolsImage = new Image();
+      Object.defineProperty(devToolsImage, 'id', {
+        get: function() {
+          if (!isGracePeriod.current && exam && !submittedRef.current && !submittingRef.current) {
+            handleCheatingSubmit('تم اكتشاف رصد فتح أدوات المطورين (Developer Console).');
+          }
         }
-      }
-    });
+      });
 
-    const devtoolsInterval = setInterval(() => {
-      console.log('%c', devToolsImage);
+      devtoolsInterval = setInterval(() => {
+        console.log('%c', devToolsImage);
 
-      const threshold = 160;
-      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-      if ((widthThreshold || heightThreshold) && exam && !submittedRef.current && !submittingRef.current) {
-        handleCheatingSubmit('تم رصد فتح أدوات المطورين (Developer Console) بجانب الصفحة.');
-      }
-    }, 1000);
+        const threshold = 160;
+        const widthThreshold = (window.outerWidth - window.innerWidth) > threshold;
+        const heightThreshold = (window.outerHeight - window.innerHeight) > threshold;
+        if (!isGracePeriod.current && (widthThreshold || heightThreshold) && exam && !submittedRef.current && !submittingRef.current) {
+          handleCheatingSubmit('تم رصد فتح أدوات المطورين (Developer Console) بجانب الصفحة.');
+        }
+      }, 2000);
+    }
 
     const translationObserver = new MutationObserver(() => {
       const htmlEl = document.documentElement;
@@ -190,7 +227,7 @@ const TakeExam = () => {
                                          document.querySelector('#goog-gt-tt');
 
       if (hasTranslatedClass || hasGoogleTranslateElements || (langAttr && langAttr !== 'ar' && langAttr !== 'en')) {
-        if (exam && !submittedRef.current && !submittingRef.current) {
+        if (!isGracePeriod.current && exam && !submittedRef.current && !submittingRef.current) {
           handleCheatingSubmit('تم رصد محاولة ترجمة صفحة الاختبار.');
         }
       }
@@ -208,7 +245,7 @@ const TakeExam = () => {
     document.addEventListener('paste', handleCopyCutPaste);
 
     return () => {
-      clearInterval(devtoolsInterval);
+      if (devtoolsInterval) clearInterval(devtoolsInterval);
       translationObserver.disconnect();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);

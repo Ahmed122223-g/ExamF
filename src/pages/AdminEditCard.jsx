@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt } from 'react-icons/fa';
+import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt, FaEdit } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminEditCard = () => {
@@ -556,17 +556,31 @@ const AdminEditCard = () => {
             <label className="form-label" style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
               <FaLink /> ربط اختبار بهذا الكارت تلقائياً للطلاب:
             </label>
-            <select 
-              className="form-input" 
-              value={linkedExamId} 
-              onChange={(e) => setLinkedExamId(e.target.value)}
-              style={{ marginTop: '10px', borderColor: 'rgba(245, 158, 11, 0.4)' }}
-            >
-              <option value="">-- بدون اختبار مرتبط --</option>
-              {exams.map(e => (
-                <option key={e.id} value={e.id}>{e.title} ({e.exam_code})</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+              <select 
+                className="form-input" 
+                value={linkedExamId} 
+                onChange={(e) => setLinkedExamId(e.target.value)}
+                style={{ flex: '1', minWidth: '220px', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+              >
+                <option value="">-- بدون اختبار مرتبط --</option>
+                {exams.map(e => (
+                  <option key={e.id} value={e.id}>{e.title} ({e.exam_code})</option>
+                ))}
+              </select>
+              {linkedExamId && (
+                <Link
+                  to={`/admin/exams?action=edit&id=${linkedExamId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{ backgroundColor: '#f59e0b', color: 'white', padding: '8px 16px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  title="تعديل هذا الاختبار في نافذة جديدة"
+                >
+                  <FaEdit /> تعديل هذا الاختبار
+                </Link>
+              )}
+            </div>
           </div>
 
                     <div style={{ marginTop: '10px' }}>

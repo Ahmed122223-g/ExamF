@@ -857,7 +857,16 @@ const AdminDashboard = () => {
                             <td>{exam.total_questions} أسئلة</td>
                             <td>{exam.total_marks} درجة</td>
                             <td>
-                              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Link 
+                                  to={`/admin/exams?action=edit&id=${exam.id}`} 
+                                  className="btn" 
+                                  style={{ padding: '6px 12px', fontSize: '0.85rem', backgroundColor: '#f59e0b', color: 'white', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  title="تعديل الاختبار"
+                                >
+                                  <FaEdit />
+                                  تعديل
+                                </Link>
                                 <Link to={`/admin/results?exam_id=${exam.id}`} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
                                   النتائج
                                 </Link>

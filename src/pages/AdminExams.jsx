@@ -1,13 +1,27 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaPlus, FaTrash, FaSignOutAlt, FaChevronRight, FaClipboardList, FaClock, FaCheckCircle, FaTrashAlt } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaSignOutAlt, FaChevronRight, FaClipboardList, FaClock, FaCheckCircle, FaTrashAlt, FaEdit } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+
+const formatForDateTimeInput = (isoStr) => {
+  if (!isoStr) return '';
+  const date = new Date(isoStr);
+  if (isNaN(date.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 const AdminExams = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const action = searchParams.get('action');
+  const examIdParam = searchParams.get('id');
 
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,24 +44,59 @@ const AdminExams = () => {
       return;
     }
 
-    const fetchExams = async () => {
+    const loadData = async () => {
+      setLoading(true);
       try {
-        const data = await apiService.getExams(token);
-        setExams(data);
+        if (action === 'edit' && examIdParam) {
+          const examData = await apiService.getExamDetails(examIdParam, token);
+          setTitle(examData.title || '');
+          setExamCode(examData.exam_code || '');
+          setDuration(examData.duration_minutes || 30);
+          setStartTime(formatForDateTimeInput(examData.start_time));
+          setEndTime(formatForDateTimeInput(examData.end_time));
+          if (examData.questions && examData.questions.length > 0) {
+            setQuestions(examData.questions.map(q => ({
+              id: q.id,
+              question_text: q.question_text || '',
+              option_a: q.option_a || '',
+              option_b: q.option_b || '',
+              option_c: q.option_c || '',
+              option_d: q.option_d || '',
+              correct_answer: (q.correct_answer || 'a').toLowerCase(),
+              marks: q.marks || 1,
+              explanation: q.explanation || ''
+            })));
+          }
+        } else if (action === 'create') {
+          setTitle('');
+          setExamCode('');
+          setDuration(30);
+          setStartTime('');
+          setEndTime('');
+          setQuestions([
+            { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', marks: 1, explanation: '' }
+          ]);
+        } else {
+          const data = await apiService.getExams(token);
+          setExams(data);
+        }
       } catch (err) {
         if (err.response?.status === 401) {
           localStorage.removeItem('admin_token');
           navigate('/admin/login');
         } else {
-          Swal.fire('خطأ!', 'فشل في تحميل الاختبارات.', 'error');
+          Swal.fire('خطأ!', err.response?.data?.detail || 'فشل في تحميل البيانات.', 'error');
+          if (action === 'edit') {
+            navigate('/admin/exams');
+          }
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchExams();
-  }, [token, navigate, action]);
+    loadData();
+  }, [token, navigate, action, examIdParam]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -75,7 +124,7 @@ const AdminExams = () => {
     });
   };
 
-  const handleCreateExam = async (e) => {
+  const handleSubmitExam = async (e) => {
     e.preventDefault();
     if (!title.trim() || !startTime || !endTime) {
       Swal.fire('تنبيه!', 'يرجى إكمال الحقول الأساسية للاختبار.', 'warning');
@@ -104,24 +153,39 @@ const AdminExams = () => {
         start_time: new Date(startTime).toISOString(),
         end_time: new Date(endTime).toISOString(),
         questions: questions.map(q => ({
-          ...q,
-          marks: parseInt(q.marks),
+          question_text: q.question_text.trim(),
+          option_a: q.option_a.trim(),
+          option_b: q.option_b.trim(),
+          option_c: q.option_c.trim(),
+          option_d: q.option_d.trim(),
+          correct_answer: q.correct_answer.toLowerCase(),
+          marks: parseInt(q.marks) || 1,
           explanation: q.explanation?.trim() || null
         }))
       };
 
-      await apiService.createExam(payload, token);
-      
-      Swal.fire({
-        title: 'تم الإنشاء!',
-        text: 'تم إنشاء الاختبار وإضافة الأسئلة بنجاح.',
-        icon: 'success'
-      }).then(() => {
-        navigate('/admin/exams');
-      });
+      if (action === 'edit' && examIdParam) {
+        await apiService.updateExam(examIdParam, payload, token);
+        Swal.fire({
+          title: 'تم التعديل!',
+          text: 'تم تحديث بيانات وأسئلة الاختبار بنجاح.',
+          icon: 'success'
+        }).then(() => {
+          navigate('/admin/exams');
+        });
+      } else {
+        await apiService.createExam(payload, token);
+        Swal.fire({
+          title: 'تم الإنشاء!',
+          text: 'تم إنشاء الاختبار وإضافة الأسئلة بنجاح.',
+          icon: 'success'
+        }).then(() => {
+          navigate('/admin/exams');
+        });
+      }
 
     } catch (err) {
-      Swal.fire('خطأ!', err.response?.data?.detail || 'فشل في إنشاء الاختبار. قد يكون كود الاختبار مستخدماً.', 'error');
+      Swal.fire('خطأ!', err.response?.data?.detail || 'فشل في حفظ الاختبار. قد يكون كود الاختبار مستخدماً.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -160,7 +224,7 @@ const AdminExams = () => {
 
   return (
     <div className="app-container">
-            <nav className="navbar">
+      <nav className="navbar">
         <Link to="/admin/dashboard" className="nav-brand">
           منصة الاختبارات الإلكترونية <span>لوحة التحكم</span>
         </Link>
@@ -175,21 +239,23 @@ const AdminExams = () => {
         </div>
       </nav>
 
-            <main className="main-content">
-        {action === 'create' ? (
-          /* CREATE EXAM VIEW */
+      <main className="main-content">
+        {(action === 'create' || action === 'edit') ? (
+          /* CREATE OR EDIT EXAM VIEW */
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '30px' }}>
               <Link to="/admin/exams" style={{ color: '#94a3b8', fontSize: '1.2rem', textDecoration: 'none' }}>
                 إدارة الاختبارات
               </Link>
               <FaChevronRight style={{ color: '#475569', fontSize: '0.8rem' }} />
-              <span style={{ color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>إنشاء اختبار جديد</span>
+              <span style={{ color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                {action === 'edit' ? 'تعديل الاختبار' : 'إنشاء اختبار جديد'}
+              </span>
             </div>
 
-            <form onSubmit={handleCreateExam} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            <form onSubmit={handleSubmitExam} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               
-                            <div className="glass-card">
+              <div className="glass-card">
                 <h2 style={{ fontSize: '1.2rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #f59e0b', paddingRight: '10px' }}>
                   بيانات الاختبار الأساسية
                 </h2>
@@ -214,7 +280,7 @@ const AdminExams = () => {
                       className="form-input"
                       value={examCode}
                       onChange={(e) => setExamCode(e.target.value)}
-                      placeholder="مثal: MATH101"
+                      placeholder="مثال: MATH101"
                       style={{ textTransform: 'uppercase' }}
                     />
                   </div>
@@ -255,7 +321,7 @@ const AdminExams = () => {
                 </div>
               </div>
 
-                            <div>
+              <div>
                 <h2 style={{ fontSize: '1.3rem', color: 'white', fontWeight: '800', marginBottom: '20px', borderRight: '4px solid #3b82f6', paddingRight: '12px' }}>
                   بناء أسئلة الاختبار
                 </h2>
@@ -264,7 +330,7 @@ const AdminExams = () => {
                   {questions.map((q, idx) => (
                     <div key={idx} className="glass-card" style={{ position: 'relative', padding: '25px 30px' }}>
                       
-                                            {questions.length > 1 && (
+                      {questions.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeQuestionField(idx)}
@@ -283,7 +349,7 @@ const AdminExams = () => {
                         <span style={{
                           backgroundColor: '#3b82f6', color: 'white',
                           width: '26px', height: '26px', borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifycontent: 'center',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontWeight: 'bold', fontSize: '0.85rem'
                         }}>
                           {idx + 1}
@@ -304,7 +370,7 @@ const AdminExams = () => {
                         />
                       </div>
 
-                                            <div className="responsive-grid-choices" style={{ marginBottom: '20px' }}>
+                      <div className="responsive-grid-choices" style={{ marginBottom: '20px' }}>
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label" style={{ fontSize: '0.85rem' }}>الاختيار أ *</label>
                           <input
@@ -351,7 +417,7 @@ const AdminExams = () => {
                         </div>
                       </div>
 
-                                            <div className="responsive-grid-2">
+                      <div className="responsive-grid-2">
                         <div className="form-group" style={{ margin: 0 }}>
                           <label className="form-label">الإجابة الصحيحة *</label>
                           <select
@@ -380,7 +446,7 @@ const AdminExams = () => {
                         </div>
                       </div>
 
-                                            <div className="form-group" style={{ margin: 0, marginTop: '15px' }}>
+                      <div className="form-group" style={{ margin: 0, marginTop: '15px' }}>
                         <label className="form-label" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
                           💡 شرح الإجابة (اختياري - يظهر للطالب بعد انتهاء الاختبار)
                         </label>
@@ -398,7 +464,7 @@ const AdminExams = () => {
                   ))}
                 </div>
 
-                                <button
+                <button
                   type="button"
                   onClick={addQuestionField}
                   className="btn btn-secondary"
@@ -409,7 +475,7 @@ const AdminExams = () => {
                 </button>
               </div>
 
-                            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
                 <button
                   type="button"
                   onClick={() => navigate('/admin/exams')}
@@ -425,7 +491,7 @@ const AdminExams = () => {
                   disabled={submitting}
                   style={{ width: '200px', fontWeight: 'bold' }}
                 >
-                  {submitting ? 'جاري الحفظ...' : 'حفظ ونشر الاختبار'}
+                  {submitting ? 'جاري الحفظ...' : (action === 'edit' ? 'حفظ التعديلات' : 'حفظ ونشر الاختبار')}
                 </button>
               </div>
 
@@ -485,7 +551,15 @@ const AdminExams = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Link 
+                          to={`/admin/exams?action=edit&id=${exam.id}`} 
+                          className="btn" 
+                          style={{ padding: '8px 16px', fontSize: '0.9rem', backgroundColor: '#f59e0b', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <FaEdit />
+                          تعديل
+                        </Link>
                         <Link to={`/admin/results?exam_id=${exam.id}`} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
                           النتائج والمشاهدات
                         </Link>

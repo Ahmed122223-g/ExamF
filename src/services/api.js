@@ -146,6 +146,13 @@ export const apiService = {
     return res.data;
   },
 
+  updateExam: async (examId, examData, token) => {
+    const res = await API.put(`/api/admin/exams/${examId}`, examData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
   deleteExam: async (examId, token) => {
     const res = await API.delete(`/api/admin/exams/${examId}`, {
       headers: { Authorization: `Bearer ${token}` }

@@ -94,6 +94,7 @@ export default function CourseRoadmap() {
   const isItemUnlocked = (id) => {
     const item = allItems.find(it => it.id === id);
     if (!item) return false;
+    if (roadmap.is_super) return true;
     const index = getItemGlobalIndex(id);
 
     if (isItemLocked(id)) return false;
@@ -127,6 +128,7 @@ export default function CourseRoadmap() {
   };
 
   const isItemLocked = (id) => {
+    if (roadmap.is_super) return false;
     const item = allItems.find(it => it.id === id);
     if (!item || !item.lock_date) return false;
     const todayStr = new Date().toISOString().split('T')[0];
@@ -152,6 +154,30 @@ export default function CourseRoadmap() {
         </Link>
         <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{roadmap.title}</span>
       </div>
+
+      {roadmap.is_super && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(168, 85, 247, 0.15))',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '12px',
+          padding: '14px 20px',
+          marginBottom: '25px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          boxShadow: '0 4px 20px rgba(245, 158, 11, 0.15)'
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>⭐</span>
+          <div>
+            <strong style={{ color: '#fbbf24', fontSize: '1rem', display: 'block' }}>
+              حساب سوبر (Super Student)
+            </strong>
+            <span style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>
+              تم فتح جميع دروس وكروت هذا الكورس بالكامل لحسابك دون التقيد بمواعيد الفتح أو الإغلاق أو حل الأسئلة المسبقة.
+            </span>
+          </div>
+        </div>
+      )}
 
       <header className="app-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <h1 className="app-title" style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>{roadmap.title}</h1>

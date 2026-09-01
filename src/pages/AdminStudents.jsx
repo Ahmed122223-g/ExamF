@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import Swal from 'sweetalert2';
@@ -131,6 +131,30 @@ export default function AdminStudents() {
     } catch (err) {
       console.error(err);
       Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إلغاء صلاحية الطالب', 'error');
+    }
+  };
+
+  const handleToggleSuper = async (studentId, courseId) => {
+    try {
+      const res = await apiService.toggleStudentSuper(studentId, courseId, token);
+      Swal.fire({
+        icon: 'success',
+        title: res.is_super ? 'تم تفعيل وضع السوبر ⭐' : 'تم إلغاء وضع السوبر',
+        text: res.message,
+        timer: 2000,
+        showConfirmButton: false
+      });
+      await fetchStudents();
+      setSelectedPermissionsStudent(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          courses: (prev.courses || []).map(c => c.course_id === courseId ? { ...c, is_super: res.is_super } : c)
+        };
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل في تعديل حالة الطالب السوبر', 'error');
     }
   };
 
@@ -356,11 +380,28 @@ export default function AdminStudents() {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {student.courses.map(c => (
                           <div key={c.course_id} style={{
-                            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: '8px', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', gap: '10px', alignItems: 'center'
+                            background: c.is_super ? 'linear-gradient(135deg, rgba(234,179,8,0.1), rgba(168,85,247,0.1))' : 'rgba(255,255,255,0.04)',
+                            border: c.is_super ? '1px solid rgba(234,179,8,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '8px', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap'
                           }}>
                             <span style={{ color: '#06b6d4', fontWeight: 700 }}>{c.course_code}</span>
                             <span style={{ color: '#d1d5db' }}>{c.course_title}</span>
+                            {c.is_super && (
+                              <span style={{
+                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                color: '#1e1b4b',
+                                fontWeight: 900,
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 0 10px rgba(245,158,11,0.3)'
+                              }}>
+                                ⭐ سوبر (مفتوح بالكامل)
+                              </span>
+                            )}
                             <span style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                               ✅ أنجز {c.cards_completed} من {c.total_cards} كارت
                             </span>
@@ -728,7 +769,7 @@ export default function AdminStudents() {
 
                         {selectedPermissionsStudent.courses?.length > 0 ? (
               <>
-                <div className="form-group" style={{ marginBottom: '20px' }}>
+                <div className="form-group" style={{ marginBottom: '16px' }}>
                   <label className="form-label">اختر الكورس</label>
                   <select
                     className="form-input"
@@ -740,10 +781,74 @@ export default function AdminStudents() {
                     }}
                   >
                     {selectedPermissionsStudent.courses.map(c => (
-                      <option key={c.course_id} value={c.course_id}>{c.course_title} ({c.course_code})</option>
+                      <option key={c.course_id} value={c.course_id}>{c.course_title} ({c.course_code}) {c.is_super ? '⭐ (سوبر)' : ''}</option>
                     ))}
                   </select>
                 </div>
+
+                {/* Super Student Control Panel */}
+                {(() => {
+                  const currentCourse = (selectedPermissionsStudent.courses || []).find(c => c.course_id === selectedPermissionCourseId);
+                  const isSuper = Boolean(currentCourse?.is_super);
+                  return (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '14px 18px',
+                      borderRadius: '12px',
+                      marginBottom: '20px',
+                      background: isSuper
+                        ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(168, 85, 247, 0.15))'
+                        : 'rgba(255,255,255,0.03)',
+                      border: isSuper ? '1px solid rgba(234, 179, 8, 0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      flexWrap: 'wrap',
+                      gap: '12px'
+                    }}>
+                      <div style={{ flex: 1, minWidth: '220px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1rem', fontWeight: 800, color: isSuper ? '#fbbf24' : 'white' }}>
+                            ⭐ وضع الطالب السوبر (Super Student)
+                          </span>
+                          {isSuper ? (
+                            <span style={{ background: '#fbbf24', color: '#0f172a', fontSize: '0.75rem', fontWeight: 900, padding: '2px 10px', borderRadius: '20px' }}>
+                              مفعل لهذا الكورس ✓
+                            </span>
+                          ) : (
+                            <span style={{ background: 'rgba(255,255,255,0.08)', color: '#9ca3af', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '20px' }}>
+                              غير مفعل
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: isSuper ? '#fde68a' : '#9ca3af', lineHeight: 1.6 }}>
+                          {isSuper
+                            ? 'جميع كروت هذا الكورس مفتوحة للطالب مباشرة دون التقيد بمواعيد الفتح/الإغلاق أو حل الأسئلة السابقة.'
+                            : 'تفعيل هذا الزر يفتح جميع كروت ودروس الكورس للطالب فوراً ويتجاوز أي قيود مواعيد أو متطلبات مسبقة.'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSuper(selectedPermissionsStudent.id, selectedPermissionCourseId)}
+                        className="btn"
+                        style={{
+                          padding: '9px 18px',
+                          borderRadius: '10px',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          background: isSuper ? 'rgba(239, 68, 68, 0.2)' : 'linear-gradient(135deg, #f59e0b, #a855f7)',
+                          border: isSuper ? '1px solid #ef4444' : 'none',
+                          color: isSuper ? '#f87171' : 'white',
+                          boxShadow: isSuper ? 'none' : '0 4px 15px rgba(245, 158, 11, 0.35)',
+                          flexShrink: 0
+                        }}
+                      >
+                        {isSuper ? '🚫 إلغاء وضع السوبر' : '⭐ تفعيل كطالب سوبر'}
+                      </button>
+                    </div>
+                  );
+                })()}
 
                                 {permissionExceptions.length > 0 && (
                   <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px' }}>

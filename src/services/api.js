@@ -540,6 +540,15 @@ export const apiService = {
     return res.data;
   },
 
+  toggleStudentSuper: async (studentId, courseId, token) => {
+    const res = await API.post(
+      `/api/admin/students/${studentId}/courses/${courseId}/toggle-super`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data;
+  },
+
   // ==========================================
   // Roadmap Endpoints (Student)
   // ==========================================

@@ -141,10 +141,18 @@ export default function AdminStudents() {
         icon: 'success',
         title: res.is_super ? 'تم تفعيل وضع السوبر ⭐' : 'تم إلغاء وضع السوبر',
         text: res.message,
-        timer: 2000,
+        timer: 1500,
         showConfirmButton: false
       });
-      await fetchStudents();
+      setStudents(prev => (prev || []).map(s => {
+        if (s.id === studentId) {
+          return {
+            ...s,
+            courses: (s.courses || []).map(c => c.course_id === courseId ? { ...c, is_super: res.is_super } : c)
+          };
+        }
+        return s;
+      }));
       setSelectedPermissionsStudent(prev => {
         if (!prev) return prev;
         return {

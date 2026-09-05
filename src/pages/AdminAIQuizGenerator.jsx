@@ -420,20 +420,42 @@ const AdminAIQuizGenerator = () => {
               
               {/* Questions Count */}
               <div>
-                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold' }}>
-                  عدد الأسئلة المطلوبة: <span style={{ color: '#a855f7', fontWeight: '900', fontSize: '1.1rem' }}>{questionsCount}</span> أسئلة
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#e2e8f0', fontWeight: 'bold' }}>
+                  <span>عدد الأسئلة المطلوبة: <span style={{ color: '#a855f7', fontWeight: '900', fontSize: '1.2rem' }}>{questionsCount}</span> أسئلة</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={questionsCount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val)) setQuestionsCount(Math.max(1, Math.min(100, val)));
+                    }}
+                    style={{
+                      width: '70px',
+                      padding: '3px 8px',
+                      background: 'rgba(10, 15, 29, 0.9)',
+                      border: '1px solid #7c3aed',
+                      borderRadius: '6px',
+                      color: '#c084fc',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      fontSize: '0.95rem'
+                    }}
+                  />
                 </label>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-                  {[3, 5, 10, 15, 20, 30].map((cnt) => (
+                <div style={{ display: 'flex', gap: '5px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  {[5, 10, 15, 20, 30, 50, 75, 100].map((cnt) => (
                     <button
                       key={cnt}
                       type="button"
                       onClick={() => setQuestionsCount(cnt)}
                       style={{
                         flex: 1,
+                        minWidth: '32px',
                         padding: '6px 0',
                         borderRadius: '6px',
-                        fontSize: '0.85rem',
+                        fontSize: '0.82rem',
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         background: questionsCount === cnt ? '#7c3aed' : 'rgba(30, 41, 59, 0.6)',
@@ -448,11 +470,14 @@ const AdminAIQuizGenerator = () => {
                 <input
                   type="range"
                   min="1"
-                  max="50"
+                  max="100"
                   value={questionsCount}
                   onChange={(e) => setQuestionsCount(parseInt(e.target.value) || 5)}
                   style={{ width: '100%', accentColor: '#a855f7', cursor: 'pointer' }}
                 />
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                  ⚡ يتم التوليد بالدفعات المتوازية ليطابق العدد المطلوب بدقة 100%
+                </span>
               </div>
 
               {/* Difficulty Level */}

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.DEV ? '' : 'https://exampf-deakgng9ehb3ekb6.westus3-01.azurewebsites.net',
+  baseURL: import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app',
 });
 
 export const apiService = {

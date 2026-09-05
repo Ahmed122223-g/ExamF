@@ -5,7 +5,6 @@ const API = axios.create({
 });
 
 
-
 export const apiService = {
   verifyExam: async (code) => {
     const token = sessionStorage.getItem(`student_token_${code}`) || localStorage.getItem('student_token') || '';
@@ -85,7 +84,7 @@ export const apiService = {
   },
 
   submitExam: async (examId, answers, isCheated, token) => {
-    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app';
+    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-backend-new.vercel.app';
     const url = `${baseUrl}/api/exams/${examId}/submit`;
     const response = await fetch(url, {
       method: 'POST',
@@ -187,7 +186,7 @@ export const apiService = {
 
   getExportUrl: (examId) => {
     const token = localStorage.getItem('admin_token') || '';
-    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-b-wedfg.vercel.app';
+    const baseUrl = import.meta.env.DEV ? '' : 'https://exam-backend-new.vercel.app';
     return `${baseUrl}/api/admin/exams/${examId}/export?token=${token}`;
   },
 
@@ -283,6 +282,14 @@ export const apiService = {
     });
     return res.data;
   },
+
+  generateCardAIQuestions: async (data, token) => {
+    const res = await API.post('/api/admin/cards/ai-generate-questions', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
 
 
   getCourseSectionsAdmin: async (courseId, token) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt, FaEdit } from 'react-icons/fa';
+import { FaSave, FaArrowRight, FaVideo, FaLink, FaPlus, FaTrash, FaSignOutAlt, FaEdit, FaMagic, FaTimes, FaLightbulb, FaCheck } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminEditCard = () => {
@@ -41,6 +41,14 @@ const AdminEditCard = () => {
   const [newFileTitle, setNewFileTitle] = useState('');
   const [newFileUrl, setNewFileUrl] = useState('');
   const [addingFile, setAddingFile] = useState(false);
+
+  // AI Card Questions generation state
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiQuestionsCount, setAiQuestionsCount] = useState(5);
+  const [aiQuestionStyle, setAiQuestionStyle] = useState('mixed'); // 'mixed' | 'analytical' | 'problem_solving' | 'conceptual'
+  const [aiInsertMode, setAiInsertMode] = useState('append'); // 'append' | 'replace'
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   const isNewCard = cardId === 'new';
 
@@ -194,6 +202,61 @@ const AdminEditCard = () => {
       if (i === idx) return { ...q, [field]: value, _dirty: true };
       return q;
     }));
+  };
+
+  const handleOpenAIModal = () => {
+    if (!aiTopic.trim()) {
+      const defaultTopic = [cardTitle, cardDesc].filter(Boolean).join(' - ');
+      setAiTopic(defaultTopic);
+    }
+    setShowAIModal(true);
+  };
+
+  const handleGenerateCardAI = async (e) => {
+    if (e) e.preventDefault();
+    if (!aiTopic.trim()) {
+      Swal.fire('تنبيه', 'يرجى كتابة محتوى أو موضوع الكارت لتوليد الأسئلة المقالية.', 'warning');
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      const payload = {
+        topic_description: aiTopic.trim(),
+        questions_count: parseInt(aiQuestionsCount) || 5,
+        card_title: cardTitle.trim() || undefined,
+        question_style: aiQuestionStyle
+      };
+
+      const res = await apiService.generateCardAIQuestions(payload, token);
+      const newQuestions = (res.questions || []).map((qText, i) => ({
+        id: null,
+        question_text: qText,
+        question_image_url: '',
+        order: (aiInsertMode === 'append' ? questionsList.length : 0) + i + 1,
+        _dirty: true,
+        _new: true
+      }));
+
+      if (aiInsertMode === 'replace') {
+        setQuestionsList(newQuestions);
+      } else {
+        setQuestionsList(prev => [...prev, ...newQuestions]);
+      }
+
+      setShowAIModal(false);
+      Swal.fire({
+        title: 'تم التوليد بنجاح! 🎉',
+        text: `تم توليد ${newQuestions.length} أسئلة مقالية وتحليلية بالذكاء الاصطناعي وإضافتها للكارت بنجاح. يمكنك مراجعتها وتعديلها الآن قبل الحفظ.`,
+        icon: 'success',
+        confirmButtonColor: '#7c3aed'
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire('خطأ', err.response?.data?.detail || 'فشل توليد الأسئلة بواسطة الذكاء الاصطناعي.', 'error');
+    } finally {
+      setGeneratingAI(false);
+    }
   };
 
   const handleSaveQuestions = async (cardId_) => {
@@ -666,18 +729,56 @@ const AdminEditCard = () => {
 
               {activeSubTab === 'edit_questions' ? (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                    <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800' }}>
-                      📝 أسئلة الكارت
-                    </h3>
-                    <button
-                      type="button"
-                      className="btn btn-accent"
-                      style={{ padding: '7px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
-                      onClick={handleAddQuestion}
-                    >
-                      <FaPlus /> إضافة سؤال
-                    </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>
+                        📝 أسئلة الكارت
+                      </h3>
+                      <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
+                        إجمالي الأسئلة: {questionsList.length} (أسئلة مقالية وتطبيقية)
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleOpenAIModal}
+                        style={{
+                          background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)',
+                          border: 'none',
+                          color: 'white',
+                          padding: '8px 18px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          boxShadow: '0 4px 15px rgba(139, 92, 246, 0.35)',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.55)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.35)';
+                        }}
+                      >
+                        <FaMagic /> توليد أسئلة بـ AI ✨
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-accent"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={handleAddQuestion}
+                      >
+                        <FaPlus /> إضافة سؤال يدوي
+                      </button>
+                    </div>
                   </div>
 
                   {questionsList.length === 0 ? (
@@ -918,6 +1019,399 @@ const AdminEditCard = () => {
 
         </div>
       </main>
+
+      {/* AI Card Questions Generation Modal */}
+      {showAIModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !generatingAI) setShowAIModal(false);
+          }}
+        >
+          <div
+            style={{
+              background: '#111827',
+              border: '1px solid rgba(139, 92, 246, 0.35)',
+              borderRadius: '20px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(139, 92, 246, 0.25)',
+              overflow: 'hidden',
+              animation: 'fadeInScale 0.25s ease-out'
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '1.2rem',
+                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)'
+                  }}
+                >
+                  <FaMagic />
+                </div>
+                <div>
+                  <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>
+                    توليد أسئلة مقالية بالذكاء الاصطناعي (AI)
+                  </h3>
+                  <p style={{ color: '#9ca3af', fontSize: '0.8rem', margin: '3px 0 0 0' }}>
+                    توليد أسئلة مقالية وتحليلية مخصصة لهذا الكارت مع الحفاظ التام على المصطلحات التقنية الإنجليزية
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => !generatingAI && setShowAIModal(false)}
+                disabled={generatingAI}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  color: '#9ca3af',
+                  cursor: generatingAI ? 'not-allowed' : 'pointer',
+                  padding: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* English Terms Notice */}
+              <div
+                style={{
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px'
+                }}
+              >
+                <span style={{ fontSize: '1.2rem', marginTop: '2px' }}>💡</span>
+                <div style={{ fontSize: '0.84rem', color: '#cbd5e1', lineHeight: '1.5' }}>
+                  <strong style={{ color: '#60a5fa' }}>حفظ المصطلحات التقنية:</strong> يتم الحفاظ على جميع المصطلحات الشبكية والبرمجية باللغة الإنجليزية كما هي (مثل: <code>Router</code>, <code>Switch</code>, <code>OSI Layers</code>, <code>TCP/IP</code>, <code>API</code>, <code>State</code>) وتجنب التعريب الحرفي غير الدقيق.
+                </div>
+              </div>
+
+              {/* Topic / Content Input */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>
+                  📌 محتوى وموضوع الكارت المطلوب صياغة أسئلة عنه:
+                </label>
+                <textarea
+                  className="form-control"
+                  rows="4"
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="مثال: شرح طبقات OSI Layer، الفرق بين Router و Switch، وطريقة توجيه الـ Packets..."
+                  disabled={generatingAI}
+                  style={{
+                    width: '100%',
+                    background: '#1f2937',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '10px',
+                    color: 'white',
+                    padding: '12px 14px',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.5',
+                    resize: 'vertical'
+                  }}
+                />
+                <span style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                  يمكنك تعديل أو كتابة أي ملاحظات أو نقاط محددة ترغب في أن يركز الـ AI عليها أثناء توليد الأسئلة.
+                </span>
+              </div>
+
+              {/* Questions Count Slider & Chips */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold', fontSize: '0.9rem', margin: 0 }}>
+                    🔢 عدد الأسئلة المقالية المطلوب توليدها:
+                  </label>
+                  <span
+                    style={{
+                      background: 'rgba(139, 92, 246, 0.2)',
+                      border: '1px solid rgba(139, 92, 246, 0.4)',
+                      color: '#c4b5fd',
+                      fontWeight: '800',
+                      fontSize: '1rem',
+                      padding: '2px 14px',
+                      borderRadius: '16px'
+                    }}
+                  >
+                    {aiQuestionsCount} أسئلة
+                  </span>
+                </div>
+
+                {/* Quick Chips */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {[3, 5, 10, 15, 20].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      disabled={generatingAI}
+                      onClick={() => setAiQuestionsCount(num)}
+                      style={{
+                        padding: '5px 14px',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        fontWeight: aiQuestionsCount === num ? 'bold' : 'normal',
+                        border: aiQuestionsCount === num ? '1px solid #8b5cf6' : '1px solid rgba(255,255,255,0.1)',
+                        background: aiQuestionsCount === num ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255,255,255,0.03)',
+                        color: aiQuestionsCount === num ? '#c4b5fd' : '#9ca3af',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {num} {num === 3 ? 'أسئلة' : num === 5 ? 'أسئلة' : 'سؤال'}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="1"
+                    disabled={generatingAI}
+                    value={aiQuestionsCount}
+                    onChange={(e) => setAiQuestionsCount(parseInt(e.target.value) || 1)}
+                    style={{
+                      flex: 1,
+                      accentColor: '#8b5cf6',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    disabled={generatingAI}
+                    value={aiQuestionsCount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val)) {
+                        setAiQuestionsCount(Math.min(20, Math.max(1, val)));
+                      }
+                    }}
+                    style={{
+                      width: '65px',
+                      background: '#1f2937',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      padding: '6px 8px',
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Style & Insertion Mode in 2 columns */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                {/* Question Style */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                    🎯 نمط صياغة الأسئلة:
+                  </label>
+                  <select
+                    className="form-control"
+                    disabled={generatingAI}
+                    value={aiQuestionStyle}
+                    onChange={(e) => setAiQuestionStyle(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: '#1f2937',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      color: 'white',
+                      padding: '10px 12px',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    <option value="mixed">🌟 منوع (شرح + تحليل + سيناريوهات)</option>
+                    <option value="analytical">🔍 تحليلي وتطبيقي (سيناريوهات واقعية)</option>
+                    <option value="problem_solving">🛠️ استكشاف وحل مشاكل (Troubleshooting)</option>
+                    <option value="conceptual">💡 مفاهيمي ونظري معمّق</option>
+                  </select>
+                </div>
+
+                {/* Insertion Mode */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                    📥 طريقة الإضافة للكارت:
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px', height: '42px', alignItems: 'center' }}>
+                    <label
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        background: aiInsertMode === 'append' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                        border: aiInsertMode === 'append' ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                        color: aiInsertMode === 'append' ? '#34d399' : '#9ca3af',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="insertMode"
+                        value="append"
+                        checked={aiInsertMode === 'append'}
+                        onChange={() => setAiInsertMode('append')}
+                        style={{ display: 'none' }}
+                      />
+                      ➕ إضافة للأسئلة
+                    </label>
+
+                    <label
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        background: aiInsertMode === 'replace' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                        border: aiInsertMode === 'replace' ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                        color: aiInsertMode === 'replace' ? '#f87171' : '#9ca3af',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="insertMode"
+                        value="replace"
+                        checked={aiInsertMode === 'replace'}
+                        onChange={() => setAiInsertMode('replace')}
+                        style={{ display: 'none' }}
+                      />
+                      🔄 استبدال الحالي
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px'
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={generatingAI}
+                onClick={() => setShowAIModal(false)}
+                style={{ padding: '9px 18px', fontSize: '0.88rem' }}
+              >
+                إلغاء
+              </button>
+
+              <button
+                type="button"
+                disabled={generatingAI || !aiTopic.trim()}
+                onClick={handleGenerateCardAI}
+                style={{
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '9px 24px',
+                  borderRadius: '8px',
+                  cursor: generatingAI || !aiTopic.trim() ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+                  opacity: generatingAI || !aiTopic.trim() ? 0.6 : 1
+                }}
+              >
+                {generatingAI ? (
+                  <>
+                    <span
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid white',
+                        borderTopColor: 'transparent',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        animation: 'spin 0.8s linear infinite'
+                      }}
+                    />
+                    جاري التوليد بدقة بالذكاء الاصطناعي...
+                  </>
+                ) : (
+                  <>
+                    <FaMagic /> توليد {aiQuestionsCount} أسئلة مقالية الآن ✨
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

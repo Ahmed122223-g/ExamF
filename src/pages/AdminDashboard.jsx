@@ -747,15 +747,37 @@ const AdminDashboard = () => {
         
         {activeTab === 'exams' ? (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexWrap: 'wrap', gap: '15px' }}>
               <div>
                 <h1 style={{ fontSize: '1.8rem', color: 'white', fontWeight: '800' }}>مرحباً بك في لوحة تحكم المسؤول 👋</h1>
                 <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>إحصائيات المنصة وأحدث الاختبارات النشطة</p>
               </div>
-              <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <FaPlus /> إنشاء اختبار جديد
-              </Link>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link 
+                  to="/admin/exams/ai-generate" 
+                  className="btn" 
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                    color: 'white',
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(124, 58, 237, 0.35)',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <FaMagic /> ✨ توليد كويز بالـ AI
+                </Link>
+                <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <FaPlus /> إنشاء اختبار يدوي
+                </Link>
+              </div>
             </div>
+
 
             {stats && (
               <div className="stats-grid">

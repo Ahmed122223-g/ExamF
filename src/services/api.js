@@ -275,6 +275,13 @@ export const apiService = {
     return res.data;
   },
 
+  generateAIQuiz: async (data, token) => {
+    const res = await API.post('/api/admin/exams/ai-generate', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
 
   getCourseSectionsAdmin: async (courseId, token) => {
     const res = await API.get(`/api/admin/courses/${courseId}/sections`, {

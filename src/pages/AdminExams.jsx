@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaPlus, FaTrash, FaSignOutAlt, FaChevronRight, FaClipboardList, FaClock, FaCheckCircle, FaTrashAlt, FaEdit } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaSignOutAlt, FaChevronRight, FaClipboardList, FaClock, FaCheckCircle, FaTrashAlt, FaEdit, FaMagic } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const formatForDateTimeInput = (isoStr) => {
@@ -500,24 +500,50 @@ const AdminExams = () => {
         ) : (
           /* STANDARD LIST VIEW */
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
               <div>
                 <h1 style={{ fontSize: '1.6rem', color: 'white', fontWeight: '800' }}>إدارة الاختبارات</h1>
-                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>عرض وتعديل وحذف الاختبارات</p>
+                <p style={{ color: 'var(--text-muted-dark)', fontSize: '0.9rem', marginTop: '5px' }}>عرض وتعديل وحذف الاختبارات وإدارتها بالذكاء الاصطناعي</p>
               </div>
-              <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <FaPlus />
-                إنشاء اختبار جديد
-              </Link>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link 
+                  to="/admin/exams/ai-generate" 
+                  className="btn" 
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                    color: 'white',
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(124, 58, 237, 0.35)',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <FaMagic /> ✨ توليد كويز بالـ AI
+                </Link>
+                <Link to="/admin/exams?action=create" className="btn btn-accent" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <FaPlus /> إنشاء اختبار يدوي
+                </Link>
+              </div>
             </div>
 
             {exams.length === 0 ? (
               <div className="glass-card" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted-dark)' }}>
                 <FaClipboardList style={{ fontSize: '3rem', color: '#475569', marginBottom: '15px' }} />
                 <p style={{ fontSize: '1.1rem', marginBottom: '20px' }}>لا توجد أي اختبارات مضافة بعد.</p>
-                <Link to="/admin/exams?action=create" className="btn btn-primary">أنشئ أول اختبار الآن</Link>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  <Link to="/admin/exams/ai-generate" className="btn" style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', color: 'white' }}>
+                    <FaMagic /> توليد كويز بالذكاء الاصطناعي
+                  </Link>
+                  <Link to="/admin/exams?action=create" className="btn btn-primary">أنشئ اختباراً يدوياً</Link>
+                </div>
               </div>
             ) : (
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {exams.map(exam => {
                   const localStartStr = new Date(exam.start_time).toLocaleString('ar-EG', {

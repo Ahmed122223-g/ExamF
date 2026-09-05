@@ -26,6 +26,7 @@ import StudentRoadmapView from './pages/StudentRoadmapView';
 import AdminRoadmaps from './pages/AdminRoadmaps';
 import JoinRoadmap from './pages/JoinRoadmap';
 import AdminAICourseGenerator from './pages/AdminAICourseGenerator';
+import AdminAIQuizGenerator from './pages/AdminAIQuizGenerator';
 
 
 const AdminRoute = ({ children }) => {
@@ -193,6 +194,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminStats />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/exams/ai-generate" 
+          element={
+            <AdminRoute>
+              <AdminAIQuizGenerator />
             </AdminRoute>
           } 
         />

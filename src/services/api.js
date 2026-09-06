@@ -715,6 +715,27 @@ export const apiService = {
     });
     return res.data;
   },
+
+  // ── Certificate APIs ──────────────────────────────────────────
+  getCourseCertificateStatus: async (courseId, token) => {
+    const res = await API.get(`/api/certificates/course/${courseId}/status`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  claimCourseCertificate: async (courseId, token) => {
+    const res = await API.post(`/api/certificates/course/${courseId}/claim`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.data;
+  },
+
+  verifyCertificate: async (code) => {
+    const res = await API.get(`/api/certificates/verify/${code}`);
+    return res.data;
+  },
 };
+
 
 

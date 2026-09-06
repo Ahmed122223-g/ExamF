@@ -22,6 +22,7 @@ const AdminEditCard = () => {
   const [cardSectionId, setCardSectionId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isProject, setIsProject] = useState(false);
+  const [isCertificate, setIsCertificate] = useState(false);
 
   const [unlockType, setUnlockType] = useState('immediate'); // 'immediate' | 'date' | 'days'
   const [unlockDate, setUnlockDate] = useState('');
@@ -91,6 +92,7 @@ const AdminEditCard = () => {
           setCardOrder(currentCard.order || 1);
           setCardSectionId(currentCard.section_id || null);
           setIsProject(currentCard.is_project || false);
+          setIsCertificate(currentCard.is_certificate || false);
 
           if (currentCard.unlock_date) {
             setUnlockType('date');
@@ -401,7 +403,8 @@ const AdminEditCard = () => {
         unlock_days: finalUnlockDays,
         lock_date: lockDate || null,
         section_id: cardSectionId,
-        is_project: isProject
+        is_project: isProject,
+        is_certificate: isCertificate
       };
 
       let savedCard = null;
@@ -503,6 +506,26 @@ const AdminEditCard = () => {
             </label>
             <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginRight: '10px' }}>
               (يقفل التقدم للمستخدمين حتى تقوم بتصحيح حلولهم يدوياً)
+            </span>
+          </div>
+
+          {/* Certificate Card Toggle */}
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(250, 204, 21, 0.05)', border: `1px solid ${isCertificate ? 'rgba(250, 204, 21, 0.5)' : 'rgba(250, 204, 21, 0.2)'}`, padding: '12px 18px', borderRadius: '10px', transition: 'all 0.2s' }}>
+            <input
+              type="checkbox"
+              id="is_certificate_checkbox"
+              checked={isCertificate}
+              onChange={(e) => {
+                setIsCertificate(e.target.checked);
+                if (e.target.checked) setIsProject(false); // mutually exclusive
+              }}
+              style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#facc15' }}
+            />
+            <label htmlFor="is_certificate_checkbox" style={{ color: '#facc15', fontWeight: 'bold', cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🎓 هذا الكارت شهادة إتمام الكورس (Certificate Card)
+            </label>
+            <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginRight: '10px' }}>
+              (يُوضع في نهاية الكورس — يتحقق النظام تلقائياً من استيفاء الطالب لجميع المتطلبات قبل إصدار الشهادة)
             </span>
           </div>
 

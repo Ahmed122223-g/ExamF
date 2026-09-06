@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink, FaMagic } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaSignOutAlt, FaChartBar, FaUserGraduate, FaClipboardList, FaFileExcel, FaPlus, FaCopy, FaBook, FaArrowRight, FaVideo, FaLink, FaMagic, FaAward } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
@@ -45,6 +45,7 @@ const AdminDashboard = () => {
   const [showAddDependencyModal, setShowAddDependencyModal] = useState(false);
   const [selectedDependencyCourseId, setSelectedDependencyCourseId] = useState('');
   const [savingDependency, setSavingDependency] = useState(false);
+  const [addingCertCard, setAddingCertCard] = useState(false);
 
   const token = localStorage.getItem('admin_token');
 
@@ -369,6 +370,93 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleAddCertificateCard = async () => {
+    if (!selectedCourse) return;
+
+    const existingCertCard = courseCards.find(c => c.is_certificate);
+    if (existingCertCard) {
+      Swal.fire({
+        icon: 'info',
+        title: 'يوجد كارت شهادة بالفعل',
+        html: `يحتوي هذا الكورس بالفعل على كارت شهادة:<br/><b style="color: #facc15; font-size: 1.1rem; display: inline-block; margin-top: 6px;">${existingCertCard.title}</b> (خطوة رقم #${existingCertCard.order})`,
+        showCancelButton: true,
+        confirmButtonText: 'تعديل كارت الشهادة',
+        cancelButtonText: 'إغلاق',
+        confirmButtonColor: '#f59e0b'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate(`/admin/courses/${selectedCourse.id}/cards/${existingCertCard.card_id}`);
+        }
+      });
+      return;
+    }
+
+    const maxOrder = courseCards.length > 0 
+      ? Math.max(...courseCards.map(c => c.order || 0)) 
+      : 0;
+    const newOrder = maxOrder + 1;
+
+    Swal.fire({
+      title: '🎓 إضافة كارت شهادة إتمام الكورس',
+      html: `سيتم إضافة كارت شهادة تلقائياً في نهاية هذا الكورس بالترتيب رقم <b>${newOrder}</b>.<br/><br/><span style="font-size: 0.88rem; color: #94a3b8;">سيكون هذا الكارت مفتوحاً دائماً للطلاب ليتمكنوا من النقر على <b>إظهار الشهادة</b> والتحقق من متطلبات التخرج أو استلام شهادتهم المعتمدة.</span>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، أضف كارت الشهادة',
+      cancelButtonText: 'إلغاء',
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#334155'
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+
+      setAddingCertCard(true);
+      try {
+        let targetSectionId = null;
+        if (courseSections.length > 0) {
+          targetSectionId = courseSections[courseSections.length - 1].id;
+        } else {
+          const createdSec = await apiService.createCourseSectionAdmin(selectedCourse.id, {
+            title: 'الختام والشهادة',
+            description: 'شهادة إتمام الكورس والتخرج',
+            order: 1
+          }, token);
+          targetSectionId = createdSec.id;
+          const freshSecs = await apiService.getCourseSectionsAdmin(selectedCourse.id, token);
+          setCourseSections(freshSecs);
+        }
+
+        const certPayload = {
+          card_id: `cert_${selectedCourse.id}_${Date.now().toString(36)}`,
+          title: '🎓 شهادة إتمام الكورس',
+          description: 'احصل على شهادة إتمام الكورس المعتمدة والموثقة من منصة ExamPF بعد إتمام جميع الدروس وحل الأسئلة واجتياز الاختبارات والمشاريع.',
+          phase: 'الشهادة والتخرج',
+          order: newOrder,
+          instructors_data: JSON.stringify({}),
+          unlock_date: null,
+          unlock_days: 0,
+          lock_date: null,
+          section_id: targetSectionId,
+          is_project: false,
+          is_certificate: true
+        };
+
+        await apiService.createCourseCardAdmin(selectedCourse.id, certPayload, token);
+
+        const updatedCards = await apiService.getCourseCardsAdmin(selectedCourse.id, token);
+        setCourseCards(updatedCards);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'تم إنشاء كارت الشهادة بنجاح! 🎓',
+          html: `تمت إضافة كارت الشهادة كخطوة رقم <b>${newOrder}</b> في نهاية الكورس وهو مفتوح وجاهز للطلاب الآن.`
+        });
+      } catch (err) {
+        Swal.fire('خطأ', err.response?.data?.detail || 'فشل في إضافة كارت الشهادة.', 'error');
+      } finally {
+        setAddingCertCard(false);
+      }
+    });
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#090d16' }}>
@@ -414,6 +502,15 @@ const AdminDashboard = () => {
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#10b981', color: 'white' }}
               >
                 <FaPlus /> إضافة كارت جديد
+              </button>
+              <button 
+                className="btn" 
+                onClick={handleAddCertificateCard}
+                disabled={addingCertCard}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f59e0b', color: '#000', fontWeight: '800' }}
+                title="إضافة كارت شهادة إتمام الكورس في نهاية الكورس تلقائياً"
+              >
+                <FaAward /> {addingCertCard ? 'جاري الإضافة...' : '🎓 إضافة شهادة'}
               </button>
               <button className="btn btn-secondary" onClick={() => setSelectedCourse(null)}>
                 العودة لقائمة الكورسات
@@ -473,10 +570,33 @@ const AdminDashboard = () => {
                         {secCards.map(card => {
                           const isLinked = exams.some(e => e.course_card_id === card.id);
                           return (
-                            <div key={card.id} className="stat-card" style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', background: 'rgba(255,255,255,0.02)', padding: '15px' }} onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}>
+                            <div 
+                              key={card.id} 
+                              className="stat-card" 
+                              style={{ 
+                                cursor: 'pointer', 
+                                flexDirection: 'column', 
+                                alignItems: 'stretch', 
+                                background: card.is_certificate ? 'linear-gradient(135deg, rgba(250,204,21,0.08) 0%, rgba(234,179,8,0.02) 100%)' : 'rgba(255,255,255,0.02)', 
+                                border: card.is_certificate ? '2px solid rgba(250,204,21,0.6)' : undefined,
+                                boxShadow: card.is_certificate ? '0 0 16px rgba(250,204,21,0.15)' : undefined,
+                                padding: '15px' 
+                              }} 
+                              onClick={() => navigate(`/admin/courses/${selectedCourse.id}/cards/${card.card_id}`)}
+                            >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
                                   <span className="badge badge-success">خطوة {card.order}</span>
+                                  {card.is_certificate && (
+                                    <span className="badge" style={{ backgroundColor: 'rgba(250,204,21,0.25)', color: '#facc15', border: '1px solid rgba(250,204,21,0.5)', fontWeight: 'bold' }}>
+                                      🎓 كارت شهادة
+                                    </span>
+                                  )}
+                                  {card.is_project && (
+                                    <span className="badge" style={{ backgroundColor: 'rgba(56,189,248,0.2)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.4)', fontWeight: 'bold' }}>
+                                      🏗️ مشروع
+                                    </span>
+                                  )}
                                   {card.unlock_date && <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>يفتح: {card.unlock_date}</span>}
                                   {card.unlock_days !== null && card.unlock_days !== undefined && <span className="badge" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>يفتح بعد: {card.unlock_days} يوم</span>}
                                   {card.lock_date && <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>يقفل: {card.lock_date}</span>}

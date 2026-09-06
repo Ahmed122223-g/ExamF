@@ -27,6 +27,7 @@ import AdminRoadmaps from './pages/AdminRoadmaps';
 import JoinRoadmap from './pages/JoinRoadmap';
 import AdminAICourseGenerator from './pages/AdminAICourseGenerator';
 import AdminAIQuizGenerator from './pages/AdminAIQuizGenerator';
+import VerifyCertificate from './pages/VerifyCertificate';
 
 
 const AdminRoute = ({ children }) => {
@@ -66,6 +67,7 @@ function App() {
         <Route path="/login" element={<StudentLogin />} />
         <Route path="/register" element={<StudentRegister />} />
         <Route path="/forgot-password" element={<StudentForgotPassword />} />
+        <Route path="/verify-certificate" element={<VerifyCertificate />} />
         <Route 
           path="/dashboard" 
           element={

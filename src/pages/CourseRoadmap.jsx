@@ -95,6 +95,7 @@ export default function CourseRoadmap() {
     const item = allItems.find(it => it.id === id);
     if (!item) return false;
     if (roadmap.is_super) return true;
+    if (item.is_certificate) return true; // Always unlocked for students to check requirements and claim
     const index = getItemGlobalIndex(id);
 
     if (isItemLocked(id)) return false;
@@ -130,7 +131,9 @@ export default function CourseRoadmap() {
   const isItemLocked = (id) => {
     if (roadmap.is_super) return false;
     const item = allItems.find(it => it.id === id);
-    if (!item || !item.lock_date) return false;
+    if (!item) return false;
+    if (item.is_certificate) return false; // Certificate card is never locked
+    if (!item.lock_date) return false;
     const todayStr = new Date().toISOString().split('T')[0];
     return todayStr >= item.lock_date;
   };
@@ -267,12 +270,14 @@ export default function CourseRoadmap() {
                     key={item.id}
                     className={`roadmap-card ${(!unlocked || isItemLocked(item.id)) ? 'locked' : ''} ${item.is_completed && !isItemLocked(item.id) ? 'completed-glow' : ''}`}
                     onClick={() => unlocked && openCardDetail(item)}
-                    style={item.is_completed && !isItemLocked(item.id) ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
+                    style={item.is_certificate
+                      ? { borderColor: '#facc15', boxShadow: '0 0 25px rgba(250, 204, 21, 0.25)', background: 'linear-gradient(135deg, rgba(250,204,21,0.08) 0%, rgba(234,179,8,0.04) 100%)' }
+                      : item.is_completed && !isItemLocked(item.id) ? { borderColor: '#10b981', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' } : {}}
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                        <span className="roadmap-card-step-badge">
-                          {item.is_project ? '🏗️ مشروع' : `خطوة ${index + 1}`}
+                        <span className="roadmap-card-step-badge" style={item.is_certificate ? { background: 'rgba(250,204,21,0.15)', color: '#facc15', border: '1px solid rgba(250,204,21,0.4)' } : {}}>
+                          {item.is_certificate ? '🎓 شهادة إتمام الكورس' : item.is_project ? '🏗️ مشروع' : `خطوة ${index + 1}`}
                         </span>
                         {isItemLocked(item.id) && (
                           <span className="roadmap-lock-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -323,7 +328,7 @@ export default function CourseRoadmap() {
                         {isItemLocked(item.id)
                           ? '🔒 مقفول'
                           : unlocked
-                            ? item.is_project ? '🏗️ فتح صفحة المشروع ←' : '📂 استعرض المحاضرين والدروس ←'
+                            ? item.is_certificate ? '🎓 إظهار الشهادة وفحص المتطلبات ←' : item.is_project ? '🏗️ فتح صفحة المشروع ←' : '📂 استعرض المحاضرين والدروس ←'
                             : '🔒 مغلق'}
                       </span>
                     </div>

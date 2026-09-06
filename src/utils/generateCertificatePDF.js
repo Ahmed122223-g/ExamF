@@ -6,6 +6,9 @@ import { jsPDF } from 'jspdf';
  * Clean typography without boxed cards, single-page A4 landscape diploma.
  */
 export async function generateCertificatePDF(certificate) {
+  // Detect if a string contains Arabic characters
+  const isArabic = (text) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+
   const formatDate = (iso) => {
     const d = iso ? new Date(iso) : new Date();
     return d.toLocaleDateString('en-US', {
@@ -13,6 +16,14 @@ export async function generateCertificatePDF(certificate) {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Arabic-aware text style: uses Cairo font + RTL when Arabic is detected
+  const textStyle = (text, baseStyle = '') => {
+    if (isArabic(text)) {
+      return `font-family:'Cairo',sans-serif;direction:rtl;unicode-bidi:embed;${baseStyle}`;
+    }
+    return baseStyle;
   };
 
   const getEnglishGrade = (grade, score) => {
@@ -33,10 +44,19 @@ export async function generateCertificatePDF(certificate) {
     ? '#1d4ed8'
     : '#b91c1c';
 
-  // Ensure fonts are ready before capturing
+  // Ensure fonts are ready before capturing (including Cairo for Arabic)
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready;
   }
+  // Force-load Cairo font weights used in the certificate
+  try {
+    await Promise.all([
+      document.fonts.load('900 38px Cairo'),
+      document.fonts.load('900 28px Cairo'),
+      document.fonts.load('900 32px Cinzel'),
+      document.fonts.load('900 22px Cinzel'),
+    ]);
+  } catch (e) { /* ignore font load errors */ }
 
   // Create isolated rendering element fixed at exact 1122x793 A4 landscape dimensions
   const container = document.createElement('div');
@@ -97,10 +117,10 @@ export async function generateCertificatePDF(certificate) {
     <div style="margin:0;">
       <p style="font-size:13px;color:#64748b;font-weight:600;margin:0 0 4px 0;letter-spacing:0.04em;">This is to certify that</p>
       <div style="display:inline-block;padding:2px 42px;border-bottom:2.5px solid #d4af37;margin:2px 0 6px 0;">
-        <span style="font-size:38px;font-weight:900;color:#0f172a;letter-spacing:0.02em;">${certificate.student_name}</span>
+        <span style="font-size:38px;font-weight:900;color:#0f172a;letter-spacing:0.02em;${textStyle(certificate.student_name)}">${certificate.student_name}</span>
       </div>
       <p style="font-size:12.5px;color:#64748b;font-weight:600;margin:6px auto 4px auto;max-width:740px;line-height:1.45;">has successfully completed and fulfilled all academic requirements, evaluations, and coursework for:</p>
-      <div style="font-size:28px;font-weight:900;color:#1e3a8a;letter-spacing:0.02em;margin:4px 0 6px 0;">${certificate.course_title}</div>
+      <div style="font-size:28px;font-weight:900;color:#1e3a8a;letter-spacing:0.02em;margin:4px 0 6px 0;${textStyle(certificate.course_title)}">${certificate.course_title}</div>
     </div>
 
     <!-- Clean Typography Credentials Line (NO BOXES) -->
@@ -164,8 +184,8 @@ export async function generateCertificatePDF(certificate) {
 
   document.body.appendChild(container);
 
-  // Small delay to ensure styles and font rendering paint completely
-  await new Promise((resolve) => setTimeout(resolve, 180));
+  // Delay to ensure Arabic + Latin font glyphs are fully painted
+  await new Promise((resolve) => setTimeout(resolve, 400));
 
   try {
     const canvas = await html2canvas(container.firstElementChild, {

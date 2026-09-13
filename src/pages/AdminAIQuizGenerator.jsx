@@ -30,6 +30,7 @@ const AdminAIQuizGenerator = () => {
   const [topicDescription, setTopicDescription] = useState('');
   const [questionsCount, setQuestionsCount] = useState(5);
   const [difficultyLevel, setDifficultyLevel] = useState('progressive'); // progressive, easy, medium, hard
+  const [questionMixMode, setQuestionMixMode] = useState('balanced'); // balanced, practical_problems, conceptual
   const [customTitle, setCustomTitle] = useState('');
   const [customCode, setCustomCode] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(15);
@@ -55,10 +56,10 @@ const AdminAIQuizGenerator = () => {
   const [loadingStep, setLoadingStep] = useState(0);
 
   const loadingSteps = [
-    '🧠 جاري تحليل المحتوى التعليمي وموضوع الكويز...',
-    '📐 جاري صياغة الأسئلة مع توزيع تدرج الصعوبة (سهل 🟢 -> متوسط 🟡 -> متقدم 🔴)...',
-    '🎯 جاري تدقيق الخيارات الأربعة وتعيين الإجابة الصحيحة بدقة...',
-    '💡 جاري كتابة الشروحات التعليمية وتوزيع درجات كل سؤال...',
+    '🧠 جاري قراءة وتحليل موضوع الكويز والتعليمات المدخلة بدقة...',
+    '🧮 جاري صياغة الأسئلة ودمج المسائل والتمارين وتتبع النواتج...',
+    '🌱 جاري تبسيط الأسلوب والشرح ليكون سهلاً وواضحاً للطلاب المتعلمين...',
+    '🎯 جاري تدقيق الخيارات الأربعة وتحديد الإجابة الصحيحة وشرح الحل خطوة بخطوة...',
     '✨ جاري إعداد وتجهيز مسودة الكويز للمعاينة والاعتماد...'
   ];
 
@@ -81,24 +82,24 @@ const AdminAIQuizGenerator = () => {
 
   const presetTopics = [
     {
-      label: '🐍 بايثون: المتغيرات والدوال والـ OOP',
-      desc: 'اختبار شامل في لغة بايثون يغطي أنواع البيانات، هياكل البيانات (Lists, Dictionaries)، الشروط، الدوال، والبرمجة كائنية التوجه (OOP: Classes, Inheritance, Polymorphism).'
+      label: '🐍 بايثون: مقتطفات كود وتتبع ناتج ومسائل برمجية مبسطة',
+      desc: 'كويز في أساسيات لغة بايثون للطلاب المبتدئين: المتغيرات، الشروط if/else، حلقات for و while، والدوال. يرجى وضع مقتطفات كود قصيرة مع السؤال عن ناتج التنفيذ (Output Tracing) بأسلوب سهل ومباشر.'
     },
     {
-      label: '⚛️ جافاسكربت و React الحديثة',
-      desc: 'اختبار في مفاهيم JavaScript ES6+ (Promises, Async/Await, Array Methods) ومكتبة React (Hooks: useState, useEffect, Custom Hooks, Component Lifecycle, Props).'
+      label: '➕ رياضيات: مسائل حسابية وتطبيقية مباشرة للمتعلمين',
+      desc: 'اختبار في العمليات الحسابية والنسب المئوية والكسور والمعادلات البسيطة. المطلوب صياغة مسائل حسابية وتطبيقية واضحة بأرقام مباشرة وسهلة للطلاب خطوة بخطوة.'
     },
     {
-      label: '🗄️ قواعد البيانات ولغة SQL',
-      desc: 'اختبار تقني في تصميم قواعد البيانات العلائقية (Relational Databases)، استعلامات SQL المتقدمة (JOINs, GROUP BY, Subqueries)، الـ Indexes، والمفاتيح الأساسية والأجنبية.'
+      label: '⚛️ جافاسكربت: مخرجات دوال وتطبيقات ويب تفاعلية',
+      desc: 'اختبار مبسط ومباشر في JavaScript: تتبع نواتج الدوال، العمليات على Arrays والمصفوفات، مع مسائل كود قصيرة وواضحة تناسب المتعلمين.'
     },
     {
-      label: '🌐 أمن المعلومات وأساسيات الويب (Security)',
-      desc: 'كويز في أمن تطبيقات الويب يشمل ثغرات OWASP Top 10 (SQL Injection, XSS, CSRF)، المصادقة بـ JWT و Sessions، والتشفير وحماية البيانات الحساسة.'
+      label: '🌐 شبكات: أساسيات ومسائل تطبيقية سهلة في الـ IP والـ Subnet',
+      desc: 'اختبار في أساسيات الشبكات للمبتدئين: أجهزة الشبكة، نموذج الاتصال، ومسائل وتطبيقات سهلة في عناوين IP Address والـ Ports بأسلوب تعليمي مبسط.'
     },
     {
-      label: '🧩 هياكل البيانات والخوارزميات (DSA)',
-      desc: 'كويز تقييمي في هياكل البيانات (Arrays, Linked Lists, Stacks, Queues, Binary Trees) والخوارزميات (Searching, Sorting, Time & Space Complexity Big-O).'
+      label: '🗄️ قواعد بيانات: استعلامات SQL وتتبع جداول للمبتدئين',
+      desc: 'اختبار في أساسيات قواعد البيانات ولغة SQL: استعلامات SELECT، الشروط WHERE، والترتيب ORDER BY، مع مسائل تطبيقية مباشرة على جداول واضحة.'
     }
   ];
 
@@ -142,6 +143,7 @@ const AdminAIQuizGenerator = () => {
         topic_description: topicDescription.trim(),
         questions_count: parseInt(questionsCount) || 5,
         difficulty_level: difficultyLevel,
+        question_mix_mode: questionMixMode,
         title: customTitle.trim() || undefined,
         exam_code: customCode.trim().toUpperCase() || undefined,
         duration_minutes: parseInt(durationMinutes) || undefined,
@@ -338,13 +340,13 @@ const AdminAIQuizGenerator = () => {
         {/* Page Header */}
         <div style={{ textAlign: 'center', marginBottom: '35px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(124, 58, 237, 0.15)', border: '1px solid rgba(124, 58, 237, 0.3)', padding: '6px 16px', borderRadius: '30px', color: '#c084fc', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '12px' }}>
-            <FaMagic /> الجيل الجديد من واضعي الاختبارات الذكية
+            <FaMagic /> الجيل الجديد من واضعي الاختبارات الذكية والمسائل التعليمية
           </div>
           <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: '900', color: 'white', letterSpacing: '-0.5px', marginBottom: '8px' }}>
-            إنشاء كويز ذكي متدرج الصعوبة بواسطة <span style={{ background: 'linear-gradient(135deg, #a855f7, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>الذكاء الاصطناعي (AI)</span>
+            إنشاء كويز ذكي ومسائل تطبيقية بواسطة <span style={{ background: 'linear-gradient(135deg, #a855f7, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>الذكاء الاصطناعي (AI)</span>
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', maxWidth: '750px', margin: '0 auto', lineHeight: '1.6' }}>
-            اكتب المحتوى أو الموضوع المطلوب وحدد عدد الأسئلة، وسيقوم الـ AI بصياغة أسئلة دقيقة متدرجة (سهل 🟢، متوسط 🟡، متقدم 🔴) مع 4 خيارات وتعيين الإجابة الصحيحة وشرح تعليمي ودرجات وتوقيتات جاهزة.
+          <p style={{ color: '#94a3b8', fontSize: '1rem', maxWidth: '780px', margin: '0 auto', lineHeight: '1.6' }}>
+            اكتب أي موضوع أو تعليمات تريدها وسيلتزم بها الـ AI تماماً. يمكنك طلب مسائل حسابية، أكواد وتتبع نواتج، أو مفاهيم مباشرة، بأسلوب سهل ومبسط ومناسب للطلاب المتعلمين مع 4 خيارات وإجابة محددة وشرح تعليمي خطوة بخطوة.
           </p>
         </div>
 
@@ -395,7 +397,7 @@ const AdminAIQuizGenerator = () => {
             <div className="form-group" style={{ marginBottom: '25px' }}>
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', color: '#e2e8f0', fontWeight: 'bold' }}>
                 <span>محتوى / موضوع الكويز المطلوب <span style={{ color: '#ef4444' }}>*</span></span>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>يمكنك لصق كود أو نص أو منهج أو تفاصيل المحاور</span>
+                <span style={{ fontSize: '0.8rem', color: '#38bdf8' }}>✨ يلتزم الـ AI بدقة بما تكتبه فقط دون فرض مواضيع خارجية</span>
               </label>
               <textarea
                 className="form-input"
@@ -408,20 +410,26 @@ const AdminAIQuizGenerator = () => {
                   lineHeight: '1.6',
                   borderRadius: '10px'
                 }}
-                placeholder="مثال: كويز في لغة بايثون يغطي الـ List Comprehensions, Decorators, Generators, وتطبيقات الـ OOP وإدارة الاستثناءات Try/Except..."
+                placeholder="اكتب هنا موضوع الكويز ونوع الأسئلة التي تريدها بدقة...
+مثال 1: كويز رياضيات للصف السادس يغطي العمليات الحسابية والنسب المئوية مع مسائل لفظية سهلة ومباشرة.
+مثال 2: كويز بايثون للمبتدئين مع مقتطفات كود قصيرة وتوقع ناتج التنفيذ (Output).
+مثال 3: كويز في أساسيات الشبكات ومسائل سهلة في الـ IP Address بأسلوب تعليمي مبسط..."
                 value={topicDescription}
                 onChange={(e) => setTopicDescription(e.target.value)}
                 required
               />
+              <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginTop: '6px' }}>
+                💡 اكتب أي تعليمات خاصة بك: مثل التركيز على درس محدد، طلب مسائل وحسابات، أو صياغة سهلة للمبتدئين.
+              </span>
             </div>
 
-            {/* Grid for Questions Count & Difficulty & Marks */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+            {/* Grid for Questions Count & Mix Mode & Difficulty & Marks */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '25px' }}>
               
               {/* Questions Count */}
               <div>
                 <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#e2e8f0', fontWeight: 'bold' }}>
-                  <span>عدد الأسئلة المطلوبة: <span style={{ color: '#a855f7', fontWeight: '900', fontSize: '1.2rem' }}>{questionsCount}</span> أسئلة</span>
+                  <span>عدد الأسئلة: <span style={{ color: '#a855f7', fontWeight: '900', fontSize: '1.2rem' }}>{questionsCount}</span></span>
                   <input
                     type="number"
                     min="1"
@@ -432,7 +440,7 @@ const AdminAIQuizGenerator = () => {
                       if (!isNaN(val)) setQuestionsCount(Math.max(1, Math.min(100, val)));
                     }}
                     style={{
-                      width: '70px',
+                      width: '65px',
                       padding: '3px 8px',
                       background: 'rgba(10, 15, 29, 0.9)',
                       border: '1px solid #7c3aed',
@@ -452,10 +460,10 @@ const AdminAIQuizGenerator = () => {
                       onClick={() => setQuestionsCount(cnt)}
                       style={{
                         flex: 1,
-                        minWidth: '32px',
+                        minWidth: '30px',
                         padding: '6px 0',
                         borderRadius: '6px',
-                        fontSize: '0.82rem',
+                        fontSize: '0.8rem',
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         background: questionsCount === cnt ? '#7c3aed' : 'rgba(30, 41, 59, 0.6)',
@@ -476,7 +484,29 @@ const AdminAIQuizGenerator = () => {
                   style={{ width: '100%', accentColor: '#a855f7', cursor: 'pointer' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
-                  ⚡ يتم التوليد بالدفعات المتوازية ليطابق العدد المطلوب بدقة 100%
+                  ⚡ يتم التوليد بالدفعات المتوازية بدقة 100%
+                </span>
+              </div>
+
+              {/* Question Mix Mode */}
+              <div>
+                <label className="form-label" style={{ color: '#e2e8f0', fontWeight: 'bold' }}>
+                  طبيعة الأسئلة وتوازن المسائل:
+                </label>
+                <select
+                  className="form-input"
+                  style={{ background: 'rgba(10, 15, 29, 0.8)', color: '#fff', borderRadius: '8px' }}
+                  value={questionMixMode}
+                  onChange={(e) => setQuestionMixMode(e.target.value)}
+                >
+                  <option value="balanced">⚖️ متوازن (مفاهيم + مسائل وتمارين عملية) [موصى به]</option>
+                  <option value="practical_problems">🧮 تركيز على المسائل والتمارين والعملي (حسابات / أكواد)</option>
+                  <option value="conceptual">📖 مفاهيم واستيعاب مبسط ومباشر</option>
+                </select>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                  {questionMixMode === 'practical_problems' && '⚡ سيركز الـ AI على المسائل والأرقام وتتبع الأكواد'}
+                  {questionMixMode === 'balanced' && '⭐ يجمع بين أسئلة الفهم والمسائل والتمارين بأسلوب سهل'}
+                  {questionMixMode === 'conceptual' && '📘 أسئلة استيعاب وشرح للمفاهيم الأساسية'}
                 </span>
               </div>
 
@@ -496,6 +526,9 @@ const AdminAIQuizGenerator = () => {
                   <option value="medium">🟡 للمستوى المتوسط (أسئلة تطبيقية متوازنة)</option>
                   <option value="hard">🔴 للمحترفين والمتقدمين (تفكير نقدي وسيناريوهات عميقة)</option>
                 </select>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                  🌱 صياغة سهلة ومناسبة للطلاب في مرحلة التعلم
+                </span>
               </div>
 
               {/* Marks Allocation Mode */}

@@ -1295,10 +1295,10 @@ const AdminEditCard = () => {
                       fontSize: '0.85rem'
                     }}
                   >
-                    <option value="mixed">🌟 منوع (شرح + تحليل + سيناريوهات)</option>
-                    <option value="analytical">🔍 تحليلي وتطبيقي (سيناريوهات واقعية)</option>
-                    <option value="problem_solving">🛠️ استكشاف وحل مشاكل (Troubleshooting)</option>
-                    <option value="conceptual">💡 مفاهيمي ونظري معمّق</option>
+                    <option value="mixed">🌟 متوازن (مفاهيم + مسائل وتمارين تطبيقية سهلة)</option>
+                    <option value="problem_solving">🛠️ مسائل وتمارين وتطبيقات عملية (Problem Solving)</option>
+                    <option value="analytical">🔍 تحليل وتفكير ومقارنات مبسطة</option>
+                    <option value="conceptual">💡 مفاهيم أساسية واستيعاب مباشر</option>
                   </select>
                 </div>
 
